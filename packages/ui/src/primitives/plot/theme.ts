@@ -1,10 +1,10 @@
 import type { PlotOptions } from "@observablehq/plot";
 
-// The neon palette shared by every chart. These mirror the `--ttc-*` theme
-// custom properties (styles/theme.scss) and the backdrop palette so charts read
-// as part of the same synthwave world. We resolve the live custom-property
-// values at render time when the document is available, falling back to the
-// static hexes during SSR/prerender.
+// The palette shared by every chart. These mirror the `--tcab-*` custom
+// properties (styles/tokens.css) so charts read as part of the same world as
+// the rest of the UI. We resolve the live custom-property values at render time
+// when the document is available, falling back to the static hexes during
+// SSR/prerender.
 const FALLBACK = {
   text: "#fdf3ff",
   muted: "#b69ad0",
@@ -32,27 +32,27 @@ function cssVar(name: string, fallback: string): string {
 }
 
 // Reads the live theme palette for charts. Must run on the client (touches
-// getComputedStyle), mirroring backdrop/palette.ts.
+// getComputedStyle).
 export function readChartPalette(): ChartPalette {
   return {
-    text: cssVar("--ttc-text", FALLBACK.text),
-    muted: cssVar("--ttc-muted", FALLBACK.muted),
-    border: cssVar("--ttc-border", FALLBACK.border),
-    surface: cssVar("--ttc-surface", FALLBACK.surface),
-    accent: cssVar("--ttc-accent", FALLBACK.accent),
-    accent2: cssVar("--ttc-accent-2", FALLBACK.accent2),
+    text: cssVar("--tcab-text", FALLBACK.text),
+    muted: cssVar("--tcab-muted", FALLBACK.muted),
+    border: cssVar("--tcab-border", FALLBACK.border),
+    surface: cssVar("--tcab-surface", FALLBACK.surface),
+    accent: cssVar("--tcab-accent", FALLBACK.accent),
+    accent2: cssVar("--tcab-accent-2", FALLBACK.accent2),
   };
 }
 
-// Base Plot options applied to every chart: transparent background (the neon
-// backdrop shows through), themed text/grid, and a monospace font matching the
-// site. Helpers spread this first, then layer their own marks and scales.
+// Base Plot options applied to every chart: transparent background (a backdrop
+// shows through), themed text/grid, and a monospace font matching the UI.
+// Helpers spread this first, then layer their own marks and scales.
 export function basePlotOptions(palette: ChartPalette): PlotOptions {
   return {
     style: {
       background: "transparent",
       color: palette.text,
-      fontFamily: "var(--ttc-font)",
+      fontFamily: "var(--tcab-font)",
       fontSize: "12px",
     },
     grid: true,

@@ -35,7 +35,7 @@ interface MetricChartWidgetProps {
 // A self-contained metric chart: a titled, full-width panel that charts one
 // metric grouped by model as one labeled bar per run. The title carries the unit
 // prominently (the axis label alone is easy to miss). Like every chart here it
-// shows per-run magnitudes, never a ranking (docs/site.md).
+// shows per-run magnitudes, never a ranking.
 export function MetricChartWidget({
   title,
   runs,

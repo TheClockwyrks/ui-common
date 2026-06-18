@@ -19,9 +19,8 @@ interface SpecAccordionProps {
 
 // A stack of collapsible, full-width panels — one per seeded file or reference
 // image. Every entry starts collapsed and expands in place, so the whole set is
-// scannable by path and each one opens to the full content width (no sidebar
-// eating horizontal space). Shared by the Specifications and References tabs so
-// both read identically.
+// scannable by path and each one opens to the full content width. Shared by the
+// Specifications and References surfaces so both read identically.
 export function SpecAccordion({ entries, emptyLabel }: SpecAccordionProps) {
   if (entries.length === 0) {
     return <p className={styles.empty}>{emptyLabel}</p>;

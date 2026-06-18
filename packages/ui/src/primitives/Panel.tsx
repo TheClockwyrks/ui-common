@@ -7,10 +7,10 @@ interface PanelProps {
   className?: string;
 }
 
-// Wraps content in the site's standard neon-outlined surface panel. Use it
-// around free-flowing prose (About copy, test-case and model descriptions) that
-// isn't already inside one of the page-specific panels, so the text stays
-// legible over the animated backdrop.
+// Wraps content in the standard neon-outlined surface panel: a shared
+// translucent background inside a softly glowing card. Use it around
+// free-flowing prose that isn't already inside a page-specific panel so the
+// text stays legible over a busy backdrop.
 export function Panel({ children, className }: PanelProps) {
   const cls = className ? `${styles.panel} ${className}` : styles.panel;
   return <div className={cls}>{children}</div>;

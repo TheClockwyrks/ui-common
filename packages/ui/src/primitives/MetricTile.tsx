@@ -11,10 +11,10 @@ interface MetricTileProps {
   href?: string;
 }
 
-// A single labelled figure in the site's neon-outlined panel style. Used to lay
-// out a run's metrics and metadata as a responsive grid of tiles, where each
-// tile pairs a muted label with its value. When `href` is given the value
-// becomes an external link, e.g. the Source tile linking to the run's repo.
+// A single labelled figure in the neon-outlined panel style. Used to lay out a
+// run's metrics and metadata as a responsive grid of tiles, where each tile
+// pairs a muted label with its value. When `href` is given the value becomes an
+// external link, e.g. the Source tile linking to the run's repo.
 export function MetricTile({
   label,
   value,

@@ -1,4 +1,4 @@
-import { type Rating, RATING_META } from "../data/ratings";
+import { type Rating, RATING_META } from "../ratings";
 import styles from "./RatingBadge.module.scss";
 
 interface RatingBadgeProps {
@@ -7,9 +7,9 @@ interface RatingBadgeProps {
 }
 
 // A run's reviewer-assigned quality rating, shown as a color-coded chip. This is
-// per-run context, never a ranking: the gallery never sorts or aggregates by it
-// (see docs/site.md). The tier's full description is exposed as the title so the
-// shorthand label stays legible inline.
+// per-run context, never a ranking: the gallery never sorts or aggregates by it.
+// The tier's full description is exposed as the title so the shorthand label
+// stays legible inline.
 export function RatingBadge({ rating, className }: RatingBadgeProps) {
   const meta = RATING_META[rating];
   return (

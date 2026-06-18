@@ -2,10 +2,10 @@ import * as Plot from "@observablehq/plot";
 import type { PlotOptions } from "@observablehq/plot";
 import { basePlotOptions, type ChartPalette } from "./theme";
 
-// Spec builders that turn the site's data into themed Plot option objects. They
-// return PlotOptions (not DOM) so <Chart> stays the single place that renders
-// into the document. Each builder layers the neon-themed `basePlotOptions` with
-// marks colored from the live palette.
+// Spec builders that turn data into themed Plot option objects. They return
+// PlotOptions (not DOM) so <Chart> stays the single place that renders into the
+// document. Each builder layers the themed `basePlotOptions` with marks colored
+// from the live palette.
 
 /** One bar in a bar chart. */
 export interface BarPoint {

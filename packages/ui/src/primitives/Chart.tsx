@@ -6,10 +6,9 @@ import styles from "./Chart.module.scss";
 
 interface ChartProps {
   /**
-   * Builds the Plot spec for the chart. It receives the live neon palette
-   * (read from the theme on the client) so marks can be themed. Use the
-   * helpers in `plot/charts.ts` (e.g. `barChart`) to build the returned
-   * options.
+   * Builds the Plot spec for the chart. It receives the live palette (read from
+   * the theme on the client) so marks can be themed. Use the helpers in
+   * `plot/charts.ts` (e.g. `barChart`) to build the returned options.
    */
   spec: (palette: ChartPalette) => PlotOptions;
   /** Accessible title describing what the chart shows. */
@@ -18,15 +17,14 @@ interface ChartProps {
   className?: string;
 }
 
-// The single place the site renders an Observable Plot figure. It reads the
-// live neon palette on the client, asks the caller's `spec` for themed Plot
+// The single place an Observable Plot figure is rendered. It reads the live
+// theme palette on the client, asks the caller's `spec` for themed Plot
 // options, and mounts the resulting node into a ref'd container, cleaning up on
-// re-render. Charts never imply a ranking — they show distributions and
-// per-run magnitudes (see docs/site.md).
+// re-render. Charts never imply a ranking — they show distributions and per-run
+// magnitudes.
 //
 // Usage:
-//   import { Chart } from "../../components/Chart";
-//   import { barChart } from "../../components/plot/charts";
+//   import { Chart, barChart } from "@test-cabinet/ui";
 //   <Chart title="Cost by harness"
 //          spec={(p) => barChart(data, p, { y: "USD" })} />
 export function Chart({ spec, title, className }: ChartProps) {

@@ -1,8 +1,8 @@
 @use "../styles/tokens" as t;
 
-// Themed prose. Markdown blocks are spaced and colored to the neon palette;
-// links glow with the accent, code/tables sit on the surface tones, and the
-// outermost margins collapse so the block fits flush inside a padded panel.
+// Themed prose. Markdown blocks are spaced and colored to the palette; links
+// glow with the accent, code/tables sit on the surface tones, and the outermost
+// margins collapse so the block fits flush inside a padded panel.
 .prose {
   color: t.$color-text;
   line-height: 1.6;
@@ -19,7 +19,7 @@
   h2,
   h3,
   h4 {
-    font-family: var(--ttc-display);
+    font-family: var(--tcab-display);
     line-height: 1.25;
     margin: t.$space-xl 0 t.$space-md;
   }
@@ -65,7 +65,7 @@
   }
 
   code {
-    font-family: var(--ttc-font);
+    font-family: var(--tcab-font);
     font-size: t.$font-sm;
     background: t.$color-surface-2;
     border-radius: t.$radius-sm;

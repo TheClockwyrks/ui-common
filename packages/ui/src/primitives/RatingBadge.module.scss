@@ -1,8 +1,8 @@
 @use "../styles/tokens" as t;
 
 // A run's quality rating, shown as a color-coded chip. The tier color comes from
-// the `--ttc-rating-*` theme tokens, selected by the `data-rating` attribute so
-// the markup stays a single element.
+// the `--tcab-rating-*` tokens, selected by the `data-rating` attribute so the
+// markup stays a single element.
 .badge {
   display: inline-flex;
   align-items: center;
@@ -18,15 +18,15 @@
   white-space: nowrap;
 
   &[data-rating="flawless"] {
-    --rating-color: var(--ttc-rating-flawless);
+    --rating-color: var(--tcab-rating-flawless);
   }
   &[data-rating="great"] {
-    --rating-color: var(--ttc-rating-great);
+    --rating-color: var(--tcab-rating-great);
   }
   &[data-rating="scuffed"] {
-    --rating-color: var(--ttc-rating-scuffed);
+    --rating-color: var(--tcab-rating-scuffed);
   }
   &[data-rating="broken"] {
-    --rating-color: var(--ttc-rating-broken);
+    --rating-color: var(--tcab-rating-broken);
   }
 }
