@@ -8,13 +8,14 @@
 import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
+
+import { useGgCostBreakdown, useGgSpend, type PricedSlot } from "./ggCost";
+import type { SlotUsage } from "./useGgRunState";
 import {
   GalleryDataProvider,
   type GalleryDataInput,
 } from "../../../data/galleryContext";
 import type { ModelSummary } from "../../../data/models";
-import { useGgCostBreakdown, useGgSpend, type PricedSlot } from "./ggCost";
-import type { SlotUsage } from "./useGgRunState";
 
 const MODEL_ID = "anthropic/claude-x";
 
@@ -36,7 +37,7 @@ function wrapper(models: ModelSummary[]) {
     writeups: {},
     reviews: {},
     runsLoading: false,
-    queryRunSummaries: async () => ({ summaries: [], total: 0 }),
+    queryRunSummaries: () => Promise.resolve({ summaries: [], total: 0 }),
     testCases: [],
     testCasesStatus: "ready",
     models,
@@ -64,13 +65,14 @@ describe("the gg cost split's catalog price", () => {
         model({ uncachedInput: 3e-6, cachedInput: 3e-7, output: 15e-6 }),
       ]),
     });
-    expect(result.current).not.toBeNull();
-    expect(result.current!.input).toBeCloseTo(3, 9);
-    expect(result.current!.cachedInput).toBeCloseTo(0.3, 9);
-    expect(result.current!.output).toBeCloseTo(15, 9);
+    const split = result.current;
+    expect(split).not.toBeNull();
+    expect(split?.input).toBeCloseTo(3, 9);
+    expect(split?.cachedInput).toBeCloseTo(0.3, 9);
+    expect(split?.output).toBeCloseTo(15, 9);
     // Reasoning takes the output rate.
-    expect(result.current!.reasoning).toBeCloseTo(15, 9);
-    expect(result.current!.total).toBeCloseTo(33.3, 9);
+    expect(split?.reasoning).toBeCloseTo(15, 9);
+    expect(split?.total).toBeCloseTo(33.3, 9);
   });
 
   it("has no split for a model without a list price", () => {
@@ -94,8 +96,8 @@ describe("the gg cost split's catalog price", () => {
         model({ uncachedInput: 3e-6, cachedInput: 3e-7, output: 15e-6 }),
       ]),
     });
-    const row = result.current.perModel[0]!;
-    expect(row.cost).toBeCloseTo(33.3, 9);
-    expect(row.derived).toBe(true);
+    const row = result.current.perModel[0];
+    expect(row?.cost).toBeCloseTo(33.3, 9);
+    expect(row?.derived).toBe(true);
   });
 });

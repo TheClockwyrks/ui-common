@@ -8,6 +8,8 @@ import {
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ModelsPage } from "./ModelsPage";
 import {
   BackendProvider,
   type BackendContextValue,
@@ -19,7 +21,6 @@ import {
 } from "../../data/galleryContext";
 import type { ModelSummary } from "../../data/models";
 import { RunsRuntimeProvider, useRunsRuntime } from "../../runtime/runsRuntime";
-import { ModelsPage } from "./ModelsPage";
 
 // The Models page's "Refresh" control: one press re-reads every curated
 // model's list price from OpenRouter (`POST /models/list-prices/refresh`), the
@@ -30,7 +31,7 @@ import { ModelsPage } from "./ModelsPage";
 vi.mock("../../components/PageLayout", () => ({
   PageLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
-const authState = vi.hoisted(() => ({ token: "t" as string | null }));
+const authState = vi.hoisted((): { token: string | null } => ({ token: "t" }));
 vi.mock("../../../client/auth", () => ({
   useAuth: () => ({ token: authState.token }),
 }));
@@ -57,7 +58,7 @@ function galleryValue(canExecute = true): GalleryDataInput {
     writeups: {},
     reviews: {},
     runsLoading: false,
-    queryRunSummaries: async () => ({ summaries: [], total: 0 }),
+    queryRunSummaries: () => Promise.resolve({ summaries: [], total: 0 }),
     testCases: [],
     testCasesStatus: "ready",
     models: MODELS,
@@ -87,7 +88,7 @@ function backendValue(client: object): BackendContextValue {
     status: "ready",
     error: null,
     url: null,
-    setUrl: () => {},
+    setUrl: vi.fn(),
   } as unknown as BackendContextValue;
 }
 
@@ -125,37 +126,56 @@ function renderPage({
       </RunsRuntimeProvider>
     </MemoryRouter>,
   );
-  return refreshListPrices;
 }
 
 const refreshButton = () => screen.getByRole("button", { name: "Refresh" });
 const queryRefreshButton = () =>
   screen.queryByRole("button", { name: "Refresh" });
+const addModel = () => screen.getByRole("link", { name: "+ Add model" });
 const queryAddModel = () => screen.queryByRole("link", { name: "+ Add model" });
 const refreshToken = () => screen.getByTestId("refresh-token").textContent;
 
+// Every element the page rendered, in document order.
+const elementsInOrder = () =>
+  screen.getAllByText((_content, element) => element !== null);
+
 // A request the test settles by hand, so the pending state can be observed.
+// `resolve` is a mock that takes the promise's resolver as its implementation:
+// the project's `lib` (ES2022) has no `Promise.withResolvers`.
 function deferred<T>() {
-  let resolve: (value: T) => void = () => {};
-  let reject: (reason: unknown) => void = () => {};
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
+  const resolve = vi.fn<(value: T) => void>();
+  const promise = new Promise<T>((settle) => {
+    resolve.mockImplementation(settle);
   });
-  return { promise, resolve, reject };
+  return { promise, resolve };
+}
+
+// Settles a deferred refresh and lets the page take its answer.
+async function answer(pending: ReturnType<typeof deferred<ListPriceRefresh>>) {
+  await act(async () => {
+    pending.resolve(COUNTS);
+    await pending.promise;
+  });
 }
 
 describe("the Models page's Refresh control", () => {
   it("sits immediately before + Add model, as a plain button", () => {
     renderPage();
     const button = refreshButton();
-    const add = queryAddModel()!;
-    expect(button.getAttribute("type")).toBe("button");
-    // Adjacent siblings, the refresh first.
-    expect(button.nextElementSibling).toBe(add);
-    // The icon leads the label.
-    expect(button.firstElementChild?.tagName.toLowerCase()).toBe("svg");
-    expect(button.textContent).toBe("Refresh");
+    const add = addModel();
+    expect(button).toHaveAttribute("type", "button");
+    const elements = elementsInOrder();
+    // Adjacent, the refresh first: the element that follows the button and
+    // everything inside it is the link.
+    const next = elements
+      .slice(elements.indexOf(button) + 1)
+      .find((element) => !button.contains(element));
+    expect(next).toBe(add);
+    // The icon leads the label: the button's first element is the svg.
+    const icon = elements[elements.indexOf(button) + 1];
+    expect(button).toContainElement(icon ?? null);
+    expect(icon?.tagName.toLowerCase()).toBe("svg");
+    expect(button).toHaveTextContent(/^Refresh$/);
   });
 
   // Every condition that hides "+ Add model" hides the refresh with it, and
@@ -181,33 +201,33 @@ describe("the Models page's Refresh control", () => {
   });
 
   it("calls the endpoint once with the signed-in token", async () => {
-    const refresh = renderPage();
+    const refresh = vi.fn().mockResolvedValue(COUNTS);
+    renderPage({ refreshListPrices: refresh });
     fireEvent.click(refreshButton());
-    await waitFor(() => expect(refreshButton()).not.toBeDisabled());
+    await waitFor(() => expect(refreshButton()).toBeEnabled());
     expect(refresh).toHaveBeenCalledTimes(1);
     expect(refresh).toHaveBeenCalledWith("t");
   });
 
   it("is disabled while the request runs and enabled again after", async () => {
     const pending = deferred<ListPriceRefresh>();
-    const refresh = renderPage({
-      refreshListPrices: vi.fn().mockReturnValue(pending.promise),
-    });
-    expect(refreshButton()).not.toBeDisabled();
+    const refresh = vi.fn().mockReturnValue(pending.promise);
+    renderPage({ refreshListPrices: refresh });
+    expect(refreshButton()).toBeEnabled();
 
     fireEvent.click(refreshButton());
     expect(refreshButton()).toBeDisabled();
-    expect(refreshButton().getAttribute("aria-busy")).toBe("true");
+    expect(refreshButton()).toHaveAttribute("aria-busy", "true");
     // A press on the disabled control starts no second refresh.
     fireEvent.click(refreshButton());
     expect(refresh).toHaveBeenCalledTimes(1);
     // Nothing is reported, and nothing re-read, before the backend answers.
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(refreshToken()).toBe("0");
 
-    await act(async () => pending.resolve(COUNTS));
-    expect(refreshButton()).not.toBeDisabled();
-    expect(refreshButton().getAttribute("aria-busy")).toBe("false");
+    await answer(pending);
+    expect(refreshButton()).toBeEnabled();
+    expect(refreshButton()).toHaveAttribute("aria-busy", "false");
   });
 
   it("re-reads the catalog and reports the counts once the refresh answers", async () => {
@@ -216,12 +236,11 @@ describe("the Models page's Refresh control", () => {
     fireEvent.click(refreshButton());
 
     const notice = await screen.findByRole("status");
-    expect(notice.textContent).toBe(
-      "Refreshed the list price of 12 models: 3 updated, 8 unchanged, " +
-        "1 with no rate on OpenRouter.",
+    expect(notice).toHaveTextContent(
+      /^Refreshed the list price of 12 models: 3 updated, 8 unchanged, 1 with no rate on OpenRouter\.$/,
     );
     expect(refreshToken()).toBe("1");
-    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("says so when the catalog has no curated model to refresh", async () => {
@@ -234,9 +253,8 @@ describe("the Models page's Refresh control", () => {
       }),
     });
     fireEvent.click(refreshButton());
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "No models to refresh.",
-    );
+    const notice = await screen.findByRole("status");
+    expect(notice).toHaveTextContent(/^No models to refresh\.$/);
   });
 
   it("shows the error of a refresh that failed and re-reads nothing", async () => {
@@ -248,11 +266,11 @@ describe("the Models page's Refresh control", () => {
     fireEvent.click(refreshButton());
 
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("502: OpenRouter unreachable");
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(alert).toHaveTextContent("502: OpenRouter unreachable");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(refreshToken()).toBe("0");
     // The control is usable again, so the operator can retry.
-    expect(refreshButton()).not.toBeDisabled();
+    expect(refreshButton()).toBeEnabled();
   });
 
   it("clears the last outcome when the next press starts", async () => {
@@ -267,9 +285,9 @@ describe("the Models page's Refresh control", () => {
     await screen.findByRole("alert");
 
     fireEvent.click(refreshButton());
-    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
-    await act(async () => pending.resolve(COUNTS));
-    expect(screen.getByRole("status").textContent).toContain("3 updated");
+    await answer(pending);
+    expect(screen.getByRole("status")).toHaveTextContent("3 updated");
   });
 });
