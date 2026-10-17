@@ -177,6 +177,19 @@ describe("RunMonitorPage", () => {
     expect(follow).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("says a validating run's model has finished and its build is being validated", async () => {
+    const { value } = makeWorkers(() => {
+      // The session is over, so the stream has gone quiet.
+    });
+
+    renderMonitor(value, inFlight({ state: "validating" }));
+    await settle();
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "The model has finished; validating the build.",
+    );
+  });
+
   it("shows the waiting message before any events arrive", () => {
     const { value } = makeWorkers(() => {
       // Never delivers — the run is still starting up.

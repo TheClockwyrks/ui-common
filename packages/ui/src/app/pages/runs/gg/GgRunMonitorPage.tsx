@@ -15,6 +15,7 @@ import {
 } from "./useGgRunState";
 import { GgDashboard, type GgDashboardStatus } from "./GgDashboard";
 import { GgRunPanels } from "./GgRunPanels";
+import { validatingRunNotice } from "../../../../client/runPhase";
 
 // The live gg run monitor (`/runs/gg/:jobId/live`, consoles only). gg is
 // headless, so this is the only live window into a run. It reads the run's live
@@ -62,11 +63,21 @@ export function GgRunMonitorPage() {
     launched?.testCaseVersion ?? null,
   );
 
+  // The model has finished and the driver is validating its build. The job's own
+  // `validating` phase says so; the session's end on the telemetry stream says the
+  // same thing, often a moment before the phase change reaches the list, so either
+  // one reads as validating. A run already storing its files is past validation.
+  const validating =
+    status.kind === "running" &&
+    launched?.state !== "storing" &&
+    (launched?.state === "validating" || sessionEndStatus !== null);
   const dashboardStatus: GgDashboardStatus = {
-    ...statusPhase(status, sawSession, setupStage),
+    ...statusPhase(status, sawSession, setupStage, validating),
     note:
-      sessionEndStatus && status.kind === "running"
-        ? `gg session ended: ${sessionEndStatus}. Finalizing…`
+      validating
+        ? sessionEndStatus
+          ? `gg session ended: ${sessionEndStatus}. Validating the build…`
+          : validatingRunNotice(launched)
         : null,
     action:
       status.kind === "running" && jobId ? (
@@ -200,8 +211,17 @@ function statusPhase(
   status: GgMonitorStatus,
   sawSession: boolean,
   setupStage: SetupStage | null,
+  validating: boolean,
 ): Pick<GgDashboardStatus, "label" | "detail" | "tone"> {
   if (status.kind === "running") {
+    // The model's session is over and the driver is validating its build.
+    if (validating) {
+      return {
+        label: "Validating",
+        detail: "the model has finished; validating the build",
+        tone: "live",
+      };
+    }
     if (sawSession) {
       // No detail: the pill already says the run is live, and a run has as many agents
       // working as it has dispatched, so there is nothing true to add in one phrase.

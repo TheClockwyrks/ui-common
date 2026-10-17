@@ -32,6 +32,7 @@ import {
   formatUsd,
   totalTokens,
 } from "../format";
+import { RunActiveMarker } from "./RunActiveMarker";
 import { RunSelectBox, type RunSelectionContext } from "./RunSelect";
 import { sortRows, type SortState } from "./useTableSort";
 import { UnpublishedTag } from "./UnpublishedTag";
@@ -144,8 +145,9 @@ function categoryLabel(testType: string): string {
 }
 
 // The status label for an in-progress run's live phase. "queued"/"starting" carry
-// an ellipsis (work is pending and will proceed on its own), as does "storing" (the
-// run has finished and its driver is waiting to store its files); "pending" is a
+// an ellipsis (work is pending and will proceed on its own), as do "validating" (the
+// model has finished and its build is being validated, work that ends on its own)
+// and "storing" (the run has finished and its driver is waiting to store its files); "pending" is a
 // deliberate hold — the harness is at its parallelism cap, or the run is a game-jam
 // entry waiting for the same model's earlier entry of that jam to finish — shown
 // without one so it reads as a settled state rather than imminent progress.
@@ -154,9 +156,14 @@ const ACTIVE_STATE_LABEL: Readonly<Record<InProgressRun["state"], string>> = {
   pending: "pending",
   starting: "starting…",
   running: "running…",
+  validating: "validating…",
   storing: "storing files…",
   failed: "failed",
 };
+
+// What a "validating" run's tooltip says: the label alone does not say that the
+// model is done, which is the whole difference from "running…".
+const VALIDATING_TITLE = "The model has finished; validating the build";
 
 // A muted em-dash placeholder for a cell an in-progress run can't fill yet —
 // either a figure that only the finished run carries (its metrics, its rating) or
@@ -257,8 +264,9 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
     min: 20,
     resizable: false,
     // Selectable logs swap the hover caret for a checkbox; an in-progress row's
-    // box overlays the live spinner (passed through `active`) so the gutter still
-    // signals the run is running until the row is hovered or picked.
+    // box overlays the live marker (its phase passed through `active`) so the
+    // gutter still signals the run is in flight — and whether its model is still
+    // working or its build is being validated — until the row is hovered or picked.
     render: (row, ctx) =>
       ctx.selection ? (
         <RunSelectBox id={row.summary.id} selection={ctx.selection} />
@@ -267,9 +275,13 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
       ),
     renderActive: (run, ctx) =>
       ctx.selection ? (
-        <RunSelectBox id={run.runId} active selection={ctx.selection} />
+        <RunSelectBox
+          id={run.runId}
+          active={run.state}
+          selection={ctx.selection}
+        />
       ) : (
-        <span className={styles.spinner} aria-hidden="true" />
+        <RunActiveMarker state={run.state} />
       ),
   },
   {
@@ -623,7 +635,11 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
     },
     renderActive: (run) => (
       <span className={styles.rating} data-label="Status">
-        <span className={styles.activeStatus} data-state={run.state}>
+        <span
+          className={styles.activeStatus}
+          data-state={run.state}
+          title={run.state === "validating" ? VALIDATING_TITLE : undefined}
+        >
           {ACTIVE_STATE_LABEL[run.state]}
         </span>
       </span>
