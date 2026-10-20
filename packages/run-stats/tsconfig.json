@@ -11,10 +11,6 @@
     "noEmit": false,
     "allowImportingTsExtensions": false
   },
-  "references": [
-    { "path": "../../contracts/packages/run-record" },
-    { "path": "../../contracts/packages/backend-api" }
-  ],
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"]
 }

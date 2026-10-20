@@ -13,3 +13,11 @@ workspace = true
 [dependencies]
 # Take a crate of another repository up with `<crate> = { workspace = true }`;
 # the root manifest offers the ones the dependency edges permit.
+
+[dev-dependencies]
+# The contract fixtures the TypeScript mirrors are held to (the scoring goldens
+# and the gg query conformance suite) are read off this crate, at the tag the
+# workspace pins: the npm tests find its directory through `cargo metadata`
+# (scripts/contracts-fixtures.ts), so the TypeScript half and the Rust half
+# read the same files at the same version.
+test-cabinet-contracts = { workspace = true }
