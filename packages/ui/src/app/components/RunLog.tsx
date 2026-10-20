@@ -462,7 +462,7 @@ function RunRow({
               key={agent.profile}
               className={`${styles.row} ${styles.agentRow}`}
               data-primary={agent.primary ? "" : undefined}
-              data-idle={agent.instances === 0 ? "" : undefined}
+              data-idle={agent.ran ? undefined : ""}
             >
               {agentCells(agent, row, columns, ctx)}
             </div>
