@@ -1,4 +1,4 @@
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../../index";
 import { Link } from "react-router";
 import { TestCaseDetailLayout } from "../../../layouts/testcases/TestCaseDetailLayout";
 import { routes } from "../../../routes";

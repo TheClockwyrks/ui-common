@@ -1,4 +1,4 @@
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../../index";
 import type { RunRecord } from "@clockwyrks/run-record";
 import { LoadFailureState } from "../../../components/LoadFailureState";
 import { LoadingState } from "../../../components/LoadingState";

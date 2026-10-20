@@ -21,7 +21,7 @@ import {
   type ChartPalette,
   type StackedBarSegment,
   type StackedSeries,
-} from "@clockwyrks/ui";
+} from "../../../../index";
 import { turnTotalMs, type TurnTiming } from "./useGgRunState";
 import styles from "./GgPanels.module.scss";
 import { Select } from "../../../../primitives/Select";

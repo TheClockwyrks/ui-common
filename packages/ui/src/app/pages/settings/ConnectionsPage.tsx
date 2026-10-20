@@ -1,4 +1,4 @@
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../index";
 import { SettingsLayout } from "../../layouts/settings/SettingsLayout";
 import { useBackend } from "../../../client/context";
 import styles from "../runs/RunExec.module.scss";

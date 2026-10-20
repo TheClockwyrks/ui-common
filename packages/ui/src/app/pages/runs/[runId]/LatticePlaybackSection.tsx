@@ -17,6 +17,13 @@ import type { PerformanceSnapshotCheck } from "@clockwyrks/run-record";
 import { firstDrift } from "../lattice/drift";
 import { fitZoom, MAX_ZOOM, MIN_ZOOM, stepZoom } from "../lattice/zoom";
 import type { PlaybackWorkerResponse } from "../lattice/playbackWorker";
+// Vite's `?worker` import, with an extensionless specifier, names the worker in a
+// form both the package's source and its emitted `dist/` resolve: a
+// `new URL("…/playbackWorker.ts", import.meta.url)` would name a file the emit
+// renames to `.js`. The default export is the constructor Vite generates, which
+// the resolver, reading the worker module itself, cannot see.
+// eslint-disable-next-line import-x/default -- the default is Vite's, see above
+import PlaybackWorker from "../lattice/playbackWorker?worker";
 import { formatInteger } from "../../../format";
 import {
   fetchAssetBlob,
@@ -224,10 +231,7 @@ export function PlaybackOverlay({
 
         // The submission's engine — arbitrary code — runs off the main thread so a
         // trap or runaway load cannot freeze the tab; the worker can be terminated.
-        worker = new Worker(
-          new URL("../lattice/playbackWorker.ts", import.meta.url),
-          { type: "module" },
-        );
+        worker = new PlaybackWorker();
         workerRef.current = worker;
 
         // Abandon a module that never starts. Once `ready` lands this is cleared;

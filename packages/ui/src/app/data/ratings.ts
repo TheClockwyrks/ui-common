@@ -71,7 +71,7 @@ export {
   type AggregateScore,
   aggregateScore,
   aggregateRating,
-} from "@clockwyrks/ui";
+} from "../../index";
 
 import {
   isAestheticRating,
@@ -83,7 +83,7 @@ import {
   type DomainRating,
   type GradeStatus,
   type ReviewVerdict,
-} from "@clockwyrks/ui";
+} from "../../index";
 
 /**
  * Narrow a summary card's overall-grade field — a `VerdictStatus`, which also

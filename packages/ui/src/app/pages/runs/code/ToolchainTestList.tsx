@@ -13,7 +13,7 @@
 // reader who opens this on a red suite came for the two rows that failed.
 
 import { useMemo, useState } from "react";
-import { SegmentedControl, StatusGlyph } from "@clockwyrks/ui";
+import { SegmentedControl, StatusGlyph } from "../../../../index";
 import type {
   ToolchainTest,
   ToolchainTestStatus,

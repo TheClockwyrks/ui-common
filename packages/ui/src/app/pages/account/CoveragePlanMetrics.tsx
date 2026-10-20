@@ -4,7 +4,7 @@ import {
   Panel,
   RatingsChartWidget,
   type DonutSegment,
-} from "@clockwyrks/ui";
+} from "../../../index";
 import { RATING_META } from "../../data/ratings";
 import { LoadingState } from "../../components/LoadingState";
 import { formatInteger } from "../../format";

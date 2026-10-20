@@ -7,7 +7,7 @@ import type {
   GgReasoningEffort,
   GgSubagentScope,
 } from "@clockwyrks/run-record/gg";
-import { SegmentedControl } from "@clockwyrks/ui";
+import { SegmentedControl } from "../../../../index";
 import type { Model } from "../../../../client/types";
 import { ModelCombobox } from "../../../components/ModelCombobox";
 import { NumberValueField } from "../../../components/NumberField";

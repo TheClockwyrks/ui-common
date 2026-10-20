@@ -13,7 +13,7 @@
 // actually laid out — `cap.*`, `tool.*`, `summary.*`, `metric.*` — and a flat list of
 // several hundred names is a list nobody reads.
 import { useMemo, useState } from "react";
-import { Spinner } from "@clockwyrks/ui";
+import { Spinner } from "../../../../index";
 import type {
   GgFieldCatalog,
   GgFieldInfo,

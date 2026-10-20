@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useState } from "react";
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../index";
 import { LoadingState } from "../../components/LoadingState";
 import { useRevealNotice } from "../../components/SubmitNotice";
 import { SettingsLayout } from "../../layouts/settings/SettingsLayout";

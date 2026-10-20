@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "declaration": true,
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["src"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/test",
+    "src/app/pages/runs/replay/recordingParitySuite.ts"
+  ]
+}

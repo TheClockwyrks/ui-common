@@ -1,4 +1,4 @@
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../../index";
 import type {
   ReferenceSheet,
   TestCaseDetail,

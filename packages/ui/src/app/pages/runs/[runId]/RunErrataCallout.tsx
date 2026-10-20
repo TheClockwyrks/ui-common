@@ -1,4 +1,4 @@
-import { Markdown, Panel } from "@clockwyrks/ui";
+import { Markdown, Panel } from "../../../../index";
 import type { ErratumSeverity } from "../../../data/testCases";
 import { useTestCase } from "../../../data/useTestCase";
 import styles from "./RunErrataCallout.module.scss";

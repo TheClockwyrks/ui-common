@@ -10,7 +10,7 @@ import {
   RatingsChartWidget,
   type ChartSort,
   type RatingCounts,
-} from "@clockwyrks/ui";
+} from "../../../../index";
 import {
   AnchoredScopeControls,
   useAnchoredScope,

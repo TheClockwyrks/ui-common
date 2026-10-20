@@ -4,7 +4,7 @@ import type {
 } from "@clockwyrks/backend-api/tournament";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../../index";
 import { Button, Select } from "../../../../primitives";
 import { useGalleryData, type ArenaApi } from "../../../data/galleryContext";
 import { useControllerName } from "../../../data/useControllerName";

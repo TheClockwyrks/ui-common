@@ -5,7 +5,7 @@ import {
   GradeBadge,
   RatingBadge,
   canonicalModelId,
-} from "@clockwyrks/ui";
+} from "../../index";
 import type { MyReview } from "../../client/types";
 import { overallGradeOf, reviewAesthetic, worstRating } from "../data/ratings";
 import { useFindModel } from "../data/useModels";

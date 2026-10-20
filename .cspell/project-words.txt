@@ -6,8 +6,10 @@ clippy
 Clockwyrks
 devcontainer
 doctests
+drei
 frontmatter
 genyume
+gifenc
 gitrun
 markdownlint
 nextest

@@ -13,7 +13,7 @@ import {
   GradeBadge,
   RatingBadge,
   canonicalModelId,
-} from "@clockwyrks/ui";
+} from "../../../index";
 import { UnpublishedTag } from "../../components/UnpublishedTag";
 import { RunDeleteControl } from "../../components/RunDeleteControl";
 import { useGalleryData, type RunDetail } from "../../data/galleryContext";

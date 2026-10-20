@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../../index";
 import { Select } from "../../../../primitives";
 import type { RunRecord } from "@clockwyrks/run-record";
 import {

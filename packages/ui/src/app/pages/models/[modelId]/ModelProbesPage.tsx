@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
-import { SegmentedControl, Spinner, StatusGlyph } from "@clockwyrks/ui";
+import { SegmentedControl, Spinner, StatusGlyph } from "../../../../index";
 import type {
   ModelProbe,
   ModelProbeDetail,

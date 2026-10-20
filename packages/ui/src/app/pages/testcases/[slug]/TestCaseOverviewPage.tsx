@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Markdown, Panel } from "@clockwyrks/ui";
+import { Markdown, Panel } from "../../../../index";
 import { MediaView } from "../../../components/MediaView";
 import {
   ReferenceBuildList,

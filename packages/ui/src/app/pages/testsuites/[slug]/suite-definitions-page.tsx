@@ -4,11 +4,11 @@ import { Link } from "react-router";
 
 import styles from "./suite-detail-pages.module.scss";
 import { SuiteRequirementList } from "./suite-requirement-list";
+import { Panel } from "../../../../index";
 import { engineName } from "../../../data/engines";
 import { useGalleryData } from "../../../data/galleryContext";
 import { SuiteDetailLayout } from "../../../layouts/testsuites/suite-detail-layout";
 import { routes } from "../../../routes";
-import { Panel } from "@clockwyrks/ui";
 
 // The Test cases tab (`/test-cases/suites/:suiteSlug/definitions`): the
 // definitions the anchored version offers — the individually runnable segments of

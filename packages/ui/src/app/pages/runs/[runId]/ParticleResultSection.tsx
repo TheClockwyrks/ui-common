@@ -3,7 +3,7 @@ import {
   SegmentedControl,
   Spinner,
   type SegmentedOption,
-} from "@clockwyrks/ui";
+} from "../../../../index";
 import {
   fetchParticleSystem,
   useParticleSystem,

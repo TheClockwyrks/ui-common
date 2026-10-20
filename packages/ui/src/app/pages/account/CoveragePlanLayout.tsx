@@ -15,7 +15,7 @@ import {
   useState,
 } from "react";
 import { Link, NavLink, Outlet, useLocation, useParams } from "react-router";
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../index";
 import { LoadingState } from "../../components/LoadingState";
 import { PageLayout } from "../../components/PageLayout";
 import { BackChevron } from "../../components/BackChevron";

@@ -1,5 +1,5 @@
 import type { RunRecord, RunShowcase } from "@clockwyrks/run-record";
-import { Markdown, Panel } from "@clockwyrks/ui";
+import { Markdown, Panel } from "../../../../index";
 import { ShowcaseCarousel } from "../../../components/showcase-carousel";
 import { useGalleryData } from "../../../data/galleryContext";
 import { PlayableSection } from "../PlayableSection";

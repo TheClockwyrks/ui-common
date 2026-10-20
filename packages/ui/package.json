@@ -10,15 +10,34 @@
     "directory": "packages/ui"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./tokens.css": "./src/styles/tokens.css",
-    "./client": "./src/client/index.ts",
-    "./app": "./src/app/index.ts",
-    "./routes": "./src/app/routes.ts",
-    "./transport": "./src/transport/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./app": {
+      "types": "./dist/app/index.d.ts",
+      "default": "./dist/app/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
+    },
+    "./routes": {
+      "types": "./dist/app/routes.d.ts",
+      "default": "./dist/app/routes.js"
+    },
+    "./transport": {
+      "types": "./dist/transport/index.d.ts",
+      "default": "./dist/transport/index.js"
+    },
+    "./tokens.css": "./dist/styles/tokens.css",
+    "./package.json": "./package.json"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "node scripts/copy-assets.mjs --clean && tsc -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -52,7 +71,8 @@
   },
   "peerDependencies": {
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "sass": "^1"
   },
   "devDependencies": {
     "@clockwyrks/simple-2d": "1.1.1",

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { FailureCapBadge, type FailureCapOutcome } from "@clockwyrks/ui";
+import { FailureCapBadge, type FailureCapOutcome } from "../../../../index";
 import {
   GRADE_META,
   GRADE_MAX_POINTS,

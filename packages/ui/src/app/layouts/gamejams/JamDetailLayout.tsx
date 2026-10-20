@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, NavLink, useLocation, useParams } from "react-router";
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../index";
 import { Select } from "../../../primitives";
 import { PageLayout } from "../../components/PageLayout";
 import { LoadingState } from "../../components/LoadingState";

@@ -4,7 +4,7 @@ import {
   Avatar,
   GradeBadge,
   RatingBadge,
-} from "@clockwyrks/ui";
+} from "../../../../index";
 import {
   formatPoints,
   overallGradeOf,

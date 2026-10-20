@@ -1,4 +1,4 @@
-import { Markdown } from "@clockwyrks/ui";
+import { Markdown } from "../../index";
 import type {
   SeededInput,
   VariantSummary,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pagination } from "@clockwyrks/ui";
+import { Pagination } from "../../../index";
 import type { MyReview } from "../../../client/types";
 import { useBackend } from "../../../client/context";
 import { PageLayout } from "../../components/PageLayout";
