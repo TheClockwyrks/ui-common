@@ -14,7 +14,7 @@ import {
   timeSeriesChart,
   type StackedSeries,
   type TimeSeriesPoint,
-} from "@clockwyrks/ui";
+} from "../../../index";
 import { CabinetIcon } from "../../components/CabinetIcon";
 import { LoadingState } from "../../components/LoadingState";
 import { PageLayout } from "../../components/PageLayout";

@@ -1,4 +1,4 @@
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../index";
 import {
   AESTHETIC_META,
   AESTHETIC_RATINGS,

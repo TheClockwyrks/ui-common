@@ -1,7 +1,7 @@
 import type { Comparison } from "@clockwyrks/backend-api/comparison";
 import { useCallback, useState } from "react";
 import { Link } from "react-router";
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../index";
 import { useOptionalBackend } from "../../../client/context";
 import { LoadingState } from "../../components/LoadingState";
 import { SubmitNotice } from "../../components/SubmitNotice";

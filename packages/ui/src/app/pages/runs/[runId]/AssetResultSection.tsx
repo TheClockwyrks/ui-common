@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../../index";
 import type { AssetSheet, RunRecord } from "@clockwyrks/run-record";
 import {
   useGalleryData,

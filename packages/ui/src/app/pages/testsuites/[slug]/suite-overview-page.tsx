@@ -1,11 +1,11 @@
 import styles from "./suite-detail-pages.module.scss";
+import { Markdown, Panel } from "../../../../index";
 import { ShowcaseCarousel } from "../../../components/showcase-carousel";
 import type { ShowcaseCarouselEntry } from "../../../components/showcase-carousel";
 import { useGalleryData } from "../../../data/galleryContext";
 import { showcaseMediaKind } from "../../../data/showcase-media-kind";
 import { SuiteDetailLayout } from "../../../layouts/testsuites/suite-detail-layout";
 import type { SuiteTabContext } from "../../../layouts/testsuites/suite-detail-layout";
-import { Markdown, Panel } from "@clockwyrks/ui";
 
 // The suite's landing tab (`/test-cases/suites/:suiteSlug`): the showcase, which
 // is how a reader is told what the project IS before being told what it declares.

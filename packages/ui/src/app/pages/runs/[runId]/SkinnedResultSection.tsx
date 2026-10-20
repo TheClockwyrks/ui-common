@@ -6,7 +6,7 @@ import type {
   ModelSpec,
 } from "@clockwyrks/run-record";
 import type { SkinnedMesh } from "@clockwyrks/voxel-runtime";
-import { SegmentedControl, type SegmentedOption } from "@clockwyrks/ui";
+import { SegmentedControl, type SegmentedOption } from "../../../../index";
 import {
   fetchSkinnedMesh,
   useSkinnedMesh,

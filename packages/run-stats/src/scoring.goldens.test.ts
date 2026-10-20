@@ -1,18 +1,19 @@
 // The shared scoring goldens, executed against the TypeScript mirror.
 //
-// Every file under `contracts/crates/contracts/fixtures/scoring/` holds the cases one function
-// pair must agree on: a Rust function (crates/backend/src/review.rs,
-// crates/backend/src/comparison.rs or contracts/crates/contracts/src/test_case.rs) and its mirror
-// in `./scoring`. The files are read **directly off the crate**, never copied into this
-// package, so a case added on either side is executed by both suites; the Rust half is
-// `crates/backend/src/review.goldens.test.rs`, and the expectations are its output.
+// Every file under the contracts crate's `fixtures/scoring/` holds the cases one function
+// pair must agree on: a Rust function (the backend's review.rs or comparison.rs, or the
+// contracts crate's test_case.rs) and its mirror in `./scoring`. The files are read
+// **directly off the crate**, at the version this repository pins (see
+// scripts/contracts-fixtures.ts), never copied into this package, so a case added on
+// either side is executed by both suites; the Rust half is the backend's
+// `review.goldens.test.rs`, and the expectations are its output. A missing directory
+// fails the suite rather than skipping it.
 //
 // The two halves agree on strictness. The Rust structs are `deny_unknown_fields`, and
 // this file rejects unknown keys for the same reason: a misspelled key would fall back
 // to its default and leave a case asserting less than it reads as asserting.
 import { readdirSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { DebugScriptResult } from "@clockwyrks/run-record";
 import type {
@@ -40,13 +41,10 @@ import {
   type Score,
   type WeightedItem,
 } from "./scoring";
+import { contractsFixture } from "../../../scripts/contracts-fixtures";
 
-/** The golden files' directory, resolved from this file rather than from the working
- *  directory so the suite behaves the same run from the package and from the root. */
-const GOLDENS = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "../../../contracts/crates/contracts/fixtures/scoring",
-);
+/** The golden files' directory, off the contracts crate at the pinned version. */
+const GOLDENS = contractsFixture("scoring");
 
 type Json = Record<string, unknown>;
 

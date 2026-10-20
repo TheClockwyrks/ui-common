@@ -12,7 +12,7 @@ import type {
   GgGroupKey,
   GgRunDoc,
 } from "@clockwyrks/run-record/gg-query";
-import { CATEGORICAL_COLORS } from "@clockwyrks/ui";
+import { CATEGORICAL_COLORS } from "../../../../index";
 import { compileQuery, evaluate, parseQuery } from "../query";
 import { MAX_BARS, MAX_SERIES, chooseVisualizations } from "./viz";
 

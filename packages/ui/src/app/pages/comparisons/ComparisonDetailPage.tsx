@@ -6,7 +6,7 @@ import {
   SectionWidget,
   distributionChart,
   stackedBarChart,
-} from "@clockwyrks/ui";
+} from "../../../index";
 import type { ComparisonPublishOutcome } from "../../../client/clients";
 import {
   useOptionalBackend,

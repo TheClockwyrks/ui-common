@@ -22,7 +22,7 @@
 // on every other run the table is exactly what it was.
 
 import { useMemo, useState } from "react";
-import { Treemap, type TreemapTile } from "@clockwyrks/ui";
+import { Treemap, type TreemapTile } from "../../../../index";
 import type { CoverageFile, ToolchainCoverage } from "@clockwyrks/run-record";
 import type {
   CodeAnalysisDocument,

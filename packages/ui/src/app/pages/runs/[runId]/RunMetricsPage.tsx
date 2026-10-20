@@ -1,4 +1,4 @@
-import { MetricTile } from "@clockwyrks/ui";
+import { MetricTile } from "../../../../index";
 import {
   formatRunTime,
   formatStageDuration,

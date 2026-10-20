@@ -1,4 +1,4 @@
-import { Panel, SpecAccordion, type AccordionEntry } from "@clockwyrks/ui";
+import { Panel, SpecAccordion, type AccordionEntry } from "../../../../index";
 import type { RunRecord } from "@clockwyrks/run-record";
 import { MediaView } from "../../../components/MediaView";
 import { useGalleryData } from "../../../data/galleryContext";

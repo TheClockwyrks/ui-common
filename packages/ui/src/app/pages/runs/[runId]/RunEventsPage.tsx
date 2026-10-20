@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ProgressBar, SegmentedControl, Spinner } from "@clockwyrks/ui";
+import { ProgressBar, SegmentedControl, Spinner } from "../../../../index";
 import { EventFeed } from "../../../components/EventFeed";
 import { RawOutputLog } from "../../../components/RawOutputLog";
 import { RunDetailLayout } from "../../../layouts/runs/RunDetailLayout";

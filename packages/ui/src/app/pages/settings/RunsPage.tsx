@@ -3,7 +3,7 @@ import type {
   InFlightLimit,
 } from "@clockwyrks/backend-api/coverage";
 import { useCallback, useEffect, useState } from "react";
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../index";
 import { Switch } from "../../components/Switch";
 import {
   IN_FLIGHT_LIMIT_CEILING,

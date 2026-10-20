@@ -4,7 +4,7 @@ import type {
 } from "@clockwyrks/backend-api/coverage";
 import type { RunSummary } from "@clockwyrks/backend-api/snapshot";
 import { useEffect, useMemo, useState } from "react";
-import type { RatingCounts } from "@clockwyrks/ui";
+import type { RatingCounts } from "../../../index";
 import { RATINGS, type Rating } from "../../data/ratings";
 import { countsAsModelResult } from "../../data/runState";
 import { useBackend } from "../../../client/context";

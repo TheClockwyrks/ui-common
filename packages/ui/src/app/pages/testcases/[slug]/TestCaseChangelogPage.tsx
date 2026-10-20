@@ -1,4 +1,4 @@
-import { Markdown } from "@clockwyrks/ui";
+import { Markdown } from "../../../../index";
 import { InputBrowser } from "../../../components/InputBrowser";
 import type { TestCaseDetail } from "../../../data/testCases";
 import { TestCaseDetailLayout } from "../../../layouts/testcases/TestCaseDetailLayout";

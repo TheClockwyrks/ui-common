@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ProgressBar, Spinner } from "@clockwyrks/ui";
+import { ProgressBar, Spinner } from "../../../../index";
 import type { RunRecord } from "@clockwyrks/run-record";
 import { RunDetailLayout } from "../../../layouts/runs/RunDetailLayout";
 import { useRunEvents } from "../../../data/useRunEvents";

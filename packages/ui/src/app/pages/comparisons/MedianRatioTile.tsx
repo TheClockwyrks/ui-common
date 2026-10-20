@@ -1,4 +1,4 @@
-import { SectionWidget } from "@clockwyrks/ui";
+import { SectionWidget } from "../../../index";
 import type { ArmMetric, PresentedRatio } from "./comparisonMath";
 import styles from "./Comparisons.module.scss";
 

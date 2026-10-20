@@ -6,7 +6,7 @@ import {
   Spinner,
   type DonutSegment,
   type ReliabilitySegment,
-} from "@clockwyrks/ui";
+} from "../../../../index";
 import { rollupRuns } from "@clockwyrks/run-stats/rollup";
 import type {
   ModelCandidates,

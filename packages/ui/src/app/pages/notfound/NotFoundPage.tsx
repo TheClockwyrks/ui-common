@@ -1,4 +1,4 @@
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../index";
 import { Link, useLocation } from "react-router";
 import { PageLayout } from "../../components/PageLayout";
 import { useGalleryData } from "../../data/galleryContext";

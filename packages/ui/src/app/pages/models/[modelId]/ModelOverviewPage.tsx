@@ -7,7 +7,7 @@ import {
   ReliabilityRingWidget,
   type DonutSegment,
   type ReliabilitySegment,
-} from "@clockwyrks/ui";
+} from "../../../../index";
 import { rollupRuns } from "@clockwyrks/run-stats/rollup";
 import { LoadingState } from "../../../components/LoadingState";
 import {

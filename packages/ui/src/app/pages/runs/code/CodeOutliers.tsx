@@ -10,7 +10,7 @@
 // its side, the label reads at full length and the eye runs down a list, which is what a
 // ranking is. One hue, because length already carries the magnitude.
 
-import { Chart, horizontalBarChart } from "@clockwyrks/ui";
+import { Chart, horizontalBarChart } from "../../../../index";
 import type { CodeAnalysisDocument } from "@clockwyrks/run-record/code-analysis";
 import { formatCodeNumber } from "./codeFormat";
 import styles from "./CodePanels.module.scss";

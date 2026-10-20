@@ -33,7 +33,7 @@ import {
   stackedBarChart,
   timeSeriesChart,
   type ChartPalette,
-} from "@clockwyrks/ui";
+} from "../../../../index";
 import { chooseVisualizations, type GgViz, type GgVizNote } from "./viz";
 import styles from "./GgDiscover.module.scss";
 

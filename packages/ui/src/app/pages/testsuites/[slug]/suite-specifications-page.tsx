@@ -1,8 +1,8 @@
 import styles from "./suite-detail-pages.module.scss";
 import { SuiteRequirementList } from "./suite-requirement-list";
+import { Markdown, SpecAccordion } from "../../../../index";
+import type { AccordionEntry } from "../../../../index";
 import { SuiteDetailLayout } from "../../../layouts/testsuites/suite-detail-layout";
-import { Markdown, SpecAccordion } from "@clockwyrks/ui";
-import type { AccordionEntry } from "@clockwyrks/ui";
 
 // The Specifications tab (`/test-cases/suites/:suiteSlug/specifications`): every
 // specification the anchored version declares, in the order the version folder

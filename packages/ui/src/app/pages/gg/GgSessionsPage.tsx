@@ -1,6 +1,6 @@
 import type { RunSummary } from "@clockwyrks/backend-api/snapshot";
 import { useEffect, useMemo, useState } from "react";
-import { Pagination } from "@clockwyrks/ui";
+import { Pagination } from "../../../index";
 import { LoadingState } from "../../components/LoadingState";
 import { PageLayout } from "../../components/PageLayout";
 import { PromptHeader } from "../../components/PromptHeader";

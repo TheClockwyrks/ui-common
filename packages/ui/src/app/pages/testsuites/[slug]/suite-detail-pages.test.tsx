@@ -224,7 +224,7 @@ describe("the suite landing tab", () => {
     // The version selector shows the anchored version, and each tab link carries
     // the query string that anchors it.
     const selector = screen.getByRole("combobox");
-    expect(selector.value).toBe("v1.0.0");
+    expect(selector).toHaveValue("v1.0.0");
     const assets = screen.getByRole("link", { name: "Assets" });
     expect(assets).toHaveAttribute(
       "href",

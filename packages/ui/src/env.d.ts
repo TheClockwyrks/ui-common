@@ -31,3 +31,10 @@ declare module "*?url" {
   const src: string;
   export default src;
 }
+
+// Vite `?worker` imports construct the module as a Web Worker (the Lattice
+// playback engine runs in one).
+declare module "*?worker" {
+  const WorkerConstructor: new (options?: { name?: string }) => Worker;
+  export default WorkerConstructor;
+}

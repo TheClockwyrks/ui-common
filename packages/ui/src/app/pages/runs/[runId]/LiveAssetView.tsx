@@ -1,5 +1,5 @@
 import { Suspense, lazy, useMemo, useState } from "react";
-import { Panel } from "@clockwyrks/ui";
+import { Panel } from "../../../../index";
 import type {
   AnimationSpec,
   AssetSheet,

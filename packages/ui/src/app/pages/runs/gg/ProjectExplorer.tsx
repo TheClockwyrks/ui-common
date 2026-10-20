@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Markdown } from "@clockwyrks/ui";
+import { Markdown } from "../../../../index";
 import type { GgBoardIssue, GgReviewer } from "@clockwyrks/run-record/gg";
 import type {
   BoardState,

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { MetricTile, Panel } from "@clockwyrks/ui";
+import { MetricTile, Panel } from "../../../../index";
 import type {
   PerformanceCaseResult,
   PerformanceResult,

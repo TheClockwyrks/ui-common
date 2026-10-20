@@ -52,8 +52,8 @@ import type {
   StackedBarSegment,
   StackedSeries,
   TimeSeriesPoint,
-} from "@clockwyrks/ui";
-import { CATEGORICAL_COLORS, categoricalColor } from "@clockwyrks/ui";
+} from "../../../../index";
+import { CATEGORICAL_COLORS, categoricalColor } from "../../../../index";
 import { compareCodePoints } from "../query";
 import {
   ABSENT,

@@ -5,7 +5,7 @@ import type {
 } from "@clockwyrks/backend-api/ladders";
 import type { RunSummary } from "@clockwyrks/backend-api/snapshot";
 import { useEffect, useMemo, useState } from "react";
-import { canonicalModelId } from "@clockwyrks/ui";
+import { canonicalModelId } from "../../../index";
 import { LoadingState } from "../../components/LoadingState";
 import { RunLog, useRunTable } from "../../components/RunLog";
 import { claimSectionReturn } from "../../components/backReturn";

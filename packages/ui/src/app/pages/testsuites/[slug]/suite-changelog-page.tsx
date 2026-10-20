@@ -1,6 +1,6 @@
 import styles from "./suite-detail-pages.module.scss";
+import { Markdown, Panel } from "../../../../index";
 import { SuiteDetailLayout } from "../../../layouts/testsuites/suite-detail-layout";
-import { Markdown, Panel } from "@clockwyrks/ui";
 
 // The Changelog tab (`/test-cases/suites/:suiteSlug/changelog`): the anchored
 // version's `changelog.md`, rendered as Markdown.

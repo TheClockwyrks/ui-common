@@ -1,10 +1,10 @@
 import styles from "./suite-detail-pages.module.scss";
+import { Panel } from "../../../../index";
 import { MediaView } from "../../../components/MediaView";
 import { useGalleryData } from "../../../data/galleryContext";
 import { showcaseMediaKind } from "../../../data/showcase-media-kind";
 import { SuiteDetailLayout } from "../../../layouts/testsuites/suite-detail-layout";
 import type { SuiteTabContext } from "../../../layouts/testsuites/suite-detail-layout";
-import { Panel } from "@clockwyrks/ui";
 
 // The Assets tab (`/test-cases/suites/:suiteSlug/assets`): the finished asset set
 // the anchored version bundles — what an end-to-end run is seeded with, and what

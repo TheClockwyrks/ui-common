@@ -6,7 +6,7 @@ import type {
 } from "@clockwyrks/backend-api/coverage";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { SegmentedControl, type SegmentedOption } from "@clockwyrks/ui";
+import { SegmentedControl, type SegmentedOption } from "../../../index";
 import { LoadingState } from "../../components/LoadingState";
 import { useBackend } from "../../../client/context";
 import type { Model } from "../../../client/types";

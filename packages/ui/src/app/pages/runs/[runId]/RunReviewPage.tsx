@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router";
 import type { RunRecord } from "@clockwyrks/run-record";
 import type { StoredReview } from "../../../../client/types";
-import { Markdown, Panel } from "@clockwyrks/ui";
+import { Markdown, Panel } from "../../../../index";
 import { useIdentity } from "../../../../client/identity";
 import { useGalleryData } from "../../../data/galleryContext";
 import { useReviewModel } from "../../../data/useRunVariant";

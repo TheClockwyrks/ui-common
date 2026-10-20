@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MetricTile, Panel, Spinner } from "@clockwyrks/ui";
+import { MetricTile, Panel, Spinner } from "../../../../index";
 import type { RunRecord } from "@clockwyrks/run-record";
 import type { CodeAnalysisDocument } from "@clockwyrks/run-record/code-analysis";
 import { HelpTip } from "../../../components/HelpTip";

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Pagination, Panel } from "@clockwyrks/ui";
+import { Pagination, Panel } from "../../../index";
 import type { UnreadableRun } from "../../../client/types";
 import { PageLayout } from "../../components/PageLayout";
 import { PromptHeader } from "../../components/PromptHeader";

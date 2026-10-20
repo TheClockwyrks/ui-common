@@ -1,10 +1,14 @@
 {
   "name": "@clockwyrks/run-stats",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "license": "MIT",
   "type": "module",
   "description": "Framework-free run scoring and set-level rollups: the rules every surface that reports a Test Cabinet figure shares.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheClockwyrks/ui-common.git",
+    "directory": "packages/run-stats"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -30,11 +34,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@clockwyrks/backend-api": "*",
-    "@clockwyrks/run-record": "*"
+    "@clockwyrks/backend-api": "0.2.2",
+    "@clockwyrks/run-record": "0.2.2"
   },
   "devDependencies": {
     "typescript": "^6",
     "vitest": "^5"
+  },
+  "publishConfig": {
+    "registry": "https://pkgs.dev.azure.com/genyume/the-test-cabinet/_packaging/the-test-cabinet/npm/registry/"
   }
 }

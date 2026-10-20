@@ -1,6 +1,6 @@
 import styles from "./suite-detail-pages.module.scss";
+import { Panel } from "../../../../index";
 import { SuiteDetailLayout } from "../../../layouts/testsuites/suite-detail-layout";
-import { Panel } from "@clockwyrks/ui";
 
 // The Demonstrations tab (`/test-cases/suites/:suiteSlug/demonstrations`): the
 // short, self-contained builds the anchored version ships, each showing one

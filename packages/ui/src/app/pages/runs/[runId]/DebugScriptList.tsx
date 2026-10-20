@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { StatusGlyph } from "@clockwyrks/ui";
+import { StatusGlyph } from "../../../../index";
 import type { DebugScriptResult } from "@clockwyrks/run-record";
 
 import styles from "./RunDetailPages.module.scss";

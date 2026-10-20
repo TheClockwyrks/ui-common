@@ -1,8 +1,9 @@
 // The **shared conformance suite** — the TypeScript half of the mirrored evaluator's
 // only defence.
 //
-// It reads `contracts/crates/contracts/fixtures/gg_query.conformance.json` **directly off the
-// crate**, not a copy vendored into this package. A copy would be worse than no fixture
+// It reads the contracts crate's `fixtures/gg_query.conformance.json` **directly off the
+// crate**, at the version this repository pins (see scripts/contracts-fixtures.ts), not a
+// copy vendored into this package, and fails rather than skips when it is missing. A copy would be worse than no fixture
 // at all: it would drift silently, keep passing, and still look like protection. Reading
 // the one file means a case added on either side is executed by both suites or neither,
 // and the Rust suite (`crates/backend/src/gg_query.test.rs`) asserts the same expectations
@@ -13,9 +14,7 @@
 // case to a bare count check and leave the suite green. This file rejects unknown keys
 // for the same reason.
 import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+
 import type {
   GgAggColumn,
   GgBucket,
@@ -23,7 +22,10 @@ import type {
   GgQuery,
   GgRunDoc,
 } from "@clockwyrks/run-record/gg-query";
+import { describe, expect, it } from "vitest";
+
 import { evaluate, fieldCatalog } from "./evaluate";
+import { contractsFixture } from "../../../../../../../scripts/contracts-fixtures";
 
 /** One case: a query and what it must produce. */
 interface ConformanceCase {
@@ -53,12 +55,8 @@ interface Conformance {
   cases: ConformanceCase[];
 }
 
-/** The fixture's path, resolved from this file rather than from the working directory so
- *  the suite behaves the same run from `packages/ui` and from the repo root. */
-const FIXTURE = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "../../../../../../../contracts/crates/contracts/fixtures/gg_query.conformance.json",
-);
+/** The fixture's path, off the contracts crate at the pinned version. */
+const FIXTURE = contractsFixture("gg_query.conformance.json");
 
 const fixture = JSON.parse(readFileSync(FIXTURE, "utf8")) as Conformance;
 

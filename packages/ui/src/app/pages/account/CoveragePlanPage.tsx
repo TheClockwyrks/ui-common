@@ -1,4 +1,4 @@
-import { MetricTile, Panel } from "@clockwyrks/ui";
+import { MetricTile, Panel } from "../../../index";
 import { useTestCaseName } from "../../data/useTestCaseName";
 import { useBackend } from "../../../client/context";
 import { axisLabel } from "./coveragePickers";

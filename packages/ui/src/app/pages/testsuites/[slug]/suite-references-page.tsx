@@ -1,7 +1,7 @@
 import styles from "./suite-detail-pages.module.scss";
+import { Panel } from "../../../../index";
 import { ReferenceBuildList } from "../../../components/PlayableEmbed";
 import { SuiteDetailLayout } from "../../../layouts/testsuites/suite-detail-layout";
-import { Panel } from "@clockwyrks/ui";
 
 // The Reference implementations tab
 // (`/test-cases/suites/:suiteSlug/reference-implementations`): the engines the

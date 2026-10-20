@@ -14,7 +14,7 @@
 // verdict and no point, exactly as the toolchain contract says.
 
 import { useState } from "react";
-import { MetricTile } from "@clockwyrks/ui";
+import { MetricTile } from "../../../../index";
 import type {
   ToolchainTest,
   ToolchainTests as ToolchainTestsRecord,

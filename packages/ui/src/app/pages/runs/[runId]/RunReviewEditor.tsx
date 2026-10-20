@@ -6,7 +6,7 @@ import {
   GradeBadge,
   Panel,
   RatingBadge,
-} from "@clockwyrks/ui";
+} from "../../../../index";
 import { useBackend, useWorkers } from "../../../../client/context";
 import { useIdentity } from "../../../../client/identity";
 import type {

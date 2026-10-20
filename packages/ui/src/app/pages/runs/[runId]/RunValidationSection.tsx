@@ -1,4 +1,4 @@
-import { Panel, StatusGlyph } from "@clockwyrks/ui";
+import { Panel, StatusGlyph } from "../../../../index";
 import type { RunRecord, StepResult } from "@clockwyrks/run-record";
 import { DebugScriptList } from "./DebugScriptList";
 import styles from "./RunDetailPages.module.scss";

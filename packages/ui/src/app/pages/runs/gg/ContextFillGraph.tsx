@@ -24,7 +24,7 @@ import {
   type StackedAreaMarker,
   type StackedAreaPoint,
   type StackedSeries,
-} from "@clockwyrks/ui";
+} from "../../../../index";
 import type {
   GgCapabilitySet,
   GgContextSource,

@@ -6,7 +6,7 @@ import type {
   ModelSpec,
 } from "@clockwyrks/run-record";
 import type { PartMesh } from "@clockwyrks/voxel-runtime";
-import { SegmentedControl, type SegmentedOption } from "@clockwyrks/ui";
+import { SegmentedControl, type SegmentedOption } from "../../../../index";
 import {
   fetchMeshesByPart,
   useVoxelArtifacts,

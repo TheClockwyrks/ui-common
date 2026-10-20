@@ -6,7 +6,7 @@ import {
   GradeBadge,
   RatingBadge,
   canonicalModelId,
-} from "@clockwyrks/ui";
+} from "../../index";
 import type { InProgressRun } from "../../client/types";
 import { resolveEngineSlug } from "../data/engines";
 import {

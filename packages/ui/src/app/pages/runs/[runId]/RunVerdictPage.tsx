@@ -1,4 +1,4 @@
-import { GradeBadge, Markdown, Panel, RatingBadge } from "@clockwyrks/ui";
+import { GradeBadge, Markdown, Panel, RatingBadge } from "../../../../index";
 import {
   RATING_META,
   formatPoints,

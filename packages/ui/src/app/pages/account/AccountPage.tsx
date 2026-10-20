@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { DonutChartWidget, Panel } from "@clockwyrks/ui";
-import type { DonutSegment } from "@clockwyrks/ui";
+import { DonutChartWidget, Panel } from "../../../index";
+import type { DonutSegment } from "../../../index";
 import type { ReviewStatSlice, ReviewStats } from "../../../client/types";
 import { RATING_META } from "../../../ratings";
 import { PageLayout } from "../../components/PageLayout";
