@@ -1,0 +1,7 @@
+# The kit this repository was rendered from, written by the superrepo's
+# scripts/repos/render.py from the answers in .copier-answers.yml. `name`
+# decides the dependency edges the dependency-edges gate permits, and `kind`
+# the shape the kit gave the repository.
+name = "ui-common"
+kind = "library"
+description = "The shared frontend library and the framework-free scoring rules every Test Cabinet GUI renders with."

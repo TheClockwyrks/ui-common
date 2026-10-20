@@ -1,0 +1,15 @@
+[package]
+name = "test-cabinet-ui-common"
+description = "The shared frontend library and the framework-free scoring rules every Test Cabinet GUI renders with."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Take a crate of another repository up with `<crate> = { workspace = true }`;
+# the root manifest offers the ones the dependency edges permit.
