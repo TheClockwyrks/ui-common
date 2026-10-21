@@ -68,7 +68,9 @@ export function SegmentedControl<T extends string>({
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     if (el.firstElementChild) observer.observe(el.firstElementChild);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [measure]);
   // Bring the selected segment into view whenever the selection moves, whether the
   // reader chose it or the host did. Only the track scrolls; the page never does.
@@ -113,7 +115,9 @@ export function SegmentedControl<T extends string>({
             aria-checked={option.value === value}
             className={styles.segment}
             disabled={disabled}
-            onClick={() => onChange(option.value)}
+            onClick={() => {
+              onChange(option.value);
+            }}
           >
             {option.label}
           </button>

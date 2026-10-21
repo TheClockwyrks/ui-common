@@ -102,17 +102,23 @@ describe("useAnchoredScope", () => {
     const { result } = renderScope({ version: ANCHOR, versions: VERSIONS });
     expect(result.current.scope.versionsInScope).toEqual(["v2.1.1", "v2.1.0"]);
 
-    act(() => result.current.scope.setVersionScope("version"));
+    act(() => {
+      result.current.scope.setVersionScope("version");
+    });
     expect(result.current.scope.versionsInScope).toEqual(["v2.1.0"]);
 
-    act(() => result.current.scope.setVersionScope("major"));
+    act(() => {
+      result.current.scope.setVersionScope("major");
+    });
     expect(result.current.scope.versionsInScope).toEqual([
       "v2.1.1",
       "v2.1.0",
       "v2.0.0",
     ]);
 
-    act(() => result.current.scope.setVersionScope("all"));
+    act(() => {
+      result.current.scope.setVersionScope("all");
+    });
     expect(result.current.scope.versionsInScope).toBeNull();
   });
 
@@ -162,20 +168,32 @@ describe("useAnchoredScope", () => {
       engines: ENGINES,
     });
 
-    act(() => result.current.scope.setVersionScope("version"));
+    act(() => {
+      result.current.scope.setVersionScope("version");
+    });
     expect(result.current.search).toBe("?scope=version");
 
-    act(() => result.current.scope.setVersionScope("minor"));
+    act(() => {
+      result.current.scope.setVersionScope("minor");
+    });
     expect(result.current.search).toBe("");
 
-    act(() => result.current.scope.setEngineScope("all"));
+    act(() => {
+      result.current.scope.setEngineScope("all");
+    });
     expect(result.current.search).toBe("?engines=all");
 
-    act(() => result.current.scope.setVariantScope("all"));
+    act(() => {
+      result.current.scope.setVariantScope("all");
+    });
     expect(result.current.search).toBe("?engines=all&variants=all");
 
-    act(() => result.current.scope.setEngineScope("anchor"));
-    act(() => result.current.scope.setVariantScope("anchor"));
+    act(() => {
+      result.current.scope.setEngineScope("anchor");
+    });
+    act(() => {
+      result.current.scope.setVariantScope("anchor");
+    });
     expect(result.current.search).toBe("");
   });
 
@@ -193,12 +211,12 @@ describe("useAnchoredScope", () => {
       "structured-2d",
     ]);
 
-    const single = renderScope({
+    const { result: single } = renderScope({
       version: ANCHOR,
       versions: VERSIONS,
       engines: ["none"],
     });
-    expect(single.result.current.scope.engines).toEqual([]);
+    expect(single.current.scope.engines).toEqual([]);
   });
 
   // Picking a named engine re-anchors the page and narrows a widened scope in
@@ -210,17 +228,23 @@ describe("useAnchoredScope", () => {
       "/?scope=all&engines=all",
     );
 
-    act(() => result.current.scope.anchorEngine("simple-2d"));
+    act(() => {
+      result.current.scope.anchorEngine("simple-2d");
+    });
     expect(result.current.search).toBe("?scope=all&engine=simple-2d");
     expect(result.current.scope.engineScope).toBe("anchor");
 
-    act(() => result.current.scope.setEngineScope("all"));
+    act(() => {
+      result.current.scope.setEngineScope("all");
+    });
     expect(result.current.search).toBe(
       "?scope=all&engine=simple-2d&engines=all",
     );
 
     // The engineless rendering is this version's default, so it is elided.
-    act(() => result.current.scope.anchorEngine("none"));
+    act(() => {
+      result.current.scope.anchorEngine("none");
+    });
     expect(result.current.search).toBe("?scope=all");
   });
 
@@ -235,11 +259,15 @@ describe("useAnchoredScope", () => {
     expect(result.current.scope.versionScope).toBe("version");
     expect(result.current.scope.versionsInScope).toEqual(["draft"]);
 
-    act(() => result.current.scope.setVersionScope("all"));
+    act(() => {
+      result.current.scope.setVersionScope("all");
+    });
     expect(result.current.search).toBe("?scope=all");
 
     // `version` IS the default for an unparsable anchor, so it is elided.
-    act(() => result.current.scope.setVersionScope("version"));
+    act(() => {
+      result.current.scope.setVersionScope("version");
+    });
     expect(result.current.search).toBe("");
   });
 });
@@ -285,7 +313,7 @@ describe("AnchoredScopeControls", () => {
   // single-variant case.
   it("renders nothing when there is no choice to offer", () => {
     renderControls({ anchor: { version: "v1.0.0", versions: ["v1.0.0"] } });
-    expect(screen.queryByRole("radiogroup")).toBeNull();
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
   });
 
   // The segments name concrete cohorts of the anchor rather than abstract ones,
@@ -297,10 +325,7 @@ describe("AnchoredScopeControls", () => {
     expect(
       screen.getAllByRole("radio").map((radio) => radio.textContent),
     ).toEqual(["v2.1.0", "v2.1.x", "v2.x", "All versions"]);
-    expect(screen.getByRole("radio", { name: "v2.1.x" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.getByRole("radio", { name: "v2.1.x" })).toBeChecked();
   });
 
   it("offers only the anchor and `all` segments for an unparsable anchor", () => {
@@ -328,10 +353,7 @@ describe("AnchoredScopeControls", () => {
         .getAllByRole("radio")
         .map((radio) => radio.textContent),
     ).toEqual(["None", "Simple 2D", "Structured 2D", "All engines"]);
-    expect(screen.getByRole("radio", { name: "Simple 2D" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.getByRole("radio", { name: "Simple 2D" })).toBeChecked();
   });
 
   // Picking another engine re-anchors the page to it; from the widened scope it
@@ -341,25 +363,17 @@ describe("AnchoredScopeControls", () => {
       anchor: { version: ANCHOR, versions: VERSIONS, engines: ENGINES },
       byEngine: true,
     });
-    expect(screen.getByRole("radio", { name: "None" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.getByRole("radio", { name: "None" })).toBeChecked();
 
     fireEvent.click(screen.getByRole("radio", { name: "All engines" }));
     expect(screen.getByTestId("search")).toHaveTextContent("?engines=all");
-    expect(screen.getByRole("radio", { name: "All engines" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.getByRole("radio", { name: "All engines" })).toBeChecked();
 
     fireEvent.click(screen.getByRole("radio", { name: "Structured 2D" }));
     expect(screen.getByTestId("search")).toHaveTextContent(
       "?engine=structured-2d",
     );
-    expect(
-      screen.getByRole("radio", { name: "Structured 2D" }),
-    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Structured 2D" })).toBeChecked();
   });
 
   // A version with a single engine has nothing to pick or widen into.
@@ -370,7 +384,7 @@ describe("AnchoredScopeControls", () => {
     });
     expect(
       screen.queryByRole("radiogroup", { name: "Engine scope" }),
-    ).toBeNull();
+    ).not.toBeInTheDocument();
   });
 
   // The wideners write their widening to the URL.
@@ -400,9 +414,9 @@ describe("AnchoredScopeControls", () => {
     renderControls({ anchor: { version: ANCHOR, versions: VERSIONS } });
     expect(
       screen.queryByRole("radiogroup", { name: "Engine scope" }),
-    ).toBeNull();
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("radiogroup", { name: "Variant scope" }),
-    ).toBeNull();
+    ).not.toBeInTheDocument();
   });
 });

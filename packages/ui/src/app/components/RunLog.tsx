@@ -1,5 +1,12 @@
 import type { RunSummary } from "@clockwyrks/backend-api/snapshot";
-import { Fragment, type MouseEvent, useCallback, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  type MouseEvent,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link } from "react-router";
 import type { RunSort, SortDir } from "../../client/clients";
 import type { InProgressRun } from "../../client/types";
@@ -324,7 +331,8 @@ export function RunLog({
   const ctx: RunRenderContext = {
     visible: visibleIds,
     agentColumn,
-    agentSpan: modelAt > agentFrom && agentFrom >= 0 ? modelAt - agentFrom : 1,
+    agentSpan:
+      agentFrom !== -1 && modelAt > agentFrom ? modelAt - agentFrom : 1,
     isExpanded: (runId) => expanded.has(runId),
     toggleExpanded,
     disclosureColumn:
@@ -460,7 +468,7 @@ function RunRow({
           {row.agents?.map((agent) => (
             <div
               key={agent.profile}
-              className={`${styles.row} ${styles.agentRow}`}
+              className={[styles.row, styles.agentRow].join(" ")}
               data-primary={agent.primary ? "" : undefined}
               data-idle={agent.ran ? undefined : ""}
             >

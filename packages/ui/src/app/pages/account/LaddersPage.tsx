@@ -18,8 +18,8 @@ import { PromptHeader } from "../../components/PromptHeader";
 import { SubmitNotice } from "../../components/SubmitNotice";
 import { routes } from "../../routes";
 import exec from "../runs/RunExec.module.scss";
-import { Input, Pagination } from "@clockwyrks/ui";
-import { showingLabel, useClientPage } from "../../components/useClientPage";
+import { Input, Pagination } from "../../../index";
+import { showingLabel, useClientPage } from "../../components/use-client-page";
 import { usePagedSearchParams } from "../../components/usePagedSearchParams";
 import filterStyles from "../../components/RunFilters.module.scss";
 
@@ -250,7 +250,9 @@ export function LaddersPage() {
                 type="search"
                 placeholder="Search ladders by name…"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                }}
                 aria-label="Search ladders"
               />
               <span className={ladderStyles.climberShowing} role="status">

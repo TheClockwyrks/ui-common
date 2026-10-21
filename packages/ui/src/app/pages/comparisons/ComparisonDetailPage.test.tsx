@@ -112,7 +112,7 @@ const COMPARISON_WITH_EXISTING_RUN = {
   config: { ...COMPARISON.config, n: 2 },
   arms: [
     {
-      ...COMPARISON.arms[0]!,
+      ...COMPARISON.arms[0],
       nDesired: 2,
       runIds: ["existing-1"],
       nObserved: 1,
@@ -124,13 +124,13 @@ const COMPARISON_WITH_EXISTING_RUN = {
  *  not complete either. */
 const COMPARISON_FULL = {
   ...COMPARISON,
-  arms: [{ ...COMPARISON.arms[0]!, inFlight: 1 }],
+  arms: [{ ...COMPARISON.arms[0], inFlight: 1 }],
 } as unknown as Comparison;
 
 /** The same comparison with its one run landed: complete. */
 const COMPARISON_COMPLETE = {
   ...COMPARISON,
-  arms: [{ ...COMPARISON.arms[0]!, runIds: ["alive-1"], nObserved: 1 }],
+  arms: [{ ...COMPARISON.arms[0], runIds: ["alive-1"], nObserved: 1 }],
   complete: true,
 } as unknown as Comparison;
 
@@ -306,7 +306,7 @@ describe("ComparisonDetailPage", () => {
         ...COMPARISON,
         arms: [
           {
-            ...COMPARISON.arms[0]!,
+            ...COMPARISON.arms[0],
             unlaunchable: "it imports an agent edited since it was saved",
           },
         ],
@@ -333,7 +333,9 @@ describe("ComparisonDetailPage", () => {
     expect(
       screen.getByRole("button", { name: "Trigger missing runs" }),
     ).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "Run again" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Run again" }),
+    ).not.toBeInTheDocument();
   });
 
   it("deletes the comparison through the themed dialog, then leaves for the list", async () => {
@@ -362,7 +364,9 @@ describe("ComparisonDetailPage", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
     fireEvent.click(await screen.findByRole("button", { name: "Cancel" }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
     expect(deleteComparison).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type BlockerFunction, useBlocker, useLocation } from "react-router";
 
 /** What a form holding unsaved work learns about, and does with, an attempt to leave it. */
@@ -63,15 +63,28 @@ export function useLeaveGuard(dirty: boolean): LeaveGuard {
     current.current = blocker;
   });
 
+  // A stay asked for but not yet taken by the router. The router applies the reset as a
+  // transition, which React may render after the page's own updates from the same
+  // handler, so without this a failed save would set its error and drop its busy flag a
+  // render ahead of the reset, and the dialog would come back over the error for that
+  // render. The hold reads as settled from the moment the stay is asked for, and the
+  // mark clears once the router has let the navigation go.
+  const [staying, setStaying] = useState(false);
+  if (staying && blocker.state !== "blocked") setStaying(false);
+
   useEffect(() => {
     if (!dirty) return;
-    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+    };
   }, [dirty]);
 
   return {
-    held: blocker.state === "blocked",
+    held: blocker.state === "blocked" && !staying,
     proceed: useCallback(() => {
       released.current = true;
       const now = current.current;
@@ -79,7 +92,9 @@ export function useLeaveGuard(dirty: boolean): LeaveGuard {
     }, []),
     stay: useCallback(() => {
       const now = current.current;
-      if (now.state === "blocked") now.reset();
+      if (now.state !== "blocked") return;
+      setStaying(true);
+      now.reset();
     }, []),
     release: useCallback(() => {
       released.current = true;

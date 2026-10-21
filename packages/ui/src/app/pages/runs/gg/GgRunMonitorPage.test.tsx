@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
@@ -14,12 +14,16 @@ import type {
 } from "@clockwyrks/run-record/gg";
 import type { RunRecord } from "@clockwyrks/run-record";
 import type { SystemStage, SystemStatus } from "@clockwyrks/run-record/event";
-import type { HarnessEvent } from "../../../../client/types";
+import type { HarnessEvent, InProgressRun } from "../../../../client/types";
 import {
   WorkersProvider,
   type WorkersContextValue,
 } from "../../../../client/context";
 import type { WorkerClient, RunSubscription } from "../../../../client/clients";
+import {
+  RunsRuntimeProvider,
+  useRunsRuntime,
+} from "../../../runtime/runsRuntime";
 import { useAppSettings } from "../../../store/appSettings";
 import { GgRunMonitorPage } from "./GgRunMonitorPage";
 
@@ -769,8 +773,10 @@ describe("GgRunMonitorPage", () => {
       state: "validating",
     };
     function Tracked() {
-      const { track } = useRunsRuntime();
-      useEffect(() => track(validating), [track]);
+      const runtime = useRef(useRunsRuntime());
+      useEffect(() => {
+        runtime.current.track(validating);
+      }, []);
       return null;
     }
     render(

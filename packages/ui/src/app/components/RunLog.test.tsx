@@ -142,7 +142,9 @@ function rowNames(): string[] {
 }
 
 describe("RunLog", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
   it("renders sortable headers and keeps recency order by default", () => {
     renderLog();
@@ -249,7 +251,9 @@ describe("RunLog", () => {
   it("opens a per-run menu on a row right-click", () => {
     renderLog();
     // No menu until a row is right-clicked.
-    expect(screen.queryByRole("menu", { name: "Run actions" })).toBeNull();
+    expect(
+      screen.queryByRole("menu", { name: "Run actions" }),
+    ).not.toBeInTheDocument();
 
     fireEvent.contextMenu(screen.getAllByRole("link")[0]!);
 
@@ -278,7 +282,9 @@ describe("RunLog", () => {
     // destructive item never appears.
     renderLog();
     fireEvent.contextMenu(screen.getAllByRole("link")[0]!);
-    expect(screen.queryByRole("menuitem", { name: "Delete run" })).toBeNull();
+    expect(
+      screen.queryByRole("menuitem", { name: "Delete run" }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders per-row and select-all checkboxes when selectable", () => {
@@ -312,7 +318,9 @@ describe("RunLog", () => {
     fireEvent.click(
       screen.getByRole("checkbox", { name: "Deselect all runs" }),
     );
-    expect(screen.queryByRole("checkbox", { name: "Deselect run" })).toBeNull();
+    expect(
+      screen.queryByRole("checkbox", { name: "Deselect run" }),
+    ).not.toBeInTheDocument();
   });
 
   it("switches a right-click to the batch menu once rows are checked", () => {
@@ -354,11 +362,17 @@ describe("RunLog", () => {
     ).toBeInTheDocument();
     // canExecute is false in this harness, so neither destructive batch action
     // appears.
-    expect(screen.queryByRole("menuitem", { name: /^Kill/ })).toBeNull();
-    expect(screen.queryByRole("menuitem", { name: /^Delete/ })).toBeNull();
+    expect(
+      screen.queryByRole("menuitem", { name: /^Kill/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: /^Delete/ }),
+    ).not.toBeInTheDocument();
 
     // The single-run menu is gone: the checked selection drives the menu instead.
-    expect(screen.queryByRole("menuitem", { name: "Copy link" })).toBeNull();
+    expect(
+      screen.queryByRole("menuitem", { name: "Copy link" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the single-run menu when nothing is checked", () => {
@@ -368,7 +382,9 @@ describe("RunLog", () => {
     expect(
       screen.getByRole("menuitem", { name: "Copy link" }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "Copy links" })).toBeNull();
+    expect(
+      screen.queryByRole("menuitem", { name: "Copy links" }),
+    ).not.toBeInTheDocument();
   });
 
   it("locks the last visible column so the table can't be emptied", () => {
@@ -398,42 +414,41 @@ describe("RunLog", () => {
   });
 });
 
+function renderRuns(runs: RunSummary[]) {
+  function MixedHarness() {
+    const table = useRunTable({
+      runs,
+      localIds: new Set(),
+      localWriteups: {},
+      externalOrder: true,
+    });
+    return <RunLog rows={table.rows} controls={table.controls} />;
+  }
+  return render(
+    <MemoryRouter>
+      <GalleryDataProvider value={galleryValue()}>
+        <MixedHarness />
+      </GalleryDataProvider>
+    </MemoryRouter>,
+  );
+}
+// The rendered MODEL / CONFIG cells, in DOM order, as `<label>:<value>` — the
+// label is the caption the phone card shows, and it must name whichever of the
+// two identities the cell actually carries.
+function modelCells(container: HTMLElement): string[] {
+  return [
+    ...container.querySelectorAll('[data-label="Model"],[data-label="Config"]'),
+  ].map((cell) => `${cell.getAttribute("data-label")}:${cell.textContent}`);
+}
+
 // The MODEL / CONFIG cell carries whichever identity actually distinguishes a run:
 // a third-party-harness run is its model, a gg run is the configuration it was
 // launched from (its models are per-agent bindings, so no single harness model
 // names it). One listing routinely holds both kinds of row.
 describe("RunLog model/config cell", () => {
-  beforeEach(() => localStorage.clear());
-
-  function renderRuns(runs: RunSummary[]) {
-    function MixedHarness() {
-      const table = useRunTable({
-        runs,
-        localIds: new Set(),
-        localWriteups: {},
-        externalOrder: true,
-      });
-      return <RunLog rows={table.rows} controls={table.controls} />;
-    }
-    return render(
-      <MemoryRouter>
-        <GalleryDataProvider value={galleryValue()}>
-          <MixedHarness />
-        </GalleryDataProvider>
-      </MemoryRouter>,
-    );
-  }
-
-  // The rendered MODEL / CONFIG cells, in DOM order, as `<label>:<value>` — the
-  // label is the caption the phone card shows, and it must name whichever of the
-  // two identities the cell actually carries.
-  function modelCells(container: HTMLElement): string[] {
-    return [
-      ...container.querySelectorAll(
-        '[data-label="Model"],[data-label="Config"]',
-      ),
-    ].map((cell) => `${cell.getAttribute("data-label")}:${cell.textContent}`);
-  }
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
   it("shows the configuration for a gg row and the model for every other row", () => {
     const { container } = renderRuns([
@@ -467,29 +482,75 @@ describe("RunLog model/config cell", () => {
   });
 });
 
-describe("RunLog gg agent lines", () => {
-  beforeEach(() => localStorage.clear());
+function agent(
+  profile: string,
+  opts: { primary?: boolean; ran?: boolean; tokens?: number } = {},
+) {
+  const { primary = false, ran = true, tokens = 1000 } = opts;
+  return {
+    profile,
+    name: profile.charAt(0).toUpperCase() + profile.slice(1),
+    modelIds: [`model-${profile}`],
+    primary,
+    ran,
+    tokens: {
+      uncachedInput: tokens,
+      cachedInput: null,
+      output: null,
+      reasoning: null,
+    },
+    cost: { comparable: 0.5, actual: 0.5 },
+  };
+}
 
-  function agent(
-    profile: string,
-    opts: { primary?: boolean; ran?: boolean; tokens?: number } = {},
-  ) {
-    const { primary = false, ran = true, tokens = 1000 } = opts;
-    return {
-      profile,
-      name: profile.charAt(0).toUpperCase() + profile.slice(1),
-      modelIds: [`model-${profile}`],
-      primary,
-      ran,
-      tokens: {
-        uncachedInput: tokens,
-        cachedInput: null,
-        output: null,
-        reasoning: null,
-      },
-      cost: { comparable: 0.5, actual: 0.5 },
-    };
+function LocationProbe() {
+  const { pathname } = useLocation();
+  return <output data-testid="location">{pathname}</output>;
+}
+
+function agentNames(): string[] {
+  return screen
+    .queryAllByText((_, element) =>
+      Boolean(element?.matches('[data-label="Agent"] > span:first-child')),
+    )
+    .map((element) => element.textContent);
+}
+
+// An agent line's cells, keyed by the label each carries.
+function agentLineCells(line: Element | undefined): Record<string, string> {
+  if (!line) throw new Error("no such agent line");
+  return Object.fromEntries(
+    [...line.querySelectorAll<HTMLElement>("[data-label]")].map((cell) => [
+      cell.dataset.label ?? "",
+      cell.textContent,
+    ]),
+  );
+}
+
+function renderAgentRuns(runs: RunSummary[]) {
+  function AgentHarness() {
+    const table = useRunTable({
+      runs,
+      localIds: new Set(),
+      localWriteups: {},
+      externalOrder: true,
+    });
+    return <RunLog rows={table.rows} controls={table.controls} />;
   }
+  return render(
+    <MemoryRouter initialEntries={["/runs"]}>
+      <GalleryDataProvider value={galleryValue()}>
+        <AgentHarness />
+        <LocationProbe />
+      </GalleryDataProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe("RunLog gg agent lines", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
   // A gg run whose card lists `agents`.
   function ggRun(id: string, agents: ReturnType<typeof agent>[] | null) {
@@ -504,71 +565,40 @@ describe("RunLog gg agent lines", () => {
     } as unknown as RunSummary;
   }
 
-  function LocationProbe() {
-    const { pathname } = useLocation();
-    return <output data-testid="location">{pathname}</output>;
-  }
-
-  function renderRuns(runs: RunSummary[]) {
-    function AgentHarness() {
-      const table = useRunTable({
-        runs,
-        localIds: new Set(),
-        localWriteups: {},
-        externalOrder: true,
-      });
-      return <RunLog rows={table.rows} controls={table.controls} />;
-    }
-    return render(
-      <MemoryRouter initialEntries={["/runs"]}>
-        <GalleryDataProvider value={galleryValue()}>
-          <AgentHarness />
-          <LocationProbe />
-        </GalleryDataProvider>
-      </MemoryRouter>,
-    );
-  }
-
   const TEAM = [
     agent("root", { primary: true }),
     agent("reviewer", { tokens: 2000 }),
     agent("tester", { ran: false, tokens: 0 }),
   ];
 
-  function agentNames(): string[] {
-    return screen
-      .queryAllByText((_, element) =>
-        Boolean(element?.matches('[data-label="Agent"] > span:first-child')),
-      )
-      .map((element) => element.textContent ?? "");
-  }
-
   it("lists a gg run's agents beneath it only once its toggle is opened", () => {
-    renderRuns([ggRun("r-team", TEAM)]);
-    expect(screen.queryByRole("group")).toBeNull();
+    renderAgentRuns([ggRun("r-team", TEAM)]);
+    expect(screen.queryByRole("group")).not.toBeInTheDocument();
 
     const toggle = screen.getByRole("button", { name: "Show 3 agents" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(toggle);
 
     expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("group", { name: "Agents of config-r-team" }));
+    expect(
+      screen.getByRole("group", { name: "Agents of config-r-team" }),
+    ).toBeInTheDocument();
     // In the card's order: the configuration's, which leads with its primary.
     expect(agentNames()).toEqual(["Root", "Reviewer", "Tester"]);
   });
 
   it("toggles without opening the run", () => {
-    renderRuns([ggRun("r-team", TEAM)]);
+    renderAgentRuns([ggRun("r-team", TEAM)]);
     fireEvent.click(screen.getByRole("button", { name: "Show 3 agents" }));
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/runs$/);
 
     fireEvent.click(screen.getByRole("button", { name: "Hide 3 agents" }));
-    expect(screen.queryByRole("group")).toBeNull();
+    expect(screen.queryByRole("group")).not.toBeInTheDocument();
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/runs$/);
   });
 
   it("toggles from the keyboard", () => {
-    renderRuns([ggRun("r-team", TEAM)]);
+    renderAgentRuns([ggRun("r-team", TEAM)]);
     fireEvent.keyDown(screen.getByRole("button", { name: "Show 3 agents" }), {
       key: "Enter",
     });
@@ -576,27 +606,19 @@ describe("RunLog gg agent lines", () => {
   });
 
   it("gives each agent its model, tokens and cost, and marks one that never ran", () => {
-    renderRuns([ggRun("r-team", TEAM)]);
+    renderAgentRuns([ggRun("r-team", TEAM)]);
     fireEvent.click(screen.getByRole("button", { name: "Show 3 agents" }));
     const lines = [
       ...screen.getByRole("group").querySelectorAll(":scope > div"),
     ];
-    const cells = (line: Element) =>
-      Object.fromEntries(
-        [...line.querySelectorAll("[data-label]")].map((cell) => [
-          cell.getAttribute("data-label"),
-          cell.textContent,
-        ]),
-      );
-
-    expect(cells(lines[0])).toMatchObject({
+    expect(agentLineCells(lines[0])).toMatchObject({
       Agent: "Rootprimary",
       Model: "model-root",
       Tokens: "1K",
       Cost: "$0.50",
     });
-    expect(cells(lines[1]).Agent).toBe("Reviewer");
-    expect(cells(lines[2])).toMatchObject({
+    expect(agentLineCells(lines[1]).Agent).toBe("Reviewer");
+    expect(agentLineCells(lines[2])).toMatchObject({
       Agent: "Testernot run",
       Tokens: "—",
       Cost: "—",
@@ -605,7 +627,7 @@ describe("RunLog gg agent lines", () => {
   });
 
   it("names every model an agent ran on", () => {
-    renderRuns([
+    renderAgentRuns([
       ggRun("r-repointed", [
         { ...agent("root", { primary: true }), modelIds: ["opus", "sonnet"] },
       ]),
@@ -617,48 +639,50 @@ describe("RunLog gg agent lines", () => {
   });
 
   it("offers no toggle on a non-gg run or a gg run with no agent figures", () => {
-    renderRuns([
+    renderAgentRuns([
       summary("r-claude", "beta"),
       ggRun("r-legacy", null),
       ggRun("r-empty", []),
     ]);
-    expect(screen.queryByRole("button", { name: /agents?$/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /agents?$/ }),
+    ).not.toBeInTheDocument();
   });
 });
 
+function renderWithCodeColumn(runs: RunSummary[]) {
+  function CodeHarness() {
+    const table = useRunTable({
+      runs,
+      localIds: new Set(),
+      localWriteups: {},
+      externalOrder: true,
+    });
+    return <RunLog rows={table.rows} controls={table.controls} />;
+  }
+  const rendered = render(
+    <MemoryRouter>
+      <GalleryDataProvider value={galleryValue()}>
+        <CodeHarness />
+      </GalleryDataProvider>
+    </MemoryRouter>,
+  );
+  // The column starts hidden: with an un-backfilled corpus a default-on CODE column
+  // is a column of dashes, so it lives in the picker.
+  fireEvent.click(screen.getByRole("button", { name: "Choose columns" }));
+  fireEvent.click(screen.getByRole("checkbox", { name: "CODE" }));
+  return rendered;
+}
+function codeCell(container: HTMLElement): HTMLElement {
+  const cell = container.querySelector('[data-label="Code"]');
+  if (!(cell instanceof HTMLElement)) throw new Error("no CODE cell rendered");
+  return cell;
+}
+
 describe("RunLog code cell", () => {
-  beforeEach(() => localStorage.clear());
-
-  function renderWithCodeColumn(runs: RunSummary[]) {
-    function CodeHarness() {
-      const table = useRunTable({
-        runs,
-        localIds: new Set(),
-        localWriteups: {},
-        externalOrder: true,
-      });
-      return <RunLog rows={table.rows} controls={table.controls} />;
-    }
-    const rendered = render(
-      <MemoryRouter>
-        <GalleryDataProvider value={galleryValue()}>
-          <CodeHarness />
-        </GalleryDataProvider>
-      </MemoryRouter>,
-    );
-    // The column starts hidden: with an un-backfilled corpus a default-on CODE column
-    // is a column of dashes, so it lives in the picker.
-    fireEvent.click(screen.getByRole("button", { name: "Choose columns" }));
-    fireEvent.click(screen.getByRole("checkbox", { name: "CODE" }));
-    return rendered;
-  }
-
-  function codeCell(container: HTMLElement): HTMLElement {
-    const cell = container.querySelector('[data-label="Code"]');
-    if (!(cell instanceof HTMLElement))
-      throw new Error("no CODE cell rendered");
-    return cell;
-  }
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
   // The card's whole reason for existing: an ordering over the analysed corpus without
   // fetching a single run record.
@@ -718,6 +742,46 @@ describe("RunLog code cell", () => {
   });
 });
 
+// One pinned in-flight row, carrying only what the log reads off it.
+function inFlight(state: InProgressRun["state"], startedAt?: string) {
+  return {
+    runId: "j-live",
+    testCaseSlug: "alpha",
+    testCaseVersion: "1.0.0",
+    variant: "base",
+    harnessSlug: "claude",
+    modelId: "anthropic/claude",
+    state,
+    ...(startedAt ? { startedAt } : {}),
+  } as InProgressRun;
+}
+// The log with the two hidden-by-default columns turned on or left alone, which is
+// exactly the override the column picker writes.
+function renderActive(runs: InProgressRun[], showDuration: boolean) {
+  if (showDuration) {
+    localStorage.setItem(
+      "ttc:runlog:global:visible",
+      JSON.stringify({ timestamp: true, duration: true }),
+    );
+  }
+  function ActiveHarness() {
+    const table = useRunTable({
+      runs: RUNS,
+      localIds: new Set(),
+      localWriteups: {},
+      externalOrder: true,
+    });
+    return <RunLog rows={table.rows} controls={table.controls} active={runs} />;
+  }
+  return render(
+    <MemoryRouter>
+      <GalleryDataProvider value={galleryValue()}>
+        <ActiveHarness />
+      </GalleryDataProvider>
+    </MemoryRouter>,
+  );
+}
+
 // The shared clock behind the live DURATION cell. It exists to move one figure, so
 // it must run exactly when that figure is on screen and moving: every tick
 // re-renders the whole log, and DURATION starts hidden, so a log left ticking for a
@@ -735,49 +799,6 @@ describe("RunLog live clock", () => {
     intervals.mockRestore();
     vi.useRealTimers();
   });
-
-  // One pinned in-flight row, carrying only what the log reads off it.
-  function inFlight(state: InProgressRun["state"], startedAt?: string) {
-    return {
-      runId: "j-live",
-      testCaseSlug: "alpha",
-      testCaseVersion: "1.0.0",
-      variant: "base",
-      harnessSlug: "claude",
-      modelId: "anthropic/claude",
-      state,
-      ...(startedAt ? { startedAt } : {}),
-    } as InProgressRun;
-  }
-
-  // The log with the two hidden-by-default columns turned on or left alone, which is
-  // exactly the override the column picker writes.
-  function renderActive(runs: InProgressRun[], showDuration: boolean) {
-    if (showDuration) {
-      localStorage.setItem(
-        "ttc:runlog:global:visible",
-        JSON.stringify({ timestamp: true, duration: true }),
-      );
-    }
-    function ActiveHarness() {
-      const table = useRunTable({
-        runs: RUNS,
-        localIds: new Set(),
-        localWriteups: {},
-        externalOrder: true,
-      });
-      return (
-        <RunLog rows={table.rows} controls={table.controls} active={runs} />
-      );
-    }
-    return render(
-      <MemoryRouter>
-        <GalleryDataProvider value={galleryValue()}>
-          <ActiveHarness />
-        </GalleryDataProvider>
-      </MemoryRouter>,
-    );
-  }
 
   it("ticks while a started run's duration is on screen", () => {
     renderActive([inFlight("running", "2026-01-01T00:00:00Z")], true);

@@ -168,7 +168,11 @@ function Field({
   const controlId = useId();
   return (
     <div
-      className={wide ? `${styles.field} ${styles.fieldWide}` : styles.field}
+      className={
+        wide
+          ? `${String(styles.field)} ${String(styles.fieldWide)}`
+          : styles.field
+      }
     >
       <span className={styles.fieldLabel}>
         <label htmlFor={controlId}>{label}</label>
@@ -342,7 +346,7 @@ function ProbeTriggerForm({
               ? maxTokensOk
                 ? "Replay gg's RaC turn-1 cases and check each submitted program"
                 : "Max tokens must be between 256 and 16000"
-              : `Samples must be between 1 and ${MAX_SAMPLES}`
+              : `Samples must be between 1 and ${String(MAX_SAMPLES)}`
           }
         >
           {busy ? "Starting…" : "Run probe"}
@@ -382,7 +386,7 @@ function VerdictBadge({ verdict }: { verdict: ModelProbeVerdict }) {
 
 // A pass rate (0..=1) as a whole percentage, or an em dash when unknown.
 function formatRate(rate: number | null): string {
-  return rate === null ? "—" : `${Math.round(rate * 100)}%`;
+  return rate === null ? "—" : `${String(Math.round(rate * 100))}%`;
 }
 
 // A probe's USD spend at four decimals — probe calls cost fractions of a cent,
@@ -413,7 +417,7 @@ function ProbeHistory({
             type="button"
             className={
               probe.id === selectedId
-                ? `${styles.row} ${styles.rowSelected}`
+                ? `${String(styles.row)} ${String(styles.rowSelected)}`
                 : styles.row
             }
             aria-pressed={probe.id === selectedId}
@@ -576,7 +580,9 @@ function ProbeResults({ detail }: { detail: ModelProbeDetail }) {
                     </td>
                     <td data-label="Scenario">{group.scenario}</td>
                     <td data-label="Pass">
-                      {scored.length === 0 ? "—" : `${passed}/${scored.length}`}
+                      {scored.length === 0
+                        ? "—"
+                        : `${String(passed)}/${String(scored.length)}`}
                     </td>
                     <td data-label="Labels">
                       {distinct(group.items.map((item) => item.label))}

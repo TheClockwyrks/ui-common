@@ -1,5 +1,5 @@
-import type { InProgressRun } from "../../client/types";
 import styles from "./RunLog.module.scss";
+import type { InProgressRun } from "../../client/types";
 
 // What the marker is called for each live phase. A validating run is told apart
 // from a running one because the marker is often all a view shows of the phase —

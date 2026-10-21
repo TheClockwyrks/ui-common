@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { InProgressRun } from "../../client/types";
 import { formatTimestamp } from "../format";
 import {
@@ -41,6 +41,11 @@ function ctx(overrides: Partial<RunRenderContext> = {}): RunRenderContext {
     testCaseType: () => "end-to-end",
     modelName: (modelId) => modelId,
     now: Date.parse(STARTED_AT),
+    isExpanded: () => false,
+    toggleExpanded: vi.fn(),
+    disclosureColumn: null,
+    agentColumn: null,
+    agentSpan: 1,
     ...overrides,
   };
 }
@@ -217,14 +222,11 @@ describe("run column in-progress cells", () => {
 // from a running one, in the status cell and in the in-progress marker alike.
 describe("a validating run", () => {
   const validatingRun: InProgressRun = { ...activeRun, state: "validating" };
-  const selection = { isSelected: () => false, toggle: () => {} };
+  const selection = { isSelected: () => false, toggle: vi.fn() };
 
   it("reads validating in the status cell, saying the model has finished", () => {
-    const { container } = render(
-      column("rating").renderActive(validatingRun, ctx()),
-    );
-    const cell = container.querySelector("[data-state]") as HTMLElement;
-    expect(cell).toHaveTextContent("validating…");
+    render(column("rating").renderActive(validatingRun, ctx()));
+    const cell = screen.getByText("validating…");
     expect(cell).toHaveAttribute("data-state", "validating");
     expect(cell).toHaveAttribute(
       "title",
@@ -233,10 +235,8 @@ describe("a validating run", () => {
   });
 
   it("draws its own marker in the caret gutter, named for the phase", () => {
-    const { getByRole } = render(
-      column("caret").renderActive(validatingRun, ctx()),
-    );
-    const marker = getByRole("img", { name: "Validating" });
+    render(column("caret").renderActive(validatingRun, ctx()));
+    const marker = screen.getByRole("img", { name: "Validating" });
     expect(marker).toHaveAttribute("data-state", "validating");
     expect(marker).toHaveAttribute("title", "Validating");
     // A checklist of three lines, not the running spinner's ring.
@@ -244,34 +244,32 @@ describe("a validating run", () => {
   });
 
   it("leaves a running run's marker as the running spinner", () => {
-    const { getByRole } = render(
-      column("caret").renderActive(activeRun, ctx()),
-    );
-    const marker = getByRole("img", { name: "Running" });
+    render(column("caret").renderActive(activeRun, ctx()));
+    const marker = screen.getByRole("img", { name: "Running" });
     expect(marker).toHaveAttribute("data-state", "running");
     expect(marker.children).toHaveLength(0);
   });
 
   it("draws its marker under the selectable log's checkbox too", () => {
-    const { container, getByRole } = render(
-      column("caret").renderActive(validatingRun, ctx({ selection })),
-    );
-    // The checkbox names the control; the marker inside it is decorative.
-    expect(getByRole("checkbox", { name: "Select run" })).toBeInTheDocument();
-    const marker = container.querySelector(
-      '[data-state="validating"]',
-    ) as HTMLElement;
+    render(column("caret").renderActive(validatingRun, ctx({ selection })));
+    // The checkbox names the control; the marker inside it is decorative, so it
+    // is found by its title rather than by a role.
+    expect(
+      screen.getByRole("checkbox", { name: "Select run" }),
+    ).toBeInTheDocument();
+    const marker = screen.getByTitle("Validating");
+    expect(marker).toHaveAttribute("data-state", "validating");
     expect(marker).toHaveAttribute("aria-hidden", "true");
-    expect(marker).toHaveAttribute("title", "Validating");
   });
 
   it("draws no marker under a finished row's checkbox", () => {
-    const { container } = render(
+    render(
       column("caret").render(
         { summary: { id: "done-1" } } as Parameters<RunColumn["render"]>[0],
         ctx({ selection }),
       ),
     );
-    expect(container.querySelector("[data-state]")).toBeNull();
+    expect(screen.queryByTitle("Validating")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("Running")).not.toBeInTheDocument();
   });
 });

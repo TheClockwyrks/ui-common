@@ -230,7 +230,9 @@ describe("GgAgentEditPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Create agent" }));
 
-    await waitFor(() => expect(createGgAgent).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(createGgAgent).toHaveBeenCalled();
+    });
     const [input] = createGgAgent.mock.calls[0]!;
     expect(input.agent.name).toBe("reviewer");
     expect(input.description).toBe("reviews what the implementer wrote");
@@ -304,7 +306,9 @@ describe("GgAgentEditPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Create agent" }));
 
-    await waitFor(() => expect(createGgAgent).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(createGgAgent).toHaveBeenCalled();
+    });
     const [input] = createGgAgent.mock.calls[0]!;
     expect(input.agent.slug).toBe("merge-bot");
     // The name the operator typed above it is untouched by the rename…
@@ -336,7 +340,9 @@ describe("GgAgentEditPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Save agent" }));
 
-    await waitFor(() => expect(updateGgAgent).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(updateGgAgent).toHaveBeenCalled();
+    });
     const [id, input] = updateGgAgent.mock.calls[0]!;
     expect(id).toBe("saved-1");
     expect(input.agent.slug).toBe("merge-bot");
@@ -366,25 +372,23 @@ describe("GgAgentEditPage", () => {
   });
 });
 
+function editName() {
+  fireEvent.change(screen.getByLabelText(/^Agent name/), {
+    target: { value: "Reviewer" },
+  });
+}
+function backControl() {
+  return screen.getByRole("button", { name: "All gg agents" });
+}
+function followLink() {
+  fireEvent.click(screen.getByRole("link", { name: "Elsewhere" }));
+}
+
 // Leaving the page with work to lose, by any route: its own back control, a link elsewhere
 // in the app, or the browser's back button. Each is held and asked about through one
 // dialog, which offers to save and go, to discard and go, or to keep editing.
 describe("leaving the agent editor", () => {
   beforeEach(() => createGgAgent.mockClear());
-
-  function editName() {
-    fireEvent.change(screen.getByLabelText(/^Agent name/), {
-      target: { value: "Reviewer" },
-    });
-  }
-
-  function backControl() {
-    return screen.getByRole("button", { name: "All gg agents" });
-  }
-
-  function followLink() {
-    fireEvent.click(screen.getByRole("link", { name: "Elsewhere" }));
-  }
 
   it("leaves without asking when nothing was edited", async () => {
     renderPage();
@@ -425,7 +429,9 @@ describe("leaving the agent editor", () => {
         name: "Create agent",
       }),
     );
-    await waitFor(() => expect(createGgAgent).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgAgent).toHaveBeenCalledTimes(1);
+    });
     expect(await screen.findByText(ELSEWHERE)).toBeInTheDocument();
   });
 

@@ -199,34 +199,42 @@ describe("ValidatorVerdict", () => {
         reviews={[]}
       />,
     );
-    expect(screen.getByText("0 / 3")).toBeTruthy();
-    expect(screen.getByText(/no checklist point was decided/)).toBeTruthy();
+    expect(screen.getByText("0 / 3")).toBeInTheDocument();
+    expect(
+      screen.getByText(/no checklist point was decided/),
+    ).toBeInTheDocument();
   });
 
   it("shows the rating, points, and a compact per-domain strip", () => {
     render(<ValidatorVerdict run={run()} model={model} reviews={[]} />);
 
     // The headline: the validator-decided rating and score, before any review.
-    expect(screen.getByText("1 / 3")).toBeTruthy();
+    expect(screen.getByText("1 / 3")).toBeInTheDocument();
     // No reviewer has rated the aesthetic channel yet, so there is no aesthetic
     // badge — only the functional one.
-    expect(screen.queryByLabelText(/^Aesthetic:/)).toBeNull();
+    expect(screen.queryByLabelText(/^Aesthetic:/)).not.toBeInTheDocument();
     // No explainer paragraph: the item browser's per-point cap badges carry
     // what a failure cap is, so the header is badges and points alone.
-    expect(screen.queryByText(/verdicts are this run/)).toBeNull();
-    expect(screen.queryByText(/no reviewer has rated it yet/)).toBeNull();
+    expect(screen.queryByText(/verdicts are this run/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no reviewer has rated it yet/),
+    ).not.toBeInTheDocument();
 
     // Per domain: the effective functional badge ONLY — no "capped by" list
     // (that detail lives in the item browser now) and no per-domain aesthetic.
     const single = screen.getByText("Single player").closest("li")!;
-    expect(within(single).getByText("Scuffed")).toBeTruthy();
-    expect(within(single).queryByLabelText("Capped by")).toBeNull();
+    expect(within(single).getByText("Scuffed")).toBeInTheDocument();
+    expect(
+      within(single).queryByLabelText("Capped by"),
+    ).not.toBeInTheDocument();
     expect(
       within(single).queryByText("AI paddle tracks the ball (Solo)"),
-    ).toBeNull();
+    ).not.toBeInTheDocument();
     const versus = screen.getByText("Versus").closest("li")!;
-    expect(within(versus).getByText("Great")).toBeTruthy();
-    expect(within(versus).queryByLabelText("Capped by")).toBeNull();
+    expect(within(versus).getByText("Great")).toBeInTheDocument();
+    expect(
+      within(versus).queryByLabelText("Capped by"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the aggregate run-wide aesthetic once reviewed", () => {
@@ -263,7 +271,7 @@ describe("ValidatorVerdict", () => {
         ]}
       />,
     );
-    expect(screen.getByLabelText("Aesthetic: Okay")).toBeTruthy();
+    expect(screen.getByLabelText("Aesthetic: Okay")).toBeInTheDocument();
   });
 
   it("folds a reviewer's override into the shown rating and score", () => {
@@ -281,16 +289,16 @@ describe("ValidatorVerdict", () => {
     );
     // The recovered AI point lifts the score to 2 / 3 and the rating to Great:
     // the headline badge and both domain badges now read Great.
-    expect(screen.getByText("2 / 3")).toBeTruthy();
+    expect(screen.getByText("2 / 3")).toBeInTheDocument();
     expect(screen.getAllByText("Great").length).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByText("Scuffed")).toBeNull();
+    expect(screen.queryByText("Scuffed")).not.toBeInTheDocument();
   });
 
   it("renders no checklist and no script table — the item browser owns that detail", () => {
     render(<ValidatorVerdict run={run()} model={model} reviews={[]} />);
-    expect(screen.queryByText("Automated validation")).toBeNull();
-    expect(screen.queryByRole("radiogroup")).toBeNull();
-    expect(screen.queryByText(/Restore/)).toBeNull();
-    expect(screen.queryByText("validation/rules.mjs")).toBeNull();
+    expect(screen.queryByText("Automated validation")).not.toBeInTheDocument();
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Restore/)).not.toBeInTheDocument();
+    expect(screen.queryByText("validation/rules.mjs")).not.toBeInTheDocument();
   });
 });

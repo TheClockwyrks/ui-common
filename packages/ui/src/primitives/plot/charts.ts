@@ -160,13 +160,13 @@ function rotatedAxisLayout(
   );
   const slot = n > 0 ? plotArea / n : 0;
   const cos = Math.cos((rotateDeg * Math.PI) / 180);
-  const overhang =
-    rotateDeg > 0
-      ? order.reduce((widest, label, index) => {
-          const room = (n - 1 - index + 0.5) * slot;
-          return Math.max(widest, label.length * GLYPH_PX * cos - room);
-        }, 0)
-      : 0;
+  let overhang = 0;
+  if (rotateDeg > 0) {
+    for (const [index, label] of order.entries()) {
+      const room = (n - 1 - index + 0.5) * slot;
+      overhang = Math.max(overhang, label.length * GLYPH_PX * cos - room);
+    }
+  }
   const marginRight = Math.max(DEFAULT_RIGHT_MARGIN, Math.ceil(overhang));
   return {
     marginBottom,
@@ -175,13 +175,23 @@ function rotatedAxisLayout(
   };
 }
 
+// Two labels in code-unit order, the order `<` puts strings in.
+function compareCodeUnits(a: string, b: string): number {
+  if (a < b) return -1;
+  return a > b ? 1 : 0;
+}
+
 // The categories of an ordinal axis left to right: the stated domain, or the
 // sorted distinct labels Plot would infer.
 function axisOrder(
   labels: readonly string[],
   domain: readonly string[] | undefined,
 ): readonly string[] {
-  return domain ?? [...new Set(labels)].sort();
+  if (domain) return domain;
+  // Plot orders inferred ordinal labels ascending by code unit, as `<` compares them.
+  const sorted = [...new Set(labels)];
+  sorted.sort(compareCodeUnits);
+  return sorted;
 }
 
 // Both the tooltip and the hover highlight select the bar under the pointer by
@@ -264,22 +274,21 @@ export function barChart(
   const base = basePlotOptions(palette);
   return {
     ...base,
-    ...(labels.xTickRotate
-      ? rotatedAxisLayout(
-          axisOrder(
-            data.map((d) => d.label),
-            labels.xDomain,
-          ),
-          labels.xTickRotate,
-          Number(base.marginLeft),
-          labels.availableWidth,
-        )
-      : {}),
+    ...(labels.xTickRotate &&
+      rotatedAxisLayout(
+        axisOrder(
+          data.map((d) => d.label),
+          labels.xDomain,
+        ),
+        labels.xTickRotate,
+        Number(base.marginLeft),
+        labels.availableWidth,
+      )),
     x: {
       label: labels.x ?? null,
       type: "band",
       tickRotate: labels.xTickRotate,
-      ...(labels.xDomain ? { domain: labels.xDomain as string[] } : {}),
+      ...(labels.xDomain && { domain: labels.xDomain as string[] }),
     },
     y: { label: labels.y ?? null, grid: true, tickFormat: labels.yTickFormat },
     // Bars carry literal CSS colors, so use an identity color scale (no legend,
@@ -291,9 +300,10 @@ export function barChart(
         y: "value",
         fill: (d: BarPoint) => d.color ?? palette.accent,
         rx: 2,
-        ...(hasTips
-          ? { title: (d: BarPoint) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: BarPoint) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       Plot.ruleY([0], { stroke: palette.border }),
       // The hover affordance. A distributional chart swaps the hovered bar for the
@@ -478,24 +488,23 @@ export function stackedBarChart(
   const base = basePlotOptions(palette);
   return {
     ...base,
-    ...(labels.xTickRotate
-      ? rotatedAxisLayout(
-          axisOrder(
-            data.map((d) => d.group),
-            labels.xDomain,
-          ),
-          labels.xTickRotate,
-          Number(base.marginLeft),
-          labels.availableWidth,
-          labels.minSlot,
-        )
-      : {}),
+    ...(labels.xTickRotate &&
+      rotatedAxisLayout(
+        axisOrder(
+          data.map((d) => d.group),
+          labels.xDomain,
+        ),
+        labels.xTickRotate,
+        Number(base.marginLeft),
+        labels.availableWidth,
+        labels.minSlot,
+      )),
     x: {
       label: null,
       type: "band",
       tickRotate: labels.xTickRotate,
-      ...(labels.xDomain ? { domain: labels.xDomain as string[] } : {}),
-      ...(labels.xTicks ? { ticks: labels.xTicks as string[] } : {}),
+      ...(labels.xDomain && { domain: labels.xDomain as string[] }),
+      ...(labels.xTicks && { ticks: labels.xTicks as string[] }),
     },
     y: { label: labels.y ?? null, grid: true, tickFormat: labels.yTickFormat },
     color: {
@@ -512,9 +521,10 @@ export function stackedBarChart(
         // of the row order in `data`.
         order,
         rx: 1,
-        ...(hasTips
-          ? { title: (d: StackedBarSegment) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: StackedBarSegment) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       Plot.ruleY([0], { stroke: palette.border }),
       // The hover highlight: a wash over the pointer-selected segment. `z` +
@@ -627,7 +637,7 @@ export function stackedAreaChart(
     ...basePlotOptions(palette),
     // A capped y scale only frames the plot; without clipping, a stack taller than
     // the cap would draw straight over the axis and the title.
-    ...(yMax != null ? { clip: true } : {}),
+    ...(yMax != null && { clip: true }),
     x: {
       label: labels.x ?? null,
       // Whole-number turn ticks; a fractional tick between turns is meaningless.
@@ -638,7 +648,7 @@ export function stackedAreaChart(
       grid: true,
       zero: true,
       tickFormat: labels.yTickFormat,
-      ...(yMax != null ? { domain: [0, yMax] } : {}),
+      ...(yMax != null && { domain: [0, yMax] }),
     },
     color: {
       legend: false,
@@ -656,9 +666,10 @@ export function stackedAreaChart(
         stroke: palette.surface,
         strokeWidth: 0.5,
         curve: "linear",
-        ...(hasTips
-          ? { title: (d: StackedAreaPoint) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: StackedAreaPoint) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       Plot.ruleY([0], { stroke: palette.border }),
       // The hover affordance: a vertical rule at the pointer-selected x, drawn over
@@ -821,7 +832,7 @@ export function timeSeriesChart(
       grid: true,
       zero: true,
       tickFormat: labels.yTickFormat,
-      ...(yMax != null ? { domain: [0, yMax] } : {}),
+      ...(yMax != null && { domain: [0, yMax] }),
     },
     color: {
       // One series is already named by the chart's title; two or more need a key.
@@ -851,9 +862,10 @@ export function timeSeriesChart(
         stroke: palette.surface,
         strokeWidth: 1,
         r: 3,
-        ...(hasTips
-          ? { title: (d: TimeSeriesPoint) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: TimeSeriesPoint) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       // The hover affordance: a crosshair at the pointer-selected instant, so which
       // bucket the tip describes is unmistakable in a dense series. Same pointer and
@@ -1034,15 +1046,14 @@ export function distributionChart(
 
   return {
     ...base,
-    ...(labels.xTickRotate
-      ? rotatedAxisLayout(
-          order,
-          labels.xTickRotate,
-          Number(base.marginLeft),
-          labels.availableWidth,
-          MIN_DISTRIBUTION_SLOT,
-        )
-      : {}),
+    ...(labels.xTickRotate &&
+      rotatedAxisLayout(
+        order,
+        labels.xTickRotate,
+        Number(base.marginLeft),
+        labels.availableWidth,
+        MIN_DISTRIBUTION_SLOT,
+      )),
     x: {
       label: null,
       type: "band",
@@ -1130,9 +1141,10 @@ export function distributionChart(
         r: 4,
         dx: POINTS_DX,
         title: (d: (typeof points)[number]) => pointTitle(d, formatValue),
-        ...(points.some((p) => p.href != null)
-          ? { href: (d: (typeof points)[number]) => d.href, target: "_self" }
-          : {}),
+        ...(points.some((p) => p.href != null) && {
+          href: (d: (typeof points)[number]) => d.href,
+          target: "_self",
+        }),
         tip: tipBox(palette),
       }),
     ],
@@ -1263,14 +1275,13 @@ export function scatterChart(
   const base = basePlotOptions(palette);
   return {
     ...base,
-    ...(labels.xTickRotate
-      ? rotatedAxisLayout(
-          order,
-          labels.xTickRotate,
-          Number(base.marginLeft),
-          labels.availableWidth,
-        )
-      : {}),
+    ...(labels.xTickRotate &&
+      rotatedAxisLayout(
+        order,
+        labels.xTickRotate,
+        Number(base.marginLeft),
+        labels.availableWidth,
+      )),
     x: {
       label: labels.x ?? null,
       type: "linear",
@@ -1313,9 +1324,10 @@ export function scatterChart(
         strokeWidth: 1,
         r: 4,
         title: (d: (typeof dots)[number]) => pointTitle(d, format),
-        ...(hasLinks
-          ? { href: (d: (typeof dots)[number]) => d.href, target: "_self" }
-          : {}),
+        ...(hasLinks && {
+          href: (d: (typeof dots)[number]) => d.href,
+          target: "_self",
+        }),
         tip: tipBoxXY(palette),
       }),
     ],
@@ -1384,7 +1396,7 @@ export function metricLineChart(
       grid: true,
       zero: true,
       tickFormat: labels.yTickFormat,
-      ...(yMax != null ? { domain: [0, yMax] } : {}),
+      ...(yMax != null && { domain: [0, yMax] }),
     },
     marks: [
       Plot.ruleY([0], { stroke: palette.border }),
@@ -1403,9 +1415,10 @@ export function metricLineChart(
         stroke: palette.surface,
         strokeWidth: 1,
         r: 3,
-        ...(hasTips
-          ? { title: (d: MetricPoint) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: MetricPoint) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       // The hover affordance: a crosshair rule at the pointer-selected turn and a
       // widened dot on the observation itself, so the point the tip is describing is
@@ -1557,7 +1570,7 @@ export function horizontalBarChart(
     ...basePlotOptions(palette),
     marginLeft,
     marginTop: H_BAR_MARGIN_TOP,
-    ...(marginRight != null ? { marginRight } : {}),
+    ...(marginRight != null && { marginRight }),
     // The frame grows with the ranking, so every row gets the same height whatever the
     // row count, and the x-axis band below is always inside the figure.
     height: H_BAR_MARGIN_TOP + data.length * ROW_PX + 40,

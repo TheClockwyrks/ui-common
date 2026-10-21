@@ -7,9 +7,10 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
 } from "react";
-import type { InProgressRun } from "../../client/types";
-import { RunActiveMarker } from "./RunActiveMarker";
+
+import { RunActiveMarker } from "./run-active-marker";
 import styles from "./RunLog.module.scss";
+import type { InProgressRun } from "../../client/types";
 
 /**
  * A run resolved to just what the batch context menu needs to act on it: its id,

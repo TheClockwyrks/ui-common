@@ -107,7 +107,7 @@ export function Chart({ spec, title, className }: ChartProps) {
     return () => container?.replaceChildren();
   }, []);
 
-  const cls = className ? `${styles.chart} ${className}` : styles.chart;
+  const cls = className ? `${String(styles.chart)} ${className}` : styles.chart;
   return (
     <div ref={containerRef} className={cls} role="img" aria-label={title} />
   );
@@ -132,7 +132,7 @@ function keepLegendInView(
     if (!(child instanceof HTMLElement)) continue;
     child.style.position = "sticky";
     child.style.left = "0";
-    child.style.maxWidth = `${width}px`;
+    child.style.maxWidth = `${String(width)}px`;
   }
 }
 
@@ -199,12 +199,11 @@ function createPageTip(container: HTMLElement): {
     );
     const above = target.top - TIP_GAP - height >= VIEWPORT_MARGIN;
     const top = above ? target.top - TIP_GAP - height : target.bottom + TIP_GAP;
-    tip.style.left = `${left}px`;
-    tip.style.top = `${top}px`;
+    tip.style.left = `${String(left)}px`;
+    tip.style.top = `${String(top)}px`;
     tip.dataset.side = above ? "above" : "below";
-    arrow.style.left = `${Math.max(
-      ARROW_INSET,
-      Math.min(pointX - left, width - ARROW_INSET),
+    arrow.style.left = `${String(
+      Math.max(ARROW_INSET, Math.min(pointX - left, width - ARROW_INSET)),
     )}px`;
   };
 

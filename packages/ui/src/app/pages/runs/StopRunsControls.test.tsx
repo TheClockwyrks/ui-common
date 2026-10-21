@@ -202,5 +202,4 @@ describe("StopRunsControls", () => {
       screen.getByRole("button", { name: "Clear pending" }),
     ).toBeDisabled();
   });
-
 });

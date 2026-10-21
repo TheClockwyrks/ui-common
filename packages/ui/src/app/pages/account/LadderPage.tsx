@@ -5,7 +5,6 @@ import type {
 } from "@clockwyrks/backend-api/coverage";
 import type {
   ClimberBlock,
-  ClimberStatus,
   DispatchStatus,
   Ladder,
   LadderClimber,
@@ -21,6 +20,11 @@ import { Link, useParams, useSearchParams } from "react-router";
 
 import { caseLabel } from "./caseLabels";
 import { comboLabel } from "./comboLabels";
+import {
+  climberSearchText,
+  climberStanding,
+  type ClimberStanding,
+} from "./ladder-climbers";
 import styles from "./Coverage.module.scss";
 import { CoverageReviewQueue } from "./CoverageReviewQueue";
 import { formatInFlightLimit, inFlightStatTitle } from "./inFlightLimit";
@@ -40,9 +44,12 @@ import { routes } from "../../routes";
 import { useRunsRuntime } from "../../runtime/runsRuntime";
 import { useLiveRunUpdates } from "../../runtime/useLiveRunUpdates";
 import exec from "../runs/RunExec.module.scss";
-import { Button, Input, Pagination, Select } from "@clockwyrks/ui";
-import { showingLabel, useClientPage } from "../../components/useClientPage";
-import { PAGE_PARAM, usePagedSearchParams } from "../../components/usePagedSearchParams";
+import { Button, Input, Pagination, Select } from "../../../index";
+import { showingLabel, useClientPage } from "../../components/use-client-page";
+import {
+  PAGE_PARAM,
+  usePagedSearchParams,
+} from "../../components/usePagedSearchParams";
 import filterStyles from "../../components/RunFilters.module.scss";
 
 // The ladder dashboard is the point of the whole feature: one card per climber, each
@@ -74,17 +81,21 @@ export const SLOT_BADGE_LABEL: Record<SlotStatus, string> = {
 /** How a ladder's latest dispatch reads: the header's badge and the list card's. */
 export function dispatchStatusLabel(status: DispatchStatus | null): string {
   switch (status) {
-    case null:
+    case null: {
       return "Not run yet";
-    case "running":
+    }
+    case "running": {
       return "Running";
+    }
     case "needsAttention": {
       return "Needs attention";
     }
-    case "finished":
+    case "finished": {
       return "Finished";
-    case "stopped":
+    }
+    case "stopped": {
       return "Stopped";
+    }
   }
 }
 
@@ -118,14 +129,18 @@ export function climberStatusLabel(
     return `Stopped at rung ${at}`;
   }
   switch (climber.status) {
-    case "running":
+    case "running": {
       return `Running rung ${at}`;
-    case "blocked":
+    }
+    case "blocked": {
       return blockedLabel(climber.blocked, at);
-    case "failed":
+    }
+    case "failed": {
       return `Failed at rung ${at}`;
-    case "completed":
+    }
+    case "completed": {
       return "Completed";
+    }
   }
 }
 
@@ -135,14 +150,18 @@ export function climberStatusLabel(
  */
 function blockedLabel(block: ClimberBlock | undefined, at: number): string {
   switch (block?.kind) {
-    case "unlaunchable":
+    case "unlaunchable": {
       return `Blocked at rung ${at}: cannot launch`;
-    case "failing":
+    }
+    case "failing": {
       return `Blocked at rung ${at}: retries used up`;
-    case "unrated":
+    }
+    case "unrated": {
       return `Blocked at rung ${at}: ${block.runs} run${block.runs === 1 ? "" : "s"} unrated`;
-    case undefined:
+    }
+    case undefined: {
       return `Blocked at rung ${at}`;
+    }
   }
 }
 
@@ -153,21 +172,24 @@ function blockedLabel(block: ClimberBlock | undefined, at: number): string {
  */
 export function describeClimberBlock(block: ClimberBlock): string {
   switch (block.kind) {
-    case "unlaunchable":
+    case "unlaunchable": {
       return `This combination cannot be launched: ${block.reason}. Fix the combination, then retry this climber.`;
-    case "failing":
+    }
+    case "failing": {
       return (
         "A run launched for this rung used up its automatic retries without a " +
         `run that counts (${block.attempts} attempt${block.attempts === 1 ? "" : "s"}) ` +
         "and was not launched again. Fix the cause, then retry this climber to " +
         "launch it again."
       );
-    case "unrated":
+    }
+    case "unrated": {
       return (
         `${block.runs} completed run${block.runs === 1 ? "" : "s"} on this rung ` +
         `${block.runs === 1 ? "carries" : "carry"} no validator rating, so the gate ` +
         "cannot decide the rung from them. Re-push those runs."
       );
+    }
   }
 }
 
@@ -180,41 +202,27 @@ export function retryable(climber: LadderClimber): boolean {
   );
 }
 
-/**
- * How a climber's status pill reads under its dispatch: its own status, or stopped
- * for a climber a Stop caught while it was still running or blocked. The pill's
- * colour and the board's status filter both go by this, so the filter narrows to
- * exactly the pills that say what it says.
- */
-export type ClimberStanding = ClimberStatus | "stopped";
-
-/** Where a climber stands as its pill reads it. */
-export function climberStanding(
-  climber: LadderClimber,
-  dispatch: DispatchStatus,
-): ClimberStanding {
-  return dispatch === "stopped" &&
-    (climber.status === "running" || climber.status === "blocked")
-    ? "stopped"
-    : climber.status;
-}
-
 /** The status pill's colour class, one per state (see `Ladder.module.scss`). */
 function statusClass(
   climber: LadderClimber,
   dispatch: DispatchStatus,
 ): string | undefined {
   switch (climberStanding(climber, dispatch)) {
-    case "stopped":
+    case "stopped": {
       return ladderStyles.statusStopped;
-    case "running":
+    }
+    case "running": {
       return ladderStyles.statusRunning;
-    case "blocked":
+    }
+    case "blocked": {
       return ladderStyles.statusBlocked;
-    case "failed":
+    }
+    case "failed": {
       return ladderStyles.statusFailed;
-    case "completed":
+    }
+    case "completed": {
       return ladderStyles.statusCompleted;
+    }
   }
 }
 
@@ -368,30 +376,39 @@ export function climberCombo(climber: LadderClimber): ReviewPlanCombo {
 /** The badge's colour class: filled for a verdict, muted for anything undecided. */
 function slotBadgeClass(status: SlotStatus): string | undefined {
   switch (status) {
-    case "passed":
+    case "passed": {
       return ladderStyles.verdictPassed;
-    case "failed":
+    }
+    case "failed": {
       return ladderStyles.verdictFailed;
-    default:
+    }
+    default: {
       return ladderStyles.verdictUndecided;
+    }
   }
 }
 
 /** The rung-track segment's class for one slot. */
 function trackStepClass(slot: LadderSlot | undefined): string {
   switch (slot?.status) {
-    case "passed":
+    case "passed": {
       return ladderStyles.rungStepDone ?? "";
-    case "failed":
+    }
+    case "failed": {
       return ladderStyles.rungStepFailed ?? "";
-    case "running":
+    }
+    case "running": {
       return ladderStyles.rungStepCurrent ?? "";
-    case "blocked":
+    }
+    case "blocked": {
       return ladderStyles.rungStepBlocked ?? "";
-    case "skipped":
+    }
+    case "skipped": {
       return ladderStyles.rungStepSkipped ?? "";
-    default:
+    }
+    default: {
       return "";
+    }
   }
 }
 
@@ -478,7 +495,7 @@ export const RUNGS_PER_PAGE = 5;
  * so the rung the status pill names is on screen without paging. A completed climber,
  * which stands at no rung, opens on the first page.
  */
-export function openingRungPage(
+function openingRungPage(
   climber: LadderClimber,
   rungs: LadderProgressRung[],
 ): number {
@@ -486,7 +503,7 @@ export function openingRungPage(
   const index = rungs.findIndex(
     (rung) => rung.position === climber.currentRung,
   );
-  return index < 0 ? 0 : Math.floor(index / RUNGS_PER_PAGE);
+  return index === -1 ? 0 : Math.floor(index / RUNGS_PER_PAGE);
 }
 
 // One climber's card on the board. Its header is a grid of fixed slots: the identity,
@@ -689,25 +706,6 @@ function standingsOf(dispatch: DispatchStatus): ClimberStanding[] {
   return dispatch === "stopped"
     ? ["stopped", "failed", "completed"]
     : ["running", "blocked", "failed", "completed"];
-}
-
-/**
- * What the board's search matches a climber on, lowercased: its heading as the card
- * spells it, and the raw fields under it (the harness, the model, the provider, the gg
- * configuration and every model it binds), so a climber is found by whichever of them
- * the reader remembers.
- */
-export function climberSearchText(climber: LadderClimber): string {
-  return [
-    comboLabel(climber),
-    climber.harness,
-    climber.model,
-    climber.provider ?? "",
-    climber.ggConfigName ?? "",
-    ...Object.values(climber.ggSlotModels ?? {}),
-  ]
-    .join(" ")
-    .toLowerCase();
 }
 
 // The climbers of a dispatch, a page at a time.

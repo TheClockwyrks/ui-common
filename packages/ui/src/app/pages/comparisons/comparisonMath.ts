@@ -35,13 +35,38 @@ export function remainingForArm(
   n: number,
   result: ComparisonArmResult,
 ): number {
-  if (result.unlaunchable || !Array.isArray(result.runIds)) return 0;
-  return Math.max(0, n - result.runIds.length - (result.inFlight ?? 0));
+  const held = heldRunIds(result);
+  return held === null || result.unlaunchable
+    ? 0
+    : Math.max(0, n - held.length - inFlightOf(result));
+}
+
+/**
+ * An arm's result as a backend older than its holdings reports it: without the runs
+ * it holds or the jobs it waits on.
+ */
+type ReportedHoldings = Partial<
+  Pick<ComparisonArmResult, "runIds" | "inFlight">
+>;
+
+/** The runs an arm holds, or null when its backend reported none at all. */
+export function heldRunIds(
+  result: ComparisonArmResult,
+): readonly string[] | null {
+  const { runIds } = result as ReportedHoldings;
+  return Array.isArray(runIds) ? runIds : null;
+}
+
+/** The jobs of an arm's cell it is waiting on; none when its backend did not say. */
+export function inFlightOf(result: ComparisonArmResult): number {
+  return (result as ReportedHoldings).inFlight ?? 0;
 }
 
 /** How many runs the arms are waiting on, across every arm. */
 export function runsInFlight(results: readonly ComparisonArmResult[]): number {
-  return results.reduce((sum, result) => sum + (result.inFlight ?? 0), 0);
+  let sum = 0;
+  for (const result of results) sum += inFlightOf(result);
+  return sum;
 }
 
 /** One arm and how many runs it still needs to reach the comparison's `N`. */
@@ -178,28 +203,29 @@ export function armDistributionGroups(
 ): DistributionGroup[] {
   return arms.flatMap((a) => {
     const summary = a[metric];
-    if (!summary) return [];
-    return [
-      {
-        label: a.arm.label,
-        color: colorForArm.get(a.arm.id),
-        n: summary.n,
-        points: (a.runPoints ?? []).flatMap((p: ArmRunPoint) => {
-          const value = p[RUN_POINT_FIELD[metric]];
-          return value == null
-            ? []
-            : [{ runId: p.runId, value, href: routes.runDetail(p.runId) }];
-        }),
-        median: summary.median,
-        mean: summary.mean,
-        min: summary.min,
-        max: summary.max,
-        q1: summary.q1,
-        q3: summary.q3,
-        ciLow: summary.ciLow,
-        ciHigh: summary.ciHigh,
-      },
-    ];
+    return summary
+      ? [
+          {
+            label: a.arm.label,
+            color: colorForArm.get(a.arm.id),
+            n: summary.n,
+            points: (a.runPoints ?? []).flatMap((p: ArmRunPoint) => {
+              const value = p[RUN_POINT_FIELD[metric]];
+              return value == null
+                ? []
+                : [{ runId: p.runId, value, href: routes.runDetail(p.runId) }];
+            }),
+            median: summary.median,
+            mean: summary.mean,
+            min: summary.min,
+            max: summary.max,
+            q1: summary.q1,
+            q3: summary.q3,
+            ciLow: summary.ciLow,
+            ciHigh: summary.ciHigh,
+          },
+        ]
+      : [];
   });
 }
 
@@ -438,8 +464,8 @@ export function toolCallChartData(arms: readonly ArmToolCalls[]): {
       arm.armLabel,
       ...rows.map(
         (r) =>
-          `${r.kind}: ${r.value} (${r.tools
-            .map(([name, count]) => `${name} ${count}`)
+          `${r.kind}: ${String(r.value)} (${r.tools
+            .map(([name, count]) => `${name} ${String(count)}`)
             .join(", ")})`,
       ),
     ].join("\n");

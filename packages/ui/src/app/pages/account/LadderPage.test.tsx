@@ -16,8 +16,21 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { dispatchLive } from "./ladder-dispatch";
+import { climberSearchText, climberStanding } from "./ladder-climbers";
 import ladderStyles from "./Ladder.module.scss";
-import { climberCombo, ClimberRow, CLIMBERS_PER_PAGE, climberSearchText, climberStanding, climberStatusLabel, describeClimberBlock, describeLadderStop, describeTally, dispatchStatusLabel, LADDER_ATTENTION_NOTE, LadderPage, ladderStatusNote } from "./LadderPage";
+import {
+  climberCombo,
+  ClimberRow,
+  CLIMBERS_PER_PAGE,
+  climberStatusLabel,
+  describeClimberBlock,
+  describeLadderStop,
+  describeTally,
+  dispatchStatusLabel,
+  LADDER_ATTENTION_NOTE,
+  LadderPage,
+  ladderStatusNote,
+} from "./LadderPage";
 import type { BackendClient } from "../../../client/clients";
 import {
   BackendProvider,
@@ -104,9 +117,9 @@ function rung(
   over: Partial<LadderProgressRung> = {},
 ): LadderProgressRung {
   return {
-    id: `r${position}`,
+    id: `r${String(position)}`,
     position,
-    slug: `case-${position}`,
+    slug: `case-${String(position)}`,
     version: "v1.0.0",
     variant: "base",
     latestVersion: "v1.0.0",
@@ -130,7 +143,7 @@ function tally(over: Partial<RungTally> = {}): RungTally {
 
 function slot(position: number, over: Partial<LadderSlot> = {}): LadderSlot {
   return {
-    rungId: `r${position}`,
+    rungId: `r${String(position)}`,
     position,
     status: "pending",
     runIds: [],
@@ -224,6 +237,12 @@ function progress(over: Partial<LadderProgress> = {}): LadderProgress {
 
 // "Failed" alone is the same sentence for a model that fell at the first case and one
 // that passed six, so every state but a completed climb names its rung.
+// A rung's status when the climber stands on rung `current`.
+function rungStatus(rung: number, current: number) {
+  if (rung < current) return "passed";
+  return rung === current ? "running" : "pending";
+}
+
 describe("climberStatusLabel", () => {
   it("says each state in plain words, naming the rung from one", () => {
     expect(climberStatusLabel(climber(), 3)).toBe("Running rung 2");
@@ -465,49 +484,48 @@ describe("ladderStatusNote", () => {
   });
 });
 
+function renderRow(
+  over: Partial<LadderClimber> = {},
+  opts: {
+    rungs?: LadderProgressRung[];
+    query?: GalleryDataInput["queryRunSummaries"];
+    dispatch?: DispatchStatus;
+  } = {},
+) {
+  const onRetry = vi.fn();
+  render(
+    <MemoryRouter>
+      <GalleryDataProvider value={galleryValue(opts.query)}>
+        <ClimberRow
+          climber={climber(over)}
+          rungs={opts.rungs ?? [rung(0), rung(1), rung(2)]}
+          busy={false}
+          dispatch={opts.dispatch ?? "running"}
+          onRetry={onRetry}
+        />
+      </GalleryDataProvider>
+    </MemoryRouter>,
+  );
+  return { onRetry };
+}
+const shownRungNumbers = () =>
+  [...document.querySelectorAll("[class*=rungIndex]")].map(
+    (el) => el.textContent,
+  );
+const expand = () =>
+  fireEvent.click(screen.getByRole("button", { expanded: false }));
+
 // The board's card is the feature: collapsed it must already answer "how far did this
 // model get", and expanded it must show the evidence behind each rung.
 describe("ClimberRow", () => {
-  function renderRow(
-    over: Partial<LadderClimber> = {},
-    opts: {
-      rungs?: LadderProgressRung[];
-      query?: GalleryDataInput["queryRunSummaries"];
-      dispatch?: DispatchStatus;
-    } = {},
-  ) {
-    const onRetry = vi.fn();
-    render(
-      <MemoryRouter>
-        <GalleryDataProvider value={galleryValue(opts.query)}>
-          <ClimberRow
-            climber={climber(over)}
-            rungs={opts.rungs ?? [rung(0), rung(1), rung(2)]}
-            busy={false}
-            dispatch={opts.dispatch ?? "running"}
-            onRetry={onRetry}
-          />
-        </GalleryDataProvider>
-      </MemoryRouter>,
-    );
-    return { onRetry };
-  }
-
   describe("paging the rungs", () => {
     const twelve = Array.from({ length: 12 }, (_, i) => rung(i));
     const slots12 = (current: number) =>
       twelve.map((_, i) =>
         slot(i, {
-          status:
-            i < current ? "passed" : i === current ? "running" : "pending",
+          status: rungStatus(i, current),
         }),
       );
-    const shownRungNumbers = () =>
-      [...document.querySelectorAll("[class*=rungIndex]")].map(
-        (el) => el.textContent,
-      );
-    const expand = () =>
-      fireEvent.click(screen.getByRole("button", { expanded: false }));
 
     it("draws 5 rungs a page and opens on the page of the climber's rung", () => {
       renderRow({ currentRung: 7, slots: slots12(7) }, { rungs: twelve });
@@ -530,7 +548,7 @@ describe("ClimberRow", () => {
 
     it("opens a completed climber on the first page", () => {
       renderRow(
-        { status: "completed", currentRung: null, slots: slots12(12) },
+        { status: "completed", currentRung: undefined, slots: slots12(12) },
         { rungs: twelve },
       );
       expand();
@@ -543,7 +561,7 @@ describe("ClimberRow", () => {
       expect(shownRungNumbers()).toEqual(["1", "2", "3"]);
       expect(
         screen.queryByRole("navigation", { name: "Pagination" }),
-      ).toBeNull();
+      ).not.toBeInTheDocument();
     });
 
     it("keeps the whole climb on the rung track while the list is paged", () => {
@@ -555,9 +573,9 @@ describe("ClimberRow", () => {
 
   it("answers where the climber stands without being expanded", () => {
     renderRow();
-    expect(screen.getByText("Running rung 2")).toBeTruthy();
-    expect(screen.getByText("1/3 rungs")).toBeTruthy();
-    expect(screen.queryByText(/runs passed/)).toBeNull();
+    expect(screen.getByText("Running rung 2")).toBeInTheDocument();
+    expect(screen.getByText("1/3 rungs")).toBeInTheDocument();
+    expect(screen.queryByText(/runs passed/)).not.toBeInTheDocument();
   });
 
   // jsdom has no layout, so stability is asserted structurally: the status pill lives
@@ -603,15 +621,15 @@ describe("ClimberRow", () => {
 
   it("heads a gg climber with its configuration and the models it binds", () => {
     renderRow(ggClimber());
-    expect(screen.getByText("reviewer · haiku, opus")).toBeTruthy();
+    expect(screen.getByText("reviewer · haiku, opus")).toBeInTheDocument();
   });
 
   it("offers no steering: no watch, priority, or pause", () => {
     renderRow();
     expect(
       screen.queryByRole("button", { name: /watch|pause|resume/i }),
-    ).toBeNull();
-    expect(screen.queryByRole("spinbutton")).toBeNull();
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
   });
 
   it("says why a blocked climber will not move and offers Retry", () => {
@@ -619,8 +637,12 @@ describe("ClimberRow", () => {
       status: "blocked",
       blocked: { kind: "failing", attempts: 3 },
     });
-    expect(screen.getByText("Blocked at rung 2: retries used up")).toBeTruthy();
-    expect(screen.getByText(/used up its automatic retries/)).toBeTruthy();
+    expect(
+      screen.getByText("Blocked at rung 2: retries used up"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/used up its automatic retries/),
+    ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Retry claude · opus" }),
     );
@@ -636,12 +658,14 @@ describe("ClimberRow", () => {
       }),
     );
     expect(screen.getAllByText(/configuration deleted/)).toHaveLength(1);
-    expect(screen.getByRole("button", { name: /^Retry / })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Retry / })).toBeInTheDocument();
   });
 
   it("offers no Retry for an unrated block", () => {
     renderRow({ status: "blocked", blocked: { kind: "unrated", runs: 2 } });
-    expect(screen.queryByRole("button", { name: /^Retry / })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^Retry / }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the reason and Retry under a dispatch that needs attention", () => {
@@ -663,21 +687,23 @@ describe("ClimberRow", () => {
       { status: "blocked", blocked: { kind: "failing", attempts: 3 } },
       { dispatch: "stopped" },
     );
-    expect(screen.getByText("Stopped at rung 2")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /^Retry / })).toBeNull();
+    expect(screen.getByText("Stopped at rung 2")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Retry / }),
+    ).not.toBeInTheDocument();
   });
 
   it("expands to each rung's slot status and its evidence", () => {
     renderRow();
     fireEvent.click(screen.getByRole("button", { expanded: false }));
-    expect(screen.getByText("Passed")).toBeTruthy();
-    expect(screen.getByText("Running")).toBeTruthy();
-    expect(screen.getByText("Pending")).toBeTruthy();
+    expect(screen.getByText("Passed")).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
+    expect(screen.getByText("Pending")).toBeInTheDocument();
     expect(
       screen.getByText(
         "1 of 3 runs passed (2 needed) · 1 without a validator rating · 1 in flight · 1 still to launch",
       ),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
   });
 
   it("badges the slots after a failed rung as skipped", () => {
@@ -690,7 +716,7 @@ describe("ClimberRow", () => {
         slot(2, { status: "skipped" }),
       ],
     });
-    expect(screen.getByText("Failed at rung 1")).toBeTruthy();
+    expect(screen.getByText("Failed at rung 1")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { expanded: false }));
     expect(screen.getAllByText("Skipped")).toHaveLength(2);
   });
@@ -701,7 +727,7 @@ describe("ClimberRow", () => {
     const rows = screen.getAllByRole("listitem");
     const current = rows.filter((r) => /rungRowCurrent/.test(r.className));
     expect(current).toHaveLength(1);
-    expect(current[0]!.textContent).toMatch(/Running/);
+    expect(current[0]!).toHaveTextContent(/Running/);
   });
 
   it("names a rung's engine, so one case climbed on two is two rows", () => {
@@ -716,8 +742,10 @@ describe("ClimberRow", () => {
       },
     );
     fireEvent.click(screen.getByRole("button", { expanded: false }));
-    expect(screen.getByText("Case 0 · base · v1.0.0 · Simple 2D")).toBeTruthy();
-    expect(screen.getByText("Case 0 · base · v1.0.0")).toBeTruthy();
+    expect(
+      screen.getByText("Case 0 · base · v1.0.0 · Simple 2D"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Case 0 · base · v1.0.0")).toBeInTheDocument();
   });
 
   // A rung's runs are the ones the board says the slot holds, whoever launched them:
@@ -743,7 +771,9 @@ describe("ClimberRow", () => {
         latestVersions: false,
       }),
     );
-    await waitFor(() => expect(screen.getAllByRole("link")).toHaveLength(1));
+    await waitFor(() => {
+      expect(screen.getAllByRole("link")).toHaveLength(1);
+    });
   });
 
   it("offers no runs list on a rung the dispatch has not reached", () => {
@@ -764,19 +794,19 @@ describe("ClimberRow", () => {
   });
 });
 
+function Dashboard() {
+  useRecordSectionIndex("coverage");
+  return (
+    <ClimberRow
+      climber={climber()}
+      rungs={[rung(0), rung(1), rung(2)]}
+      busy={false}
+    />
+  );
+}
+
 // The review loop: a rung's runs must open with a return to the ladder behind them.
 describe("the ladder's back-return", () => {
-  function Dashboard() {
-    useRecordSectionIndex("coverage");
-    return (
-      <ClimberRow
-        climber={climber()}
-        rungs={[rung(0), rung(1), rung(2)]}
-        busy={false}
-      />
-    );
-  }
-
   it("hands a run's back control a return to the ladder it was opened from", async () => {
     render(
       <MemoryRouter initialEntries={["/account/ladders/l1"]}>
@@ -798,10 +828,40 @@ describe("the ladder's back-return", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /Runs$/ })[0]!);
     const row = await screen.findByRole("link", { name: /opus/i });
     fireEvent.click(row);
-    expect(screen.getByText("the run")).toBeTruthy();
+    expect(screen.getByText("the run")).toBeInTheDocument();
     expect(sectionReturnTo("runs", "/runs")).toBe("/account/ladders/l1");
   });
 });
+
+// The address the page is at, so a test reads the page and the filters off the URL.
+function Search() {
+  return <output data-testid="search">{useLocation().search}</output>;
+}
+// A dispatch at scale: one climber per model, in the order the backend reports them.
+// `model-07` is the eighth climber, so a page's cards are told apart by number.
+function many(
+  count: number,
+  over: (index: number) => Partial<LadderClimber> = () => ({}),
+): LadderClimber[] {
+  return Array.from({ length: count }, (_, index) => {
+    const model = `model-${String(index).padStart(2, "0")}`;
+    return climber({ key: `claude|${model}`, model, ...over(index) });
+  });
+}
+// The models of the cards on screen, in order.
+function shownModels(): string[] {
+  return screen
+    .getAllByText(/^claude · model-\d+$/)
+    .map((node) => node.textContent.replace("claude · ", ""));
+}
+const search = () => screen.getByTestId("search").textContent;
+const failing = (at: number) => (index: number) =>
+  index === at
+    ? ({
+        status: "blocked",
+        blocked: { kind: "failing", attempts: 2 },
+      } as Partial<LadderClimber>)
+    : {};
 
 // The dashboard mounted for real: Run ladder starts a dispatch, Stop ends it, and the
 // controls a dispatch replaced (Enabled, Halt, Pause) are gone.
@@ -838,11 +898,6 @@ describe("LadderPage", () => {
     confirmSpy.mockClear();
   });
 
-  // The address the page is at, so a test reads the page and the filters off the URL.
-  function Search() {
-    return <output data-testid="search">{useLocation().search}</output>;
-  }
-
   function renderPage(initial: LadderProgress, search = "") {
     board = initial;
     const client = {
@@ -855,7 +910,7 @@ describe("LadderPage", () => {
         return board;
       },
       stopLadder: async (_id: string, input: { cancelRunning: boolean }) => {
-        calls.push(`stop:${input.cancelRunning}`);
+        calls.push(`stop:${String(input.cancelRunning)}`);
         board = progress({ dispatch: dispatch({ status: "stopped" }) });
         return { canceled: 2, includedActive: input.cancelRunning };
       },
@@ -897,12 +952,12 @@ describe("LadderPage", () => {
 
   it("says how to start a ladder never run, and runs it", async () => {
     renderPage(progress({ dispatch: null, climbers: [], runsUnreviewed: 0 }));
-    expect(await screen.findByText("Not run yet")).toBeTruthy();
+    expect(await screen.findByText("Not run yet")).toBeInTheDocument();
     expect(
       screen.getByText(/Press Run ladder to start a dispatch/),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
     // The configured rungs, so the reader sees what a Run would climb.
-    expect(screen.getByText("Case 0 · base · v1.0.0")).toBeTruthy();
+    expect(screen.getByText("Case 0 · base · v1.0.0")).toBeInTheDocument();
     const stop = screen.getByRole("button", { name: "Stop" });
     expect((stop as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "▶ Run ladder" }));
@@ -912,7 +967,7 @@ describe("LadderPage", () => {
     expect(calls).toEqual(["run"]);
     // A first Run replaces nothing, so it is not confirmed.
     expect(confirmSpy).not.toHaveBeenCalled();
-    expect(screen.getByText("Running")).toBeTruthy();
+    expect(screen.getByText("Running")).toBeInTheDocument();
   });
 
   // A dispatch counts the runs its rungs already have, so a Run over runs that exist
@@ -942,16 +997,23 @@ describe("LadderPage", () => {
       progress({ dispatch: dispatch({ slots: slotCounts({ skipped: 4 }) }) }),
     );
     await screen.findByText("rungs skipped");
-    expect(screen.getByText("rungs skipped").textContent).toBe(
+    expect(screen.getByText("rungs skipped")).toHaveTextContent(
       "4 rungs skipped",
     );
-    expect(screen.queryByRole("switch")).toBeNull();
-    expect(screen.queryByRole("button", { name: /^Halt/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /Pause|Resume/ })).toBeNull();
-    expect(screen.queryByText(/↑/)).toBeNull();
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Halt/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Pause|Resume/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/↑/)).not.toBeInTheDocument();
     const run = screen.getByRole("button", { name: "▶ Run ladder" });
     expect((run as HTMLButtonElement).disabled).toBe(true);
-    expect(run.getAttribute("title")).toMatch(/Stop it to run again/);
+    expect(run).toHaveAttribute(
+      "title",
+      expect.stringMatching(/Stop it to run again/),
+    );
   });
 
   // Needs attention is a reading of a running dispatch: nothing of it is in flight and
@@ -1015,7 +1077,9 @@ describe("LadderPage", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Stop and cancel running" }),
     );
-    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+    });
     expect(calls).toEqual([]);
     confirmAnswer = true;
     fireEvent.click(
@@ -1027,40 +1091,13 @@ describe("LadderPage", () => {
 
   it("confirms running again over a finished dispatch", async () => {
     renderPage(progress({ dispatch: dispatch({ status: "finished" }) }));
-    expect(await screen.findByText("Finished")).toBeTruthy();
+    expect(await screen.findByText("Finished")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "▶ Run ladder" }));
-    await waitFor(() => expect(calls).toEqual(["run"]));
+    await waitFor(() => {
+      expect(calls).toEqual(["run"]);
+    });
     expect(confirmSpy).toHaveBeenCalledTimes(1);
   });
-
-  // A dispatch at scale: one climber per model, in the order the backend reports them.
-  // `model-07` is the eighth climber, so a page's cards are told apart by number.
-  function many(
-    count: number,
-    over: (index: number) => Partial<LadderClimber> = () => ({}),
-  ): LadderClimber[] {
-    return Array.from({ length: count }, (_, index) => {
-      const model = `model-${String(index).padStart(2, "0")}`;
-      return climber({ key: `claude|${model}`, model, ...over(index) });
-    });
-  }
-
-  // The models of the cards on screen, in order.
-  function shownModels(): string[] {
-    return screen
-      .getAllByText(/^claude · model-\d+$/)
-      .map((node) => (node.textContent ?? "").replace("claude · ", ""));
-  }
-
-  const search = () => screen.getByTestId("search").textContent;
-
-  const failing = (at: number) => (index: number) =>
-    index === at
-      ? ({
-          status: "blocked",
-          blocked: { kind: "failing", attempts: 2 },
-        } as Partial<LadderClimber>)
-      : {};
 
   describe("paging the climbers", () => {
     it("draws one page of a long board, in the backend's order", async () => {
@@ -1069,9 +1106,15 @@ describe("LadderPage", () => {
       expect(shownModels()).toHaveLength(CLIMBERS_PER_PAGE);
       expect(shownModels()[0]).toBe("model-00");
       expect(shownModels()[19]).toBe("model-19");
-      expect(screen.getByText("Showing 1–20 of 45 climbers")).toBeTruthy();
-      expect(screen.getByRole("button", { name: "Page 3" })).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "Page 4" })).toBeNull();
+      expect(
+        screen.getByText("Showing 1–20 of 45 climbers"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Page 3" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Page 4" }),
+      ).not.toBeInTheDocument();
     });
 
     it("offers no pager and no filters on a board that fits one page", async () => {
@@ -1080,9 +1123,11 @@ describe("LadderPage", () => {
       expect(shownModels()).toHaveLength(CLIMBERS_PER_PAGE);
       expect(
         screen.queryByRole("navigation", { name: "Pagination" }),
-      ).toBeNull();
-      expect(screen.queryByLabelText("Search climbers")).toBeNull();
-      expect(screen.queryByLabelText("Status")).toBeNull();
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByLabelText("Search climbers"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Status")).not.toBeInTheDocument();
     });
 
     it("moves through the pages by the pager, keeping the page in the URL", async () => {
@@ -1092,7 +1137,9 @@ describe("LadderPage", () => {
       expect(shownModels()[0]).toBe("model-20");
       expect(shownModels()).toHaveLength(20);
       expect(search()).toBe("?page=2");
-      expect(screen.getByText("Showing 21–40 of 45 climbers")).toBeTruthy();
+      expect(
+        screen.getByText("Showing 21–40 of 45 climbers"),
+      ).toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: "Page 3" }));
       expect(shownModels()).toEqual([
         "model-40",
@@ -1110,12 +1157,11 @@ describe("LadderPage", () => {
     it("opens on the page a link names", async () => {
       renderPage(progress({ climbers: many(45) }), "?page=2");
       await screen.findByText("claude · model-20");
-      expect(screen.queryByText("claude · model-00")).toBeNull();
-      expect(
-        screen
-          .getByRole("button", { name: "Page 2" })
-          .getAttribute("aria-current"),
-      ).toBe("page");
+      expect(screen.queryByText("claude · model-00")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Page 2" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
       expect(search()).toBe("?page=2");
     });
 
@@ -1123,7 +1169,9 @@ describe("LadderPage", () => {
       renderPage(progress({ climbers: many(45) }), "?page=9");
       await screen.findByText("claude · model-44");
       expect(shownModels()[0]).toBe("model-40");
-      await waitFor(() => expect(search()).toBe("?page=3"));
+      await waitFor(() => {
+        expect(search()).toBe("?page=3");
+      });
     });
 
     // A re-read that leaves fewer climbers than the page reaches (here a Stop whose
@@ -1133,36 +1181,41 @@ describe("LadderPage", () => {
       await screen.findByText("claude · model-44");
       fireEvent.click(screen.getByRole("button", { name: "Stop" }));
       await screen.findByText("claude · opus");
-      await waitFor(() => expect(search()).toBe(""));
-      expect(screen.queryByText(/^claude · model-/)).toBeNull();
+      await waitFor(() => {
+        expect(search()).toBe("");
+      });
+      expect(screen.queryByText(/^claude · model-/)).not.toBeInTheDocument();
     });
 
     // The summary, the status note and the blocked count are the whole dispatch's,
     // whatever page is on screen: the one blocked climber here is on page 2.
     it("keeps the summary and the status note about the whole dispatch", async () => {
+      const climbers = many(45, failing(30));
       renderPage(
         progress({
           dispatch: dispatch({ climbersRunning: 44, climbersBlocked: 1 }),
-          climbers: many(45, failing(30)),
+          climbers,
         }),
       );
       await screen.findByText("claude · model-00");
-      expect(screen.getByText("climbers").textContent).toBe("45 climbers");
-      expect(screen.getByText("running").textContent).toBe("44 running");
-      expect(screen.getByText("blocked").textContent).toBe("1 blocked");
+      expect(screen.getByText("climbers")).toHaveTextContent("45 climbers");
+      expect(screen.getByText("running")).toHaveTextContent("44 running");
+      expect(screen.getByText("blocked")).toHaveTextContent("1 blocked");
       expect(
         screen.getByText(/^1 blocked climber stands on a rung where a launch/),
-      ).toBeTruthy();
+      ).toBeInTheDocument();
       // Its card is not drawn on this page, so neither is its Retry.
-      expect(screen.queryByRole("button", { name: /^Retry / })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: /^Retry / }),
+      ).not.toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: "Next page" }));
-      expect(screen.getByText("climbers").textContent).toBe("45 climbers");
+      expect(screen.getByText("climbers")).toHaveTextContent("45 climbers");
       expect(
         screen.getByText(/^1 blocked climber stands on a rung where a launch/),
-      ).toBeTruthy();
+      ).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Retry claude · model-30" }),
-      ).toBeTruthy();
+      ).toBeInTheDocument();
     });
 
     it("narrows to a status, reaching a climber off the page, and retries it", async () => {
@@ -1190,10 +1243,10 @@ describe("LadderPage", () => {
       expect(shownModels()).toEqual(["model-30"]);
       expect(
         screen.getByText("Showing 1 of 1 matching (45 climbers)"),
-      ).toBeTruthy();
+      ).toBeInTheDocument();
       expect(
         screen.queryByRole("navigation", { name: "Pagination" }),
-      ).toBeNull();
+      ).not.toBeInTheDocument();
       fireEvent.click(
         screen.getByRole("button", { name: "Retry claude · model-30" }),
       );
@@ -1215,28 +1268,34 @@ describe("LadderPage", () => {
       fireEvent.change(screen.getByLabelText("Search climbers"), {
         target: { value: "MODEL-3" },
       });
-      await waitFor(() => expect(search()).toBe("?q=MODEL-3"));
+      await waitFor(() => {
+        expect(search()).toBe("?q=MODEL-3");
+      });
       expect(shownModels()).toEqual(
-        Array.from({ length: 10 }, (_, index) => `model-3${index}`),
+        Array.from({ length: 10 }, (_, index) => `model-3${String(index)}`),
       );
       expect(
         screen.getByText("Showing 1–10 of 10 matching (45 climbers)"),
-      ).toBeTruthy();
+      ).toBeInTheDocument();
       // The status counts follow the search.
-      expect(screen.getByRole("option", { name: "Running (10)" })).toBeTruthy();
+      expect(
+        screen.getByRole("option", { name: "Running (10)" }),
+      ).toBeInTheDocument();
       fireEvent.change(screen.getByLabelText("Search climbers"), {
         target: { value: "reviewer" },
       });
-      await waitFor(() => expect(search()).toBe("?q=reviewer"));
-      expect(screen.getByText(/^reviewer · /)).toBeTruthy();
-      expect(screen.queryByText(/^claude · model-/)).toBeNull();
+      await waitFor(() => {
+        expect(search()).toBe("?q=reviewer");
+      });
+      expect(screen.getByText(/^reviewer · /)).toBeInTheDocument();
+      expect(screen.queryByText(/^claude · model-/)).not.toBeInTheDocument();
       fireEvent.change(screen.getByLabelText("Search climbers"), {
         target: { value: "nothing-like-this" },
       });
       await screen.findByText("No climbers match those filters.");
-      expect(screen.getByText("0 of 45 climbers")).toBeTruthy();
+      expect(screen.getByText("0 of 45 climbers")).toBeInTheDocument();
       // The whole dispatch is still what the summary counts.
-      expect(screen.getByText("climbers").textContent).toBe("45 climbers");
+      expect(screen.getByText("climbers")).toHaveTextContent("45 climbers");
     });
 
     it("restores a filtered view from a link", async () => {
@@ -1285,34 +1344,33 @@ describe("LadderPage", () => {
       expect(shownModels()[0]).toBe("model-05");
       expect(
         screen.getByText("Showing 1–20 of 40 matching (45 climbers)"),
-      ).toBeTruthy();
+      ).toBeInTheDocument();
     });
 
     // A run finishing re-reads the board. The cards that stay on the page keep their
     // state, and the page itself stays where it was.
     it("keeps an expanded climber open and its page across a re-read", async () => {
-      renderPage(progress({ climbers: many(45, failing(25)) }), "?page=2");
-      const toggle = (await screen.findByText("claude · model-21")).closest(
-        "button",
-      )!;
+      const climbers = many(45, failing(25));
+      renderPage(progress({ climbers }), "?page=2");
+      const label = await screen.findByText("claude · model-21");
+      const toggle = label.closest("button")!;
       fireEvent.click(toggle);
-      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
       // The board the Retry's re-read returns: fresh objects, the climber now running.
       board = progress({ climbers: many(45) });
       fireEvent.click(
         screen.getByRole("button", { name: "Retry claude · model-25" }),
       );
-      await waitFor(() =>
-        expect(screen.queryByRole("button", { name: /^Retry / })).toBeNull(),
-      );
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("button", { name: /^Retry / }),
+        ).not.toBeInTheDocument();
+      });
       expect(search()).toBe("?page=2");
       expect(shownModels()[0]).toBe("model-20");
       expect(
-        screen
-          .getByText("claude · model-21")
-          .closest("button")!
-          .getAttribute("aria-expanded"),
-      ).toBe("true");
+        screen.getByText("claude · model-21").closest("button")!,
+      ).toHaveAttribute("aria-expanded", "true");
     });
   });
 

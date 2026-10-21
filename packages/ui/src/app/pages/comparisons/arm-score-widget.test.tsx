@@ -1,7 +1,8 @@
-import type { ComparisonArmResult } from "@clockwyrks/run-record/comparison";
+import type { ComparisonArmResult } from "@clockwyrks/backend-api/comparison";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { ArmScoreWidget } from "./ArmScoreWidget";
+
+import { ArmScoreWidget } from "./arm-score-widget";
 
 /** An arm with three scored runs out of 24 points, one of them full. */
 function scored(id: string, label: string): ComparisonArmResult {
@@ -69,8 +70,12 @@ const rowOrder = () =>
     .getAllByRole("button", { expanded: false })
     .map((row) => row.getAttribute("aria-controls"));
 
+const ids = (...names: string[]) => names.map((n) => `arm-score-${n}`);
+
 describe("ArmScoreWidget", () => {
-  afterEach(() => localStorage.clear());
+  afterEach(() => {
+    localStorage.clear();
+  });
 
   it("shows each arm as a closed row with its average score and passed count", () => {
     renderWidget([scored("pi", "pi"), bare("kilo", "kilo")]);
@@ -98,7 +103,7 @@ describe("ArmScoreWidget", () => {
     const runs = within(detail).getAllByLabelText(/^run \d+:/);
     expect(runs).toHaveLength(3);
     expect(runs[0]).toHaveAccessibleName("run 1: 24 of 24 points");
-    expect(runs[0]!.className).not.toBe(runs[1]!.className);
+    expect(runs[0]?.className).not.toBe(runs[1]?.className);
   });
 
   it("says what an open arm without runs is still waiting on", () => {
@@ -128,7 +133,6 @@ describe("ArmScoreWidget", () => {
       bare("c", "c"),
       rated("d", 0.2, 0.5),
     ]);
-    const ids = (...names: string[]) => names.map((n) => `arm-score-${n}`);
     expect(rowOrder()).toEqual(ids("a", "b", "c", "d"));
 
     const byScore = screen.getByRole("button", { name: "Sort by Avg score" });

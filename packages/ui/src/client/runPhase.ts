@@ -56,6 +56,7 @@ export function runPhase(state: string): InProgressRun["state"] | null {
 export function validatingRunNotice(
   run: Pick<InProgressRun, "state"> | null | undefined,
 ): string | null {
-  if (run?.state !== "validating") return null;
-  return "The model has finished; validating the build.";
+  return run?.state === "validating"
+    ? "The model has finished; validating the build."
+    : null;
 }

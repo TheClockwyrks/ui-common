@@ -39,7 +39,7 @@ import {
 } from "./comparisonMath";
 import { SubmitNotice } from "../../components/SubmitNotice";
 import { MedianRatioTile } from "./MedianRatioTile";
-import { ArmScoreWidget } from "./ArmScoreWidget";
+import { ArmScoreWidget } from "./arm-score-widget";
 import exec from "../runs/RunExec.module.scss";
 import styles from "./Comparisons.module.scss";
 
@@ -156,20 +156,18 @@ export function ComparisonDetailPage() {
           );
           for (let i = 0; i < remaining; i++) {
             try {
-              const ack = await worker.client.launchGgRun(
-                {
-                  testCase: controls.caseSlug,
-                  version: controls.version,
-                  variant: controls.variant,
-                  capabilitySet,
-                  // The engine is one of the comparison's held-constant controls.
-                  // A gg arm launched engineless while the comparison declares an
-                  // engine would be doing different work from the harness arm it
-                  // is being compared against — confounding the experiment
-                  // against its own control.
-                  engine: resolveEngineSlug(controls.engineSlug),
-                },
-              );
+              const ack = await worker.client.launchGgRun({
+                testCase: controls.caseSlug,
+                version: controls.version,
+                variant: controls.variant,
+                capabilitySet,
+                // The engine is one of the comparison's held-constant controls.
+                // A gg arm launched engineless while the comparison declares an
+                // engine would be doing different work from the harness arm it
+                // is being compared against — confounding the experiment
+                // against its own control.
+                engine: resolveEngineSlug(controls.engineSlug),
+              });
               runtime.track({
                 testCaseSlug: controls.caseSlug,
                 testCaseVersion: controls.version,
@@ -177,7 +175,7 @@ export function ComparisonDetailPage() {
                 harnessSlug: GG_HARNESS_SLUG,
                 // The run's representative model is its root agent's, which is what
                 // the backend lifts into the job's launch identity.
-                modelId: capabilitySet.agents?.[0]?.modelId ?? "",
+                modelId: capabilitySet.agents[0]?.modelId ?? "",
                 // What the Runs page actually shows for a gg run: the configuration
                 // it was launched from, read off the set that was sent rather than
                 // the picker option, so it is byte-identical to the name the backend
@@ -206,8 +204,7 @@ export function ComparisonDetailPage() {
       if (backend?.getComparison) {
         // The re-aggregated comparison is how the page learns what its arms now
         // hold and have in flight.
-        const updated = await backend.getComparison(comparison.id);
-        if (updated) setComparison(updated);
+        setComparison(await backend.getComparison(comparison.id));
       }
       if (launchErrors.size > 0) setError([...launchErrors].join(" "));
     } catch (e) {

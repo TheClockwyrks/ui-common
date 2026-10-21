@@ -6,7 +6,7 @@ import type { Model } from "../../../client/types";
 import { BackChevron } from "../../components/BackChevron";
 import { LoadingState } from "../../components/LoadingState";
 import { PageLayout } from "../../components/PageLayout";
-import { useLeaveGuard } from "../../components/useLeaveGuard";
+import { useLeaveGuard } from "../../components/use-leave-guard";
 import { UnsavedChangesDialog } from "./UnsavedChangesDialog";
 import { routes } from "../../routes";
 import { GgAgentEditor } from "../runs/gg/GgAgentEditor";

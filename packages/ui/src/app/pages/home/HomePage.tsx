@@ -18,7 +18,7 @@ import {
 import { CabinetIcon } from "../../components/CabinetIcon";
 import { LoadingState } from "../../components/LoadingState";
 import { PageLayout } from "../../components/PageLayout";
-import { ProjectLinks } from "../../components/ProjectLinks";
+import { ProjectLinks } from "../../components/project-links";
 import { PromptHeader } from "../../components/PromptHeader";
 import { UnpublishedTag } from "../../components/UnpublishedTag";
 import {
@@ -218,7 +218,9 @@ function ShowcaseStage({ entry }: { entry: ShowcaseEntry }) {
     // without stageable media (or a host that cannot serve it) still holds its
     // place in the layout.
     return (
-      <div className={`${styles.stage} ${styles.stagePlaceholder}`}>
+      <div
+        className={`${String(styles.stage)} ${String(styles.stagePlaceholder)}`}
+      >
         <CabinetIcon className={styles.stageMark} />
       </div>
     );
@@ -546,8 +548,9 @@ function byFractionThenRatingThenRecency(a: GroupRow, b: GroupRow): number {
   if (a.meanFraction !== b.meanFraction) return b.meanFraction - a.meanFraction;
   const ra = a.best ? RATINGS.indexOf(a.best) : RATINGS.length;
   const rb = b.best ? RATINGS.indexOf(b.best) : RATINGS.length;
-  if (ra !== rb) return ra - rb;
-  return b.entry.latestStartedAt.localeCompare(a.entry.latestStartedAt);
+  return ra === rb
+    ? b.entry.latestStartedAt.localeCompare(a.entry.latestStartedAt)
+    : ra - rb;
 }
 
 // One leaderboard per repo-defined test-case group, each a full-width panel so
@@ -556,8 +559,7 @@ function byFractionThenRatingThenRecency(a: GroupRow, b: GroupRow): number {
 // all — there is nothing to head it with.
 function GroupBoards() {
   const groups = useTestCaseGroups();
-  if (groups.length === 0) return null;
-  return (
+  return groups.length === 0 ? null : (
     <section className={styles.boards}>
       {groups.map((group) => (
         <GroupBoard key={group.slug} group={group} />
@@ -684,7 +686,7 @@ function BoardBadge({
 }
 
 function percent(fraction: number): string {
-  return `${Math.round(fraction * 100)}%`;
+  return `${String(Math.round(fraction * 100))}%`;
 }
 
 // One ranked row, a disclosure over the runs it aggregates: the row itself is
@@ -711,7 +713,9 @@ function GroupBoardRow({
         className={styles.boardRow}
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          setOpen((value) => !value);
+        }}
       >
         <span className={styles.chevron} aria-hidden="true">
           {open ? "▾" : "▸"}
@@ -769,12 +773,15 @@ function GroupRowRuns({
       const index = group.cases.indexOf(slug);
       return index === -1 ? group.cases.length : index;
     };
-    return [...entry.runs].sort((a, b) => {
+    const sorted = [...entry.runs];
+    sorted.sort((a, b) => {
       const byCase =
         order(a.run.subject.testCaseSlug) - order(b.run.subject.testCaseSlug);
-      if (byCase !== 0) return byCase;
-      return b.run.startedAt.localeCompare(a.run.startedAt);
+      return byCase === 0
+        ? b.run.startedAt.localeCompare(a.run.startedAt)
+        : byCase;
     });
+    return sorted;
   }, [entry.runs, group.cases]);
 
   return (

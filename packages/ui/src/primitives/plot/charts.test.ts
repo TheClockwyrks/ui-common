@@ -65,13 +65,18 @@ describe("barChart", () => {
     // The tip box (drawn on hover, inheriting the tip group's fill) is the theme
     // surface, not Plot's default white — so the light chart text reads against it
     // rather than light-on-white.
-    expect(tip!.getAttribute("fill")).toBe(palette.surface);
-    expect(tip!.getAttribute("stroke")).toBe(palette.border);
+    expect(tip?.getAttribute("fill")).toBe(palette.surface);
+    expect(tip?.getAttribute("stroke")).toBe(palette.border);
     // The hover-highlight overlay is present (a translucent wash keyed to the same
     // pointer as the tip), so the bar reacts wherever the tooltip appears.
     expect(node.querySelector('[fill-opacity="0.18"]')).not.toBeNull();
   });
 });
+
+const xLabels = (node: Element) =>
+  [...node.querySelectorAll('[aria-label="x-axis tick label"] text')].map(
+    (t) => t.textContent,
+  );
 
 describe("stackedBarChart", () => {
   const series = [
@@ -125,11 +130,6 @@ describe("stackedBarChart", () => {
     { group: "119", series: "Great", value: 1 },
   ];
 
-  const xLabels = (node: Element) =>
-    [...node.querySelectorAll('[aria-label="x-axis tick label"] text')].map(
-      (t) => t.textContent,
-    );
-
   it("keeps the bar order it is given rather than sorting the groups", () => {
     const node = render(
       stackedBarChart(numeric, palette, series, {
@@ -173,15 +173,15 @@ describe("stackedAreaChart", () => {
     expect(node.querySelector('[aria-label="tip"]')).toBeNull();
   });
 
-  const titled = points.map((p) => ({ ...p, title: `Turn ${p.x}` }));
+  const titled = points.map((p) => ({ ...p, title: `Turn ${String(p.x)}` }));
 
   it("wires up hover tips, and the rule marking the hovered x, when points carry titles", () => {
     const node = render(stackedAreaChart(titled, palette, series));
     const tip = node.querySelector('[aria-label="tip"]');
     expect(tip).not.toBeNull();
     // The themed tip box, so the light chart text reads against it.
-    expect(tip!.getAttribute("fill")).toBe(palette.surface);
-    expect(tip!.getAttribute("stroke")).toBe(palette.border);
+    expect(tip?.getAttribute("fill")).toBe(palette.surface);
+    expect(tip?.getAttribute("stroke")).toBe(palette.border);
     // The pointer rule that marks which x the tip is describing.
     expect(node.querySelector('[stroke-opacity="0.45"]')).not.toBeNull();
   });
@@ -222,14 +222,14 @@ describe("metricLineChart", () => {
   it("wires up hover tips, the crosshair, and the widened dot when points carry titles", () => {
     const titled = points.map((p) => ({
       ...p,
-      title: `Turn ${p.turn}\n${p.value} tok/s`,
+      title: `Turn ${String(p.turn)}\n${String(p.value)} tok/s`,
     }));
     const node = render(
       metricLineChart(titled, palette, { yTickFormat: "~s", color: "#8ac926" }),
     );
     const tip = node.querySelector('[aria-label="tip"]');
     expect(tip).not.toBeNull();
-    expect(tip!.getAttribute("fill")).toBe(palette.surface);
+    expect(tip?.getAttribute("fill")).toBe(palette.surface);
     // The crosshair rule at the pointed turn.
     expect(node.querySelector('[stroke-opacity="0.45"]')).not.toBeNull();
     // ...and the widened dot layer for the selected observation (it draws no
@@ -248,23 +248,21 @@ describe("metricLineChart", () => {
   });
 });
 
-describe("timeSeriesChart", () => {
-  const day = (n: number) => new Date(Date.UTC(2026, 6, n));
-  const oneSeries = [{ name: "", color: "#ff9d2f" }];
+const day = (n: number) => new Date(Date.UTC(2026, 6, n));
+// The x coordinates of a drawn polyline, in the order the path visits them. This
+// is the only way to see what a line actually did: the mark's own data can be
+// sorted correctly and still be drawn in input order if the sort never reached the
+// mark, so the assertion has to read the geometry.
+function lineXs(node: Element): number[][] {
+  return [...node.querySelectorAll('[aria-label="line"] path')].map((path) => {
+    const d = path.getAttribute("d") ?? "";
+    const coords = [...d.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)];
+    return coords.map((m) => Number(m[1]));
+  });
+}
 
-  // The x coordinates of a drawn polyline, in the order the path visits them. This
-  // is the only way to see what a line actually did: the mark's own data can be
-  // sorted correctly and still be drawn in input order if the sort never reached the
-  // mark, so the assertion has to read the geometry.
-  function lineXs(node: Element): number[][] {
-    return [...node.querySelectorAll('[aria-label="line"] path')].map(
-      (path) => {
-        const d = path.getAttribute("d") ?? "";
-        const coords = [...d.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)];
-        return coords.map((m) => Number(m[1]));
-      },
-    );
-  }
+describe("timeSeriesChart", () => {
+  const oneSeries = [{ name: "", color: "#ff9d2f" }];
 
   it("draws a line and a dot per observation", () => {
     const node = render(
@@ -400,7 +398,7 @@ describe("timeSeriesChart", () => {
     );
     const tip = node.querySelector('[aria-label="tip"]');
     expect(tip).not.toBeNull();
-    expect(tip!.getAttribute("fill")).toBe(palette.surface);
+    expect(tip?.getAttribute("fill")).toBe(palette.surface);
     expect(node.querySelector('[stroke-opacity="0.45"]')).not.toBeNull();
   });
 
@@ -422,9 +420,19 @@ describe("timeSeriesChart", () => {
       { time: day(1), series: "", value: 2 },
     ];
     timeSeriesChart(data, palette, oneSeries);
-    expect(data[0]!.time).toEqual(day(3));
+    expect(data[0]?.time).toEqual(day(3));
   });
 });
+
+// The CI is a separate layer offset to the left of the box, drawn in the muted
+// ink. Counting marks in that color is how we tell "the interval was drawn" from
+// "the interval was omitted" without depending on Plot's internal ordering.
+const mutedMarks = (node: Element) =>
+  node.querySelectorAll(`[stroke="${palette.muted}"]`).length;
+// The fitted y domain the spec carries, as [low, high].
+function yDomain(spec: ReturnType<typeof distributionChart>): number[] {
+  return (spec.y as { domain: number[] }).domain;
+}
 
 describe("distributionChart", () => {
   const groups = [
@@ -473,12 +481,6 @@ describe("distributionChart", () => {
     const node = render(distributionChart(groups, palette));
     expect(node.querySelector('[aria-label="tip"]')).not.toBeNull();
   });
-
-  // The CI is a separate layer offset to the left of the box, drawn in the muted
-  // ink. Counting marks in that color is how we tell "the interval was drawn" from
-  // "the interval was omitted" without depending on Plot's internal ordering.
-  const mutedMarks = (node: Element) =>
-    node.querySelectorAll(`[stroke="${palette.muted}"]`).length;
 
   it("draws the confidence interval for groups that carry one", () => {
     expect(
@@ -554,7 +556,7 @@ describe("distributionChart", () => {
   it("tilts the arm labels and widens a chart of many arms past its container", () => {
     const many = Array.from({ length: 12 }, (_, i) => ({
       ...groups[0]!,
-      label: `provider/model-${i} · harness`,
+      label: `provider/model-${String(i)} · harness`,
     }));
     const fit = distributionChart(groups, palette, {
       xTickRotate: 40,
@@ -577,11 +579,6 @@ describe("distributionChart", () => {
     expect(options.width).toBeUndefined();
     expect((options.x as { tickRotate?: number }).tickRotate).toBeUndefined();
   });
-
-  // The fitted y domain the spec carries, as [low, high].
-  function yDomain(spec: ReturnType<typeof distributionChart>): number[] {
-    return (spec.y as { domain: number[] }).domain;
-  }
 
   it("fits the value axis to the data with a margin instead of starting at zero", () => {
     // Values span 1–14, so the 8% margin is 1.04 on each side; the low side
@@ -630,17 +627,29 @@ describe("distributionChart", () => {
   });
 });
 
-describe("horizontalBarChart", () => {
-  // The y positions of the drawn bars, in DOM order. Reading the geometry rather than
-  // the spec is the only way to see what the band scale actually did: an inferred
-  // ordinal domain sorts itself, and a chart whose whole point is that it is ranked
-  // would come out alphabetical with nothing in the spec looking wrong.
-  function barYs(node: Element): number[] {
-    return [...node.querySelectorAll('[aria-label="bar"] rect')].map((rect) =>
-      Number(rect.getAttribute("y")),
-    );
-  }
+// The y positions of the drawn bars, in DOM order. Reading the geometry rather than
+// the spec is the only way to see what the band scale actually did: an inferred
+// ordinal domain sorts itself, and a chart whose whole point is that it is ranked
+// would come out alphabetical with nothing in the spec looking wrong.
+function barYs(node: Element): number[] {
+  return [...node.querySelectorAll('[aria-label="bar"] rect')].map((rect) =>
+    Number(rect.getAttribute("y")),
+  );
+}
+// The bars' geometry and the x tick labels, for the extent tests below.
+function barsAndTicks(node: Element) {
+  return {
+    bars: [...node.querySelectorAll('[aria-label="bar"] rect')].map((rect) => ({
+      x: Number(rect.getAttribute("x")),
+      width: Number(rect.getAttribute("width")),
+    })),
+    ticks: [
+      ...node.querySelectorAll('[aria-label="x-axis tick label"] text'),
+    ].map((text) => text.textContent),
+  };
+}
 
+describe("horizontalBarChart", () => {
   it("draws a bar per point", () => {
     const node = render(
       horizontalBarChart(
@@ -677,21 +686,6 @@ describe("horizontalBarChart", () => {
       expect(ys[i]).toBeGreaterThan(ys[i - 1]!);
     }
   });
-
-  // The bars' geometry and the x tick labels, for the extent tests below.
-  function barsAndTicks(node: Element) {
-    return {
-      bars: [...node.querySelectorAll('[aria-label="bar"] rect')].map(
-        (rect) => ({
-          x: Number(rect.getAttribute("x")),
-          width: Number(rect.getAttribute("width")),
-        }),
-      ),
-      ticks: [
-        ...node.querySelectorAll('[aria-label="x-axis tick label"] text'),
-      ].map((text) => text.textContent),
-    };
-  }
 
   // Every value zero fits a degenerate `[0, 0]` domain, which Plot draws with every bar
   // at full width and a `0.000000` tick.
@@ -797,24 +791,24 @@ describe("horizontalBarChart", () => {
   });
 });
 
+const bars = (labels: readonly string[]) =>
+  labels.map((label) => ({ label, value: 1 }));
+const plotArea = (options: Plot.PlotOptions) =>
+  Number(options.width) -
+  Number(options.marginLeft) -
+  Number(options.marginRight);
+
 // Labels tilted down to the right start under their own bar and run over the
 // bars after it. What the layout has to guarantee is that none of them leaves
 // the chart, and that a chart with many bars asks for the width to draw them.
 describe("tilted x labels", () => {
-  const bars = (labels: readonly string[]) =>
-    labels.map((label) => ({ label, value: 1 }));
-
   it("asks for a slot per bar as its least width", () => {
     const few = barChart(bars(["a", "b"]), palette, { xTickRotate: 40 });
     const many = barChart(
-      bars(Array.from({ length: 40 }, (_, index) => `m${index}`)),
+      bars(Array.from({ length: 40 }, (_, index) => `m${String(index)}`)),
       palette,
       { xTickRotate: 40 },
     );
-    const plotArea = (options: Plot.PlotOptions) =>
-      Number(options.width) -
-      Number(options.marginLeft) -
-      Number(options.marginRight);
     expect(plotArea(few)).toBe(2 * MIN_ROTATED_SLOT);
     expect(plotArea(many)).toBe(40 * MIN_ROTATED_SLOT);
   });
@@ -882,11 +876,11 @@ describe("tilted x labels", () => {
       const slot =
         (width - Number(options.marginLeft) - Number(options.marginRight)) /
         order.length;
-      order.forEach((label, index) => {
+      for (const [index, label] of order.entries()) {
         const start = Number(options.marginLeft) + (index + 0.5) * slot;
         const end = start + label.length * 7.2 * Math.cos((40 * Math.PI) / 180);
         expect(end).toBeLessThanOrEqual(width);
-      });
+      }
     }
   });
 
@@ -905,11 +899,11 @@ describe("tilted x labels", () => {
     const slot =
       (width - Number(options.marginLeft) - Number(options.marginRight)) /
       order.length;
-    order.forEach((label, index) => {
+    for (const [index, label] of order.entries()) {
       const start = Number(options.marginLeft) + (index + 0.5) * slot;
       const end = start + label.length * 7.2 * Math.cos((40 * Math.PI) / 180);
       expect(end).toBeLessThanOrEqual(width);
-    });
+    }
   });
 
   it("anchors a label tilted to the right at its tick", () => {

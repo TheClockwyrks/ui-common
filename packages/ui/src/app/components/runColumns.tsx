@@ -1,4 +1,4 @@
-import type { RunSummary } from "@clockwyrks/backend-api/snapshot";
+import type { RunSummary, GgAgentOut } from "@clockwyrks/backend-api/snapshot";
 import { useMemo, type ReactNode } from "react";
 import type { TestType } from "@clockwyrks/run-record";
 import {
@@ -32,12 +32,11 @@ import {
   formatUsd,
   totalTokens,
 } from "../format";
-import { RunActiveMarker } from "./RunActiveMarker";
+import { RunActiveMarker } from "./run-active-marker";
 import { RunSelectBox, type RunSelectionContext } from "./RunSelect";
 import { sortRows, type SortState } from "./useTableSort";
 import { UnpublishedTag } from "./UnpublishedTag";
 import styles from "./RunLog.module.scss";
-import type { GgAgentOut } from "@clockwyrks/run-record/snapshot";
 
 /**
  * Which columns a run log carries.
@@ -206,7 +205,7 @@ const VALIDATING_TITLE = "The model has finished; validating the build";
 function activeDash(label: string, numeric: boolean): ReactNode {
   return (
     <span
-      className={`${numeric ? styles.num : styles.when} ${styles.noRating}`}
+      className={`${String(numeric ? styles.num : styles.when)} ${String(styles.noRating)}`}
       data-label={label}
     >
       &mdash;
@@ -243,13 +242,7 @@ function modelCell(
 // The toggle that shows a gg run's agent lines beneath its row: a bare arrow that
 // points down while closed and up while open. It sits inside the row's link, so it swallows its own click
 // and key presses: toggling never opens the run.
-function DisclosureToggle({
-  row,
-  ctx,
-}: {
-  row: EnrichedRun;
-  ctx: RunRenderContext;
-}) {
+function disclosureToggle(row: EnrichedRun, ctx: RunRenderContext): ReactNode {
   const agents = row.agents ?? [];
   const expanded = ctx.isExpanded(row.summary.id);
   const toggle = (event: {
@@ -260,7 +253,7 @@ function DisclosureToggle({
     event.stopPropagation();
     ctx.toggleExpanded(row.summary.id);
   };
-  const count = `${agents.length} agent${agents.length === 1 ? "" : "s"}`;
+  const count = `${String(agents.length)} agent${agents.length === 1 ? "" : "s"}`;
   return (
     <span
       role="button"
@@ -294,9 +287,9 @@ function disclosureFor(
   row: EnrichedRun,
   ctx: RunRenderContext,
 ): ReactNode {
-  return ctx.disclosureColumn === columnId && row.agents ? (
-    <DisclosureToggle row={row} ctx={ctx} />
-  ) : null;
+  return ctx.disclosureColumn === columnId && row.agents
+    ? disclosureToggle(row, ctx)
+    : null;
 }
 
 // The name of an agent on its line, with a PRIMARY tag on the configuration's
@@ -312,7 +305,7 @@ function agentLabel(
     <span
       className={styles.agentLabel}
       data-label="Agent"
-      style={span > 1 ? { gridColumn: `span ${span}` } : undefined}
+      style={span > 1 ? { gridColumn: `span ${String(span)}` } : undefined}
     >
       <span className={styles.agentName} title={agent.name}>
         {agent.name}
@@ -359,7 +352,7 @@ function codeCell(code: RunSummary["code"]): ReactNode {
   if (!code) {
     return (
       <span
-        className={`${styles.num} ${styles.noRating}`}
+        className={`${String(styles.num)} ${String(styles.noRating)}`}
         data-label="Code"
         title="Not measured. Code analysis is not backfilled, so runs from before it shipped carry no figures. This is not a claim that the run wrote no code."
       >
@@ -377,7 +370,7 @@ function codeCell(code: RunSummary["code"]): ReactNode {
     code.truncated ? "truncated: a cap stopped the analysis short" : null,
   ].filter((caveat): caveat is string => caveat !== null);
   const title = [
-    `${code.codeLines.toLocaleString("en-US")} lines of code (analyzer v${code.analyzerVersion})`,
+    `${code.codeLines.toLocaleString("en-US")} lines of code (analyzer v${String(code.analyzerVersion)})`,
     ...caveats,
   ].join(" · ");
   return (
@@ -769,7 +762,7 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
     defaultVisible: false,
     render: (row) => (
       <span
-        className={`${styles.num} ${row.summary.score ? "" : styles.noRating}`}
+        className={`${String(styles.num)} ${String(row.summary.score ? "" : styles.noRating)}`}
         data-label="Points"
       >
         {formatPoints(row.summary.score)}

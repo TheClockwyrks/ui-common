@@ -1,12 +1,14 @@
-import { useState } from "react";
-import { SectionWidget } from "@clockwyrks/ui";
 import type {
   ComparisonArmResult,
   ScorePoint,
-} from "@clockwyrks/run-record/comparison";
+} from "@clockwyrks/backend-api/comparison";
+import { useState } from "react";
+
+import styles from "./arm-score-widget.module.scss";
+import { heldRunIds, inFlightOf } from "./comparisonMath";
+import { SectionWidget } from "../../../index";
 import { SortableHeaderCell } from "../../components/SortableHeaderCell";
 import { sortRows, useTableSort } from "../../components/useTableSort";
-import styles from "./ArmScoreWidget.module.scss";
 
 interface ArmScoreWidgetProps {
   /** The comparison's arms, in the config's arm order. */
@@ -15,7 +17,7 @@ interface ArmScoreWidgetProps {
   colorForArm: ReadonlyMap<string, string>;
 }
 
-const percent = (fraction: number) => `${Math.round(fraction * 100)}%`;
+const percent = (fraction: number) => `${String(Math.round(fraction * 100))}%`;
 
 // What each sortable column orders the arms by, as the run log's columns do: an
 // arm with no figure yet sorts last in either direction.
@@ -41,12 +43,13 @@ export function ArmScoreWidget({ arms, colorForArm }: ArmScoreWidgetProps) {
   const ordered = sortRows(arms, sort, (columnId) => SORT_KEYS[columnId]);
   const allOpen = arms.length > 0 && arms.every((a) => open.has(a.arm.id));
 
-  const toggle = (id: string) =>
+  const toggle = (id: string) => {
     setOpen((current) => {
       const next = new Set(current);
       if (!next.delete(id)) next.add(id);
       return next;
     });
+  };
 
   return (
     <SectionWidget
@@ -56,9 +59,9 @@ export function ArmScoreWidget({ arms, colorForArm }: ArmScoreWidgetProps) {
         <button
           type="button"
           className={styles.toggleAll}
-          onClick={() =>
-            setOpen(allOpen ? new Set() : new Set(arms.map((a) => a.arm.id)))
-          }
+          onClick={() => {
+            setOpen(allOpen ? new Set() : new Set(arms.map((a) => a.arm.id)));
+          }}
         >
           {allOpen ? "Collapse all" : "Expand all"}
         </button>
@@ -105,7 +108,9 @@ export function ArmScoreWidget({ arms, colorForArm }: ArmScoreWidgetProps) {
               arm={a}
               color={colorForArm.get(a.arm.id)}
               open={open.has(a.arm.id)}
-              onToggle={() => toggle(a.arm.id)}
+              onToggle={() => {
+                toggle(a.arm.id);
+              }}
             />
           ))}
         </div>
@@ -126,10 +131,10 @@ function ArmScoreRow({ arm: a, color, open, onToggle }: ArmScoreRowProps) {
   // The jobs of the arm's cell it is still waiting on, stated rather than left
   // as a silent gap between the arm's `n` and its desired count. The same figure
   // the top-up counts, so the two never disagree.
-  const inFlight = a.inFlight ?? 0;
+  const inFlight = inFlightOf(a);
   // Held runs whose record this build can no longer read: they keep their place
   // and contribute no figure.
-  const unreadable = Math.max(0, (a.runIds?.length ?? 0) - a.nObserved);
+  const unreadable = Math.max(0, (heldRunIds(a)?.length ?? 0) - a.nObserved);
 
   return (
     <>
@@ -150,11 +155,11 @@ function ArmScoreRow({ arm: a, color, open, onToggle }: ArmScoreRowProps) {
             {a.arm.label}
           </span>
         </span>
-        <span className={`${styles.num} ${styles.score}`}>
+        <span className={`${String(styles.num)} ${String(styles.score)}`}>
           <span className={styles.inlineLabel}>avg </span>
           {a.score ? percent(a.score.meanFraction) : "—"}
         </span>
-        <span className={`${styles.num} ${styles.passed}`}>
+        <span className={`${String(styles.num)} ${String(styles.passed)}`}>
           <span className={styles.inlineLabel}>passed </span>
           {a.passRate ? (
             <>
@@ -178,8 +183,8 @@ function ArmScoreRow({ arm: a, color, open, onToggle }: ArmScoreRowProps) {
         <div className={styles.summary}>
           <p className={styles.muted}>
             n={a.nObserved} of {a.nDesired} desired
-            {inFlight > 0 && ` · ${inFlight} still in flight`}
-            {unreadable > 0 && ` · ${unreadable} unreadable`}
+            {inFlight > 0 && ` · ${String(inFlight)} still in flight`}
+            {unreadable > 0 && ` · ${String(unreadable)} unreadable`}
           </p>
           <div>
             <p className={styles.subhead}>Pass rate</p>
@@ -188,13 +193,13 @@ function ArmScoreRow({ arm: a, color, open, onToggle }: ArmScoreRowProps) {
                 <div className={styles.meter}>
                   <span
                     className={styles.meterFill}
-                    style={{ width: `${a.passRate.rate * 100}%` }}
+                    style={{ width: `${String(a.passRate.rate * 100)}%` }}
                   />
                   <span
                     className={styles.meterInterval}
                     style={{
-                      left: `${a.passRate.wilsonLow * 100}%`,
-                      width: `${(a.passRate.wilsonHigh - a.passRate.wilsonLow) * 100}%`,
+                      left: `${String(a.passRate.wilsonLow * 100)}%`,
+                      width: `${String((a.passRate.wilsonHigh - a.passRate.wilsonLow) * 100)}%`,
                     }}
                   />
                 </div>
@@ -253,22 +258,26 @@ function RunScoreColumns({
             <span
               key={i}
               className={
-                full ? `${styles.column} ${styles.full}` : styles.column
+                full
+                  ? `${String(styles.column)} ${String(styles.full)}`
+                  : styles.column
               }
-              style={{ height: `${Math.max(4, fraction * 100)}%` }}
-              title={`${p.earned}/${p.total}`}
-              aria-label={`run ${i + 1}: ${p.earned} of ${p.total} points`}
+              style={{ height: `${String(Math.max(4, fraction * 100))}%` }}
+              title={`${String(p.earned)}/${String(p.total)}`}
+              aria-label={`run ${String(i + 1)}: ${String(p.earned)} of ${String(p.total)} points`}
             />
           );
         })}
         <span
           className={styles.meanLine}
-          style={{ bottom: `${mean * 100}%` }}
+          style={{ bottom: `${String(mean * 100)}%` }}
           aria-hidden
         />
       </div>
       <div className={styles.meanLabel}>
-        <span style={{ top: `${(1 - mean) * 100}%` }}>avg {percent(mean)}</span>
+        <span style={{ top: `${String((1 - mean) * 100)}%` }}>
+          avg {percent(mean)}
+        </span>
       </div>
       <div className={styles.runSpan} aria-hidden>
         <span>run 1</span>

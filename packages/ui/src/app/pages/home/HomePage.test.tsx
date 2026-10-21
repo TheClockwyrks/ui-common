@@ -300,9 +300,10 @@ describe("the legendary showcase", () => {
     const video = (await screen.findByLabelText("Demo")) as HTMLVideoElement;
     expect(video.tagName).toBe("VIDEO");
     expect(video.muted).toBe(true);
-    expect(video.hasAttribute("autoplay")).toBe(true);
-    expect(video.hasAttribute("loop")).toBe(true);
-    expect(screen.getByRole("img", { name: "Shot" }).getAttribute("src")).toBe(
+    expect(video).toHaveAttribute("autoplay");
+    expect(video).toHaveAttribute("loop");
+    expect(screen.getByRole("img", { name: "Shot" })).toHaveAttribute(
+      "src",
       "https://cdn.example/img/shot.png",
     );
     // The showcase-less run and the unservable one both hold the layout with
@@ -437,9 +438,10 @@ describe("the group leaderboards", () => {
     // No run of GPT's reported a comparable cost: an em dash, never $0.
     expect(rows[1]?.textContent).toContain("—");
     // The member-slug line links into each case.
-    expect(
-      screen.getByRole("link", { name: "carom" }).getAttribute("href"),
-    ).toBe("/test-cases/carom");
+    expect(screen.getByRole("link", { name: "carom" })).toHaveAttribute(
+      "href",
+      "/test-cases/carom",
+    );
   });
 
   it("marks engines only when the group's rows span more than one", async () => {
@@ -505,6 +507,14 @@ describe("the group leaderboards", () => {
   });
 });
 
+function panelOf(toggle: HTMLElement): HTMLElement {
+  const panel = document.getElementById(
+    toggle.getAttribute("aria-controls") ?? "",
+  );
+  if (!panel) throw new Error("the row controls no panel");
+  return panel;
+}
+
 describe("a group leaderboard row's runs", () => {
   // Claude on pi: two carom runs and one spectra run, which fold into one row.
   // Around them, every kind of run that must stay out of that row's list.
@@ -550,28 +560,20 @@ describe("a group leaderboard row's runs", () => {
     return { board, toggle };
   }
 
-  function panelOf(toggle: HTMLElement): HTMLElement {
-    const panel = document.getElementById(
-      toggle.getAttribute("aria-controls") ?? "",
-    );
-    if (!panel) throw new Error("the row controls no panel");
-    return panel;
-  }
-
   it("toggles its runs open and shut", async () => {
     const { toggle } = await claudeRow();
     const panel = panelOf(toggle);
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(panel.hidden).toBe(true);
     expect(within(panel).queryAllByRole("link")).toHaveLength(0);
 
     fireEvent.click(toggle);
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(panel.hidden).toBe(false);
     expect(within(panel).getAllByRole("link")).toHaveLength(3);
 
     fireEvent.click(toggle);
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(panel.hidden).toBe(true);
     expect(within(panel).queryAllByRole("link")).toHaveLength(0);
   });
@@ -591,7 +593,7 @@ describe("a group leaderboard row's runs", () => {
   it("shows each run's own figures, which average to the row's", async () => {
     const { toggle } = await claudeRow();
     // (100% + 50% + 30%) / 3 = 60%.
-    expect(toggle.textContent).toContain("60%");
+    expect(toggle).toHaveTextContent(/60%/);
     fireEvent.click(toggle);
     const panel = panelOf(toggle);
     const [caromNew, caromOld, spectra] = within(panel).getAllByRole("link");
@@ -627,8 +629,8 @@ describe("a group leaderboard row's runs", () => {
     const other = within(board).getByRole("button", { name: /openai\/gpt/ });
     fireEvent.click(toggle);
     fireEvent.click(other);
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(other.getAttribute("aria-expanded")).toBe("true");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(other).toHaveAttribute("aria-expanded", "true");
     expect(
       within(panelOf(other))
         .getAllByRole("link")

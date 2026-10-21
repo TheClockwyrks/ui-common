@@ -232,6 +232,12 @@ function renderPage(stubs: ClientStubs = probeStubs()) {
   );
 }
 
+// Each wait is one live status region whose text is its label alone, with the
+// ship beside it hidden: the history row's Running and the detail's
+// Probing…, and the two loads before either arrives.
+const statusTexts = () =>
+  screen.queryAllByRole("status").map((el) => el.textContent);
+
 describe("ModelProbesPage", () => {
   it("renders the probe history and the newest probe's detail", async () => {
     renderPage();
@@ -256,7 +262,9 @@ describe("ModelProbesPage", () => {
 
     // The history still reads; only the trigger is absent.
     expect(await screen.findAllByText("Ready")).not.toHaveLength(0);
-    expect(screen.queryByRole("button", { name: /run probe/i })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /run probe/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("triggers a probe with the seeded defaults and shows the new row", async () => {
@@ -272,42 +280,41 @@ describe("ModelProbesPage", () => {
 
     // The defaults: 8 samples per input prompt, every language (no `language`
     // field), the default route (no `provider`).
-    await waitFor(() =>
+    await waitFor(() => {
       expect(trigger).toHaveBeenCalledWith("claude-x", {
         samples: 8,
         maxTokens: 3500,
-      }),
-    );
+      });
+    });
     // The accepted probe lands at the head of the history immediately, still
     // running, marked as probing every language.
     expect(await screen.findByText("Running")).toBeInTheDocument();
     expect(screen.getAllByText("all languages").length).toBeGreaterThan(0);
   });
 
-  // Each wait is one live status region whose text is its label alone, with the
-  // ship beside it hidden: the history row's Running and the detail's
-  // Probing…, and the two loads before either arrives.
-  const statusTexts = () =>
-    screen.queryAllByRole("status").map((el) => el.textContent);
-
   it("announces each running wait by its label alone", async () => {
     renderPage(
-      signedInStubs({ listModelProbes: vi.fn().mockResolvedValue([RUNNING]) }),
+      probeStubs({ listModelProbes: vi.fn().mockResolvedValue([RUNNING]) }),
     );
 
-    await waitFor(() => expect(statusTexts()).toEqual(["Running", "Probing…"]));
-    expect(screen.queryByRole("img")).toBeNull();
+    await waitFor(() => {
+      expect(statusTexts()).toEqual(["Running", "Probing…"]);
+    });
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
   it("announces the loads of the history and of a probe", async () => {
+    const never = new Promise<never>(vi.fn());
     renderPage(
-      signedInStubs({
-        getModelProbe: vi.fn().mockReturnValue(new Promise(() => {})),
+      probeStubs({
+        getModelProbe: vi.fn().mockReturnValue(never),
       }),
     );
 
     expect(statusTexts()).toEqual(["Loading probes…"]);
-    await waitFor(() => expect(statusTexts()).toEqual(["Loading probe…"]));
+    await waitFor(() => {
+      expect(statusTexts()).toEqual(["Loading probe…"]);
+    });
   });
 
   it("pins the probe to one language arm through the selector", async () => {
@@ -324,13 +331,13 @@ describe("ModelProbesPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /run probe/i }));
 
-    await waitFor(() =>
+    await waitFor(() => {
       expect(trigger).toHaveBeenCalledWith("claude-x", {
         samples: 8,
         maxTokens: 3500,
         language: "rust",
-      }),
-    );
+      });
+    });
   });
 
   it("refuses an out-of-range sample count before any request", async () => {

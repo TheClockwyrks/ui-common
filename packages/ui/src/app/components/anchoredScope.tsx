@@ -166,8 +166,9 @@ export function useAnchoredScope(anchor: {
     [setChoice, anchor.version],
   );
   const setEngineScope = useCallback(
-    (widening: AnchoredWidening) =>
-      setChoice(ENGINES_PARAM, widening, widening === "anchor"),
+    (widening: AnchoredWidening) => {
+      setChoice(ENGINES_PARAM, widening, widening === "anchor");
+    },
     [setChoice],
   );
   const anchorEngine = useCallback(
@@ -184,8 +185,9 @@ export function useAnchoredScope(anchor: {
     [setParams, engines],
   );
   const setVariantScope = useCallback(
-    (widening: AnchoredWidening) =>
-      setChoice(VARIANTS_PARAM, widening, widening === "anchor"),
+    (widening: AnchoredWidening) => {
+      setChoice(VARIANTS_PARAM, widening, widening === "anchor");
+    },
     [setChoice],
   );
 
@@ -305,11 +307,10 @@ export function AnchoredScopeControls({
               { value: ALL_ENGINES, label: "All engines" },
             ]}
             value={state.engineScope === "all" ? ALL_ENGINES : engine}
-            onChange={(choice) =>
-              choice === ALL_ENGINES
-                ? state.setEngineScope("all")
-                : state.anchorEngine(choice)
-            }
+            onChange={(choice) => {
+              if (choice === ALL_ENGINES) state.setEngineScope("all");
+              else state.anchorEngine(choice);
+            }}
             ariaLabel="Engine scope"
           />
         </div>

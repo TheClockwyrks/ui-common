@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
+
 import { FsExplorer, FsFileRow } from "./GgFsExplorer";
 
 /** A two-file explorer whose detail pane names the selected file. */
@@ -16,7 +17,9 @@ function TwoFiles() {
           name={name}
           ariaLabel={`root ${name}`}
           selected={selected === name}
-          onSelect={() => setSelected(name)}
+          onSelect={() => {
+            setSelected(name);
+          }}
         />
       ))}
     >

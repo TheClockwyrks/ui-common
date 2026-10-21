@@ -1,8 +1,8 @@
 import type { CoverageQueue } from "@clockwyrks/backend-api/coverage";
 import { Link, useSearchParams } from "react-router";
-import { Panel } from "../../../index";
+import { Panel, Pagination } from "../../../index";
 import { claimSectionReturn } from "../../components/backReturn";
-import { useClientPage } from "../../components/useClientPage";
+import { useClientPage } from "../../components/use-client-page";
 import { useTestCaseName } from "../../data/useTestCaseName";
 import { formatTimeAgo } from "../../format";
 import { routes } from "../../routes";
@@ -10,7 +10,6 @@ import { comboLabel } from "./comboLabels";
 import { caseQualifier } from "./caseLabels";
 import styles from "./Coverage.module.scss";
 import { useCallback } from "react";
-import { Pagination } from "@clockwyrks/ui";
 
 // The plan's own review queue: the completed runs of this plan the signed-in account
 // has not reviewed, listed in the plan's emission order rather than newest-first like
@@ -52,7 +51,7 @@ export const QUEUE_PAGE_PARAM = "labelPage";
 /** The queue's page as a 0-based index, read from and written to the URL. */
 function useQueuePage() {
   const [params, setParams] = useSearchParams();
-  const raw = Number.parseInt(params.get(QUEUE_PAGE_PARAM) ?? "", 10);
+  const raw = Math.trunc(Number(params.get(QUEUE_PAGE_PARAM) ?? ""));
   const page = Number.isFinite(raw) && raw >= 1 ? raw - 1 : 0;
   const setPage = useCallback(
     (next: number, opts?: { replace?: boolean }) => {

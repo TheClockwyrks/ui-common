@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { RunRecord } from "@clockwyrks/run-record";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { WorkersProvider } from "../../../../client/context";
@@ -9,9 +9,13 @@ import type { WorkerClient } from "../../../../client/clients";
 import type {
   AssetPreview,
   HarnessEvent,
+  InProgressRun,
   RunOutcome,
 } from "../../../../client/types";
-import { RunsRuntimeProvider } from "../../../runtime/runsRuntime";
+import {
+  RunsRuntimeProvider,
+  useRunsRuntime,
+} from "../../../runtime/runsRuntime";
 import { RunMonitorPage } from "./RunMonitorPage";
 
 // The page's app chrome reads contexts (gallery data, backdrop settings) that
@@ -112,11 +116,35 @@ async function settle() {
   });
 }
 
-function renderMonitor(workers: WorkersContextValue) {
+// Seeds the runs runtime with the run as the notifications layer would track it,
+// so the page reads the run's live phase.
+function Tracked({ run }: { run: InProgressRun }) {
+  const runtime = useRef(useRunsRuntime());
+  useEffect(() => {
+    runtime.current.track(run);
+  }, [run]);
+  return null;
+}
+
+function inFlight(patch: Partial<InProgressRun>): InProgressRun {
+  return {
+    runId: RUN_ID,
+    testCaseSlug: "pong",
+    testCaseVersion: "v1.0.0",
+    variant: "base",
+    harnessSlug: "claude",
+    modelId: "m",
+    state: "running",
+    ...patch,
+  };
+}
+
+function renderMonitor(workers: WorkersContextValue, tracked?: InProgressRun) {
   return render(
     <MemoryRouter initialEntries={[`/runs/${RUN_ID}/live`]}>
       <WorkersProvider value={workers}>
         <RunsRuntimeProvider>
+          {tracked && <Tracked run={tracked} />}
           <Routes>
             <Route path="/runs/:runId/live" element={<RunMonitorPage />} />
           </Routes>

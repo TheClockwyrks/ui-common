@@ -1,13 +1,13 @@
 import type { ComponentType } from "react";
-import { GitHubIcon } from "./GitHubIcon";
-import styles from "./ProjectLinks.module.scss";
+
+import { GitHubIcon } from "./github-icon";
+import styles from "./project-links.module.scss";
 
 /** The Test Cabinet's own source repository. */
-export const GITHUB_REPO_URL =
-  "https://github.com/TheClockwyrks/TheTestCabinet";
+const GITHUB_REPO_URL = "https://github.com/TheClockwyrks/TheTestCabinet";
 
 /** One place the project lives outside the cabinet itself. */
-export interface ProjectLink {
+interface ProjectLink {
   /** The short name the link is shown under. */
   label: string;
   /** What a screen reader and the hover title say the link leads to. */
@@ -20,7 +20,7 @@ export interface ProjectLink {
  * The project's links off-site, in the order they are shown. One list, so every place
  * that offers them offers the same set, and adding one is a single entry here.
  */
-export const PROJECT_LINKS: ReadonlyArray<ProjectLink> = [
+const PROJECT_LINKS: readonly ProjectLink[] = [
   {
     label: "GitHub",
     description: "The Test Cabinet on GitHub",

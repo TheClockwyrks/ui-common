@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
+
+import { LiveAssetView } from "./LiveAssetView";
 import { useWorkers } from "../../../../client/context";
+import { validatingRunNotice } from "../../../../client/runPhase";
 import type {
   AssetPreview,
   HarnessEvent,
@@ -11,14 +14,12 @@ import { KillRunControl } from "../../../components/KillRunControl";
 import { PageLayout } from "../../../components/PageLayout";
 import { PromptHeader } from "../../../components/PromptHeader";
 import { useTestCase } from "../../../data/useTestCase";
+import tabStyles from "../../../layouts/runs/RunDetailLayout.module.scss";
 import { routes } from "../../../routes";
 import { useRunsRuntime } from "../../../runtime/runsRuntime";
 import { useLiveRunUpdates } from "../../../runtime/useLiveRunUpdates";
 import { useAppSettings } from "../../../store/appSettings";
-import tabStyles from "../../../layouts/runs/RunDetailLayout.module.scss";
 import styles from "../RunExec.module.scss";
-import { LiveAssetView } from "./LiveAssetView";
-import { validatingRunNotice } from "../../../../client/runPhase";
 
 type MonitorStatus =
   | { kind: "running" }

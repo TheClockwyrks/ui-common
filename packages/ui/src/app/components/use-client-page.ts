@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+
 import type { PagedSearchParams } from "./usePagedSearchParams";
 
 /** One page of a list the page already holds whole. */
@@ -61,11 +62,13 @@ export function showingLabel(
   total: number,
   noun: string,
 ): string {
-  const plural = (n: number) => `${n} ${n === 1 ? noun : `${noun}s`}`;
+  const plural = (n: number) => `${String(n)} ${n === 1 ? noun : `${noun}s`}`;
   if (matched === 0) return `0 of ${plural(total)}`;
   const range =
-    page.from === page.to ? `${page.from}` : `${page.from}–${page.to}`;
+    page.from === page.to
+      ? String(page.from)
+      : `${String(page.from)}–${String(page.to)}`;
   return matched === total
     ? `Showing ${range} of ${plural(total)}`
-    : `Showing ${range} of ${matched} matching (${plural(total)})`;
+    : `Showing ${range} of ${String(matched)} matching (${plural(total)})`;
 }

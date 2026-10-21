@@ -1,5 +1,12 @@
 import type { RunSummary } from "@clockwyrks/backend-api/snapshot";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { GalleryApp } from "../../../GalleryApp";
@@ -191,8 +198,12 @@ describe("the Leaderboard tab's resource columns", () => {
     await visit(stockedGallery("run-board-3"));
     const board = screen.getByRole("table", { name: "Model leaderboard" });
     expect(within(board).getByText(/^best rating$/i)).toBeInTheDocument();
-    expect(within(board).queryByText(/^best aesthetic$/i)).toBeNull();
-    expect(within(board).queryByText(/^worst aesthetic$/i)).toBeNull();
+    expect(
+      within(board).queryByText(/^best aesthetic$/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(board).queryByText(/^worst aesthetic$/i),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Choose columns" }));
     fireEvent.click(
@@ -201,7 +212,7 @@ describe("the Leaderboard tab's resource columns", () => {
     expect(within(board).getByText(/^best aesthetic$/i)).toBeInTheDocument();
     expect(
       screen.getByRole("menuitemcheckbox", { name: "Worst Aesthetic" }),
-    ).toHaveAttribute("aria-checked", "false");
+    ).not.toBeChecked();
     localStorage.clear();
   });
 });

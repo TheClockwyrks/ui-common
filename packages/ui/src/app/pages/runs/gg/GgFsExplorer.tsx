@@ -61,12 +61,13 @@ export function useFsFolders(): FsFolders {
   );
   const isOpen = (key: string, byDefault: boolean) =>
     overrides.get(key) ?? byDefault;
-  const toggle = (key: string, byDefault: boolean) =>
+  const toggle = (key: string, byDefault: boolean) => {
     setOverrides((prev) => {
       const next = new Map(prev);
       next.set(key, !(prev.get(key) ?? byDefault));
       return next;
     });
+  };
   // Stable across renders, so a `reveal`-style callback built on it can itself be stable
   // and be named as an effect dependency without re-firing every render.
   const open = useCallback((keys: Iterable<string>) => {
@@ -127,7 +128,9 @@ export function FsExplorer({
 }) {
   const [treeOpen, setTreeOpen] = useState(false);
   const [current, setCurrent] = useState<string | null>(null);
-  const fileChosen = useCallback(() => setTreeOpen(false), []);
+  const fileChosen = useCallback(() => {
+    setTreeOpen(false);
+  }, []);
   const sidebarId = useId();
   return (
     <FsShellContext.Provider value={{ setCurrent, fileChosen }}>
@@ -140,7 +143,9 @@ export function FsExplorer({
           className={panels.explorerToggle}
           aria-expanded={treeOpen}
           aria-controls={sidebarId}
-          onClick={() => setTreeOpen((open) => !open)}
+          onClick={() => {
+            setTreeOpen((open) => !open);
+          }}
         >
           <span className={panels.fsCaret} aria-hidden="true">
             <ChevronIcon
