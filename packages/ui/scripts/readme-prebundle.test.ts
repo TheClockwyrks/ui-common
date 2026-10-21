@@ -43,12 +43,42 @@ function excluded(specifier: string): boolean {
   );
 }
 
+/**
+ * Where the last module name that could be a bare specifier ends in `text`, or
+ * `undefined` when it names none.
+ *
+ * Parsing every emitted module in full is most of this test's time, and the
+ * coverage run instruments the compiler so that it costs several times more,
+ * which is time a loaded machine stretches past the test's timeout. A
+ * declaration naming a module spells `from` or `import` before the quoted
+ * name, so a match of the pattern below is found for every one the parse
+ * could reach (and for some string that merely reads like one, which only
+ * parses more). A file with no candidate is skipped, and the rest is parsed
+ * only up to its last candidate, since a declaration ends with its module
+ * name but for attributes, which do not make it type-only.
+ */
+function candidatesEnd(text: string): number | undefined {
+  let end: number | undefined;
+  for (const match of text.matchAll(
+    /\b(?:from|import)(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)*["']([^"'\n]+)["']/g,
+  )) {
+    const name = match[1];
+    if (!name.startsWith(".") && !excluded(name)) {
+      end = match.index + match[0].length;
+    }
+  }
+  return end;
+}
+
 it("names every bare specifier the published modules import", () => {
   const imported = new Set<string>();
   for (const file of emitted(join(pkg, "src"))) {
+    const text = readFileSync(file, "utf8");
+    const end = candidatesEnd(text);
+    if (end === undefined) continue;
     const source = ts.createSourceFile(
       file,
-      readFileSync(file, "utf8"),
+      text.slice(0, end),
       ts.ScriptTarget.Latest,
     );
     for (const statement of source.statements) {
