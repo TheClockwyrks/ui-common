@@ -638,3 +638,20 @@ describe("a group leaderboard row's runs", () => {
     ).toEqual(["/runs/gpt"]);
   });
 });
+
+describe("the page header", () => {
+  it("links the project's GitHub repository in a new tab", async () => {
+    renderHome({ summaries: [run({ id: "a" })] });
+    const nav = screen.getByRole("navigation", { name: "Project links" });
+    const link = within(nav).getByRole("link", {
+      name: "The Test Cabinet on GitHub",
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://github.com/TheClockwyrks/TheTestCabinet",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noreferrer");
+    await showcaseSettledEmpty();
+  });
+});
