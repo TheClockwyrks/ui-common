@@ -251,18 +251,18 @@ describe("MatrixSection collapse", () => {
   it("starts collapsed: the toggle is not expanded and the rows are hidden", () => {
     renderSection();
     const toggle = screen.getByRole("button", { expanded: false });
-    expect(toggle).toBeTruthy();
+    expect(toggle).toBeInTheDocument();
     // The per-combination row (harness · model) is not rendered while collapsed.
-    expect(screen.queryByText(/claude-sonnet-4-5/)).toBeNull();
+    expect(screen.queryByText(/claude-sonnet-4-5/)).not.toBeInTheDocument();
     // The overall progress count is always visible.
-    expect(screen.getByText("1/3")).toBeTruthy();
+    expect(screen.getByText("1/3")).toBeInTheDocument();
   });
 
   it("expands to reveal the per-harness/model rows when toggled", () => {
     renderSection();
     fireEvent.click(screen.getByRole("button", { expanded: false }));
-    expect(screen.getByRole("button", { expanded: true })).toBeTruthy();
-    expect(screen.getByText(/claude-sonnet-4-5/)).toBeTruthy();
+    expect(screen.getByRole("button", { expanded: true })).toBeInTheDocument();
+    expect(screen.getByText(/claude-sonnet-4-5/)).toBeInTheDocument();
   });
 
   it("links each cell to the runs behind it, pinned to the cell's own version", () => {
@@ -301,9 +301,11 @@ describe("MatrixSection collapse", () => {
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { expanded: false }));
-    expect(screen.getByText("Carom · base · v1.0.0 · Simple 2D")).toBeTruthy();
+    expect(
+      screen.getByText("Carom · base · v1.0.0 · Simple 2D"),
+    ).toBeInTheDocument();
     // The engineless row keeps the label it always had.
-    expect(screen.getByText("Carom · base · v1.0.0")).toBeTruthy();
+    expect(screen.getByText("Carom · base · v1.0.0")).toBeInTheDocument();
   });
 
   it("labels a gg cell by its configuration and the models it binds", () => {
@@ -311,7 +313,7 @@ describe("MatrixSection collapse", () => {
     fireEvent.click(screen.getByRole("button", { expanded: false }));
     // Not "gg · opus": the configuration is what the reviewer chose, and the models
     // are what tells two arms of it apart.
-    expect(screen.getByText("reviewer · haiku, opus")).toBeTruthy();
+    expect(screen.getByText("reviewer · haiku, opus")).toBeInTheDocument();
   });
 
   it("narrows a gg cell's runs link by the configuration's id", () => {
@@ -352,7 +354,9 @@ describe("MatrixSection collapse", () => {
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { expanded: false }));
-    expect(screen.getByText("launch slot `critic` is unbound")).toBeTruthy();
+    expect(
+      screen.getByText("launch slot `critic` is unbound"),
+    ).toBeInTheDocument();
     // Both presses refuse, and the reason rides the wrapper rather than the buttons:
     // a browser routes no pointer events to a disabled control, so a title on one is
     // unreachable exactly when it has something to say.
@@ -430,7 +434,7 @@ describe("MatrixSection collapse", () => {
     expect(onTrigger).not.toHaveBeenCalled();
     // And said in the row itself, because a tooltip on a disabled control never
     // opens: without this a filled cell looks exactly like a broken one.
-    expect(screen.getByText("filled")).toBeTruthy();
+    expect(screen.getByText("filled")).toBeInTheDocument();
   });
 
   // A cell whose last run used up its automatic retries is not relaunched by filling,
@@ -453,7 +457,7 @@ describe("MatrixSection collapse", () => {
         </GalleryDataProvider>
       </MemoryRouter>,
     );
-    expect(screen.getByText("1 blocked")).toBeTruthy();
+    expect(screen.getByText("1 blocked")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { expanded: false }));
     expect(
       screen.getByText(
@@ -524,12 +528,12 @@ describe("MatrixSection collapse", () => {
       screen.getByRole("button", {
         name: "Launch one run of Carom · base · v1.0.0",
       }),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
         name: "Launch one run of Caldera · base · v1.0.0",
       }),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
   });
 
   it("says how much of a cell is pending and how much awaits review", () => {
@@ -537,7 +541,7 @@ describe("MatrixSection collapse", () => {
       cells: [cell({ inFlight: 2, pending: 2, unreviewed: 1, remaining: 0 })],
     });
     fireEvent.click(screen.getByRole("button", { expanded: false }));
-    expect(screen.getByText("2 pending")).toBeTruthy();
+    expect(screen.getByText("2 pending")).toBeInTheDocument();
     // Both the block header's pill and the cell's own note say it.
     expect(screen.getAllByText(/1 to review/).length).toBeGreaterThan(0);
   });
@@ -812,13 +816,13 @@ describe("planGgLaunches", () => {
   });
 });
 
+function ggWorker(launchGgRun: WorkerClient["launchGgRun"]) {
+  return { client: { launchGgRun } as unknown as WorkerClient };
+}
+
 // gg has no batch endpoint, so the fan-out is one request per run — and one refused
 // configuration must not take the rest of the trigger with it.
 describe("launchGgCells", () => {
-  function worker(launchGgRun: WorkerClient["launchGgRun"]) {
-    return { client: { launchGgRun } as unknown as WorkerClient };
-  }
-
   it("enqueues one run per launch and tracks each as queued", async () => {
     const launchGgRun = vi.fn().mockResolvedValue({ jobId: "job-1" });
     const track = vi.fn();
@@ -826,7 +830,7 @@ describe("launchGgCells", () => {
       [ggCell({ remaining: 2 })],
       [ggOption()],
     );
-    const failed = await launchGgCells(worker(launchGgRun), track, launches);
+    const failed = await launchGgCells(ggWorker(launchGgRun), track, launches);
     expect(failed).toEqual([]);
     expect(launchGgRun).toHaveBeenCalledTimes(2);
     const request = launchGgRun.mock.calls[0]![0];
@@ -857,7 +861,7 @@ describe("launchGgCells", () => {
       [ggCell({ remaining: 1, engine: "structured-2d" })],
       [ggOption()],
     );
-    await launchGgCells(worker(launchGgRun), vi.fn(), launches);
+    await launchGgCells(ggWorker(launchGgRun), vi.fn(), launches);
     expect(launchGgRun.mock.calls[0]![0].engine).toBe("structured-2d");
   });
 
@@ -869,9 +873,9 @@ describe("launchGgCells", () => {
       [ggCell({ remaining: 1 })],
       [ggOption()],
     );
-    await launchGgCells(worker(sent), vi.fn(), launches, 0);
+    await launchGgCells(ggWorker(sent), vi.fn(), launches, 0);
     expect(sent.mock.calls[0]?.[0].retryCount).toBe(0);
-    await launchGgCells(worker(sent), vi.fn(), launches);
+    await launchGgCells(ggWorker(sent), vi.fn(), launches);
     expect(sent.mock.calls[1]?.[0]).not.toHaveProperty("retryCount");
   });
 
@@ -885,27 +889,27 @@ describe("launchGgCells", () => {
       [ggCell({ remaining: 2 })],
       [ggOption()],
     );
-    const failed = await launchGgCells(worker(launchGgRun), track, launches);
+    const failed = await launchGgCells(ggWorker(launchGgRun), track, launches);
     expect(failed).toHaveLength(1);
     expect(failed[0]!.error).toBe("nope");
     expect(track).toHaveBeenCalledTimes(1);
   });
 });
 
+function result(over: Partial<LaunchPassResult> = {}): LaunchPassResult {
+  return {
+    inFlightLimit: { kind: "bounded", runs: 5 },
+    enqueued: 0,
+    cells: [],
+    unlaunchable: [],
+    earlyStopCanceled: 0,
+    ...over,
+  };
+}
+
 // Every fill outcome has to read differently: the next move is "nothing",
 // "wait", or "raise the target" respectively.
 describe("describeFill", () => {
-  function result(over: Partial<LaunchPassResult> = {}): LaunchPassResult {
-    return {
-      inFlightLimit: { kind: "bounded", runs: 5 },
-      enqueued: 0,
-      cells: [],
-      unlaunchable: [],
-      earlyStopCanceled: 0,
-      ...over,
-    };
-  }
-
   it("names a plan halted mid-press as halted rather than as idle", () => {
     expect(describeFill(result({ skipped: "notFilling" }))).toMatch(/halted/i);
   });
@@ -1002,44 +1006,107 @@ describe("describeHalt", () => {
   });
 });
 
+function queue(): CoverageQueue {
+  return {
+    runs: [
+      {
+        runId: "r1",
+        slug: "zeta",
+        version: "v1.0.0",
+        variant: "base",
+        engine: "none",
+        harness: "claude",
+        model: "opus",
+        finishedAt: "2026-08-15T00:00:00Z",
+      },
+      {
+        runId: "r2",
+        slug: "alpha",
+        version: "v1.0.0",
+        variant: "base",
+        engine: "none",
+        harness: "codex",
+        model: "gpt",
+        finishedAt: "2026-08-15T00:01:00Z",
+      },
+    ],
+    truncated: false,
+  };
+}
+function longQueue(count: number): CoverageQueue {
+  return {
+    runs: Array.from({ length: count }, (_, index) => ({
+      runId: `r${String(index + 1)}`,
+      slug: "zeta",
+      version: "v1.0.0",
+      variant: "base",
+      engine: "none",
+      harness: "claude",
+      model: "opus",
+      finishedAt: "2026-08-15T00:00:00Z",
+    })),
+    truncated: false,
+  };
+}
+const shownRunIds = () =>
+  screen
+    .getAllByRole("link")
+    .map((link) => link.getAttribute("href")?.split("/", 3)[2]);
+function LadderDashboard() {
+  useRecordSectionIndex("coverage");
+  return (
+    <CoverageReviewQueue queue={queue()} returnLabel="Back to the ladder" />
+  );
+}
+
 // The queue is the review loop's list: it must open runs in the plan's own order and
 // leave a back-return behind it, so reviewing walks the buffer and lands back on the
 // plan rather than on the runs index.
 describe("CoverageReviewQueue", () => {
-  function queue(): CoverageQueue {
-    return {
-      runs: [
-        {
-          runId: "r1",
-          slug: "zeta",
-          version: "v1.0.0",
-          variant: "base",
-          engine: "none",
-          harness: "claude",
-          model: "opus",
-          finishedAt: "2026-08-15T00:00:00Z",
-        },
-        {
-          runId: "r2",
-          slug: "alpha",
-          version: "v1.0.0",
-          variant: "base",
-          engine: "none",
-          harness: "codex",
-          model: "gpt",
-          finishedAt: "2026-08-15T00:01:00Z",
-        },
-      ],
-      truncated: false,
-    };
-  }
-
   // Stands in for the dashboard, which records itself as the coverage section's
   // index as it renders.
   function Dashboard() {
     useRecordSectionIndex("coverage");
     return <CoverageReviewQueue queue={queue()} />;
   }
+
+  function renderQueueAt(url: string, count: number) {
+    render(
+      <MemoryRouter initialEntries={[url]}>
+        <GalleryDataProvider value={galleryValue()}>
+          <CoverageReviewQueue queue={longQueue(count)} />
+        </GalleryDataProvider>
+      </MemoryRouter>,
+    );
+  }
+
+  it("draws a long queue 20 runs a page, in its order", () => {
+    renderQueueAt("/account/ladders/l1", 45);
+    expect(shownRunIds()).toHaveLength(20);
+    expect(shownRunIds()[0]).toBe("r1");
+    fireEvent.click(screen.getByRole("button", { name: "Page 2" }));
+    expect(shownRunIds()[0]).toBe("r21");
+    expect(shownRunIds()).toHaveLength(20);
+    // The count beside the title is the whole queue, not the page.
+    expect(screen.getByText("45")).toBeInTheDocument();
+  });
+
+  it("opens on the page the URL names, beside the board's own page", () => {
+    renderQueueAt("/account/ladders/l1?page=2&labelPage=3", 45);
+    expect(shownRunIds()).toEqual(["r41", "r42", "r43", "r44", "r45"]);
+  });
+
+  it("falls back to the last page once the queue no longer reaches it", () => {
+    renderQueueAt("/account/ladders/l1?labelPage=9", 45);
+    expect(shownRunIds()[0]).toBe("r41");
+  });
+
+  it("draws no pager for a queue that fits one page", () => {
+    renderQueueAt("/account/ladders/l1", 20);
+    expect(
+      screen.queryByRole("navigation", { name: "Pagination" }),
+    ).not.toBeInTheDocument();
+  });
 
   it("names a queued run's engine, so two pins do not read alike", () => {
     render(
@@ -1065,7 +1132,7 @@ describe("CoverageReviewQueue", () => {
         </GalleryDataProvider>
       </MemoryRouter>,
     );
-    expect(screen.getByText("base · v1.0.0 · Simple 2D")).toBeTruthy();
+    expect(screen.getByText("base · v1.0.0 · Simple 2D")).toBeInTheDocument();
   });
 
   it("leaves the engineless run unnamed, as every other surface does", () => {
@@ -1117,7 +1184,7 @@ describe("CoverageReviewQueue", () => {
     // Before the click, a run's back control is the runs section's own default.
     expect(sectionReturnTo("runs", "/runs")).toBe("/runs");
     fireEvent.click(screen.getAllByRole("link")[0]!);
-    expect(screen.getByText("a run")).toBeTruthy();
+    expect(screen.getByText("a run")).toBeInTheDocument();
     expect(sectionReturnTo("runs", "/runs")).toBe("/account/coverage/p1");
   });
 
@@ -1125,12 +1192,6 @@ describe("CoverageReviewQueue", () => {
   // at a dashboard instead, that label is simply untrue — and it is the only thing an
   // icon-only chevron says to a screen reader, so the claim carries its own wording.
   it("renames the run's back control to the dashboard it now returns to", () => {
-    function LadderDashboard() {
-      useRecordSectionIndex("coverage");
-      return (
-        <CoverageReviewQueue queue={queue()} returnLabel="Back to the ladder" />
-      );
-    }
     render(
       <MemoryRouter initialEntries={["/account/ladders/l1"]}>
         <GalleryDataProvider value={galleryValue()}>
@@ -1332,6 +1393,21 @@ function renderPlanPage(cells: CoverageCell[]) {
   renderPlanSection(cells);
 }
 
+const card = (id: string) => ({
+  id,
+  subject: {
+    testCaseSlug: "pong",
+    testCaseVersion: "v1.0.0",
+    variant: "base",
+    harnessSlug: "claude",
+    engineSlug: "none",
+    modelId: "claude-sonnet-4-5",
+  },
+  state: "completed",
+  rating: null,
+  reviewCount: 0,
+});
+
 // All missing starts filling on the backend, so it needs neither a worker nor the gg
 // configurations; the per-cell hand launches on the Tests tab need both.
 describe("CoveragePlanPage All missing", () => {
@@ -1358,8 +1434,10 @@ describe("CoveragePlanPage All missing", () => {
 
   it("says the plan is filling and still runs a pass when pressed", async () => {
     renderPlanSection([cell()], { matrix: { filling: true } });
-    expect(await screen.findByText(/Filling: the rest launch/)).toBeTruthy();
-    expect(screen.getByText(/Halt stops filling/)).toBeTruthy();
+    expect(
+      await screen.findByText(/Filling: the rest launch/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Halt stops filling/)).toBeInTheDocument();
     // A fill a global cancel left with nothing in flight resumes on a press.
     const button = screen.getByRole("button", { name: "▶ All missing" });
     expect((button as HTMLButtonElement).disabled).toBe(false);
@@ -1374,7 +1452,7 @@ describe("CoveragePlanPage All missing", () => {
     });
     expect(
       await screen.findByText(/limit is 0, so this plan launches nothing/),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
     const button = screen.getByRole("button", { name: "▶ All missing" });
     expect((button as HTMLButtonElement).disabled).toBe(true);
   });
@@ -1385,26 +1463,12 @@ describe("CoveragePlanPage All missing", () => {
       await screen.findByText(
         /All missing launches the runs this plan still needs, up to 10 runs in flight/,
       ),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
   });
 
   // The report: a cell of three whose combination other launches ran a fourth time. The
   // breakdowns read the runs the cell holds, so they say three, as the board does.
   it("breaks down only the runs the cells hold", async () => {
-    const card = (id: string) => ({
-      id,
-      subject: {
-        testCaseSlug: "pong",
-        testCaseVersion: "v1.0.0",
-        variant: "base",
-        harnessSlug: "claude",
-        engineSlug: "none",
-        modelId: "claude-sonnet-4-5",
-      },
-      state: "completed",
-      rating: null,
-      reviewCount: 0,
-    });
     planRunCards = ["a", "b", "c", "extra"].map(card);
     try {
       renderPlanPage([
@@ -1430,27 +1494,31 @@ describe("CoveragePlanPage All missing", () => {
   it("offers no top-up controls", async () => {
     renderPlanPage([cell()]);
     await screen.findByText("Cells filled");
-    expect(screen.queryByRole("button", { name: /top up/i })).toBeNull();
-    expect(screen.queryByRole("switch", { name: /top.up/i })).toBeNull();
-    expect(screen.queryByText(/Buffered/)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /top up/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("switch", { name: /top.up/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Buffered/)).not.toBeInTheDocument();
   });
 });
+
+async function renderTests() {
+  renderPlanSection([cell(), ggCell()], { at: "/account/coverage/p1/tests" });
+  fireEvent.click(await screen.findByRole("button", { expanded: false }));
+  return screen.getAllByRole("button", { name: /^Launch one run of/ });
+}
 
 // The hand launches on the Tests tab build gg runs from the configurations, so they
 // wait on that load and say when it failed.
 describe("CoveragePlanTestsPage hand launches", () => {
-  async function renderTests() {
-    renderPlanSection([cell(), ggCell()], { at: "/account/coverage/p1/tests" });
-    fireEvent.click(await screen.findByRole("button", { expanded: false }));
-    return screen.getAllByRole("button", { name: /^Launch one run of/ });
-  }
-
   it("refuses a hand launch until the gg configurations have loaded", async () => {
     ggState = { options: [], loading: true, error: null };
     const [one] = await renderTests();
     expect((one as HTMLButtonElement).disabled).toBe(true);
     // And not because of the worker: that has its own notice.
-    expect(screen.queryByText(/No worker connected/)).toBeNull();
+    expect(screen.queryByText(/No worker connected/)).not.toBeInTheDocument();
   });
 
   it("lets it through once they have", async () => {
@@ -1462,7 +1530,7 @@ describe("CoveragePlanTestsPage hand launches", () => {
   it("says the configurations could not be loaded rather than showing nothing", async () => {
     ggState = { options: [], loading: false, error: "Error: 503" };
     await renderTests();
-    expect(screen.getByText(/could not be loaded/i)).toBeTruthy();
+    expect(screen.getByText(/could not be loaded/i)).toBeInTheDocument();
   });
 
   // A launch by hand is a launch request the console sends, so the plan's retry limit
@@ -1557,12 +1625,14 @@ describe("CoveragePlanLayout tabs", () => {
     renderPlanSection([cell({ unreviewed: 2 })]);
     expect(
       await screen.findByRole("link", { name: "Reviews (2)" }),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
   });
 
   it("leaves the Reviews tab uncounted when nothing is waiting", async () => {
     renderPlanSection([cell()]);
-    expect(await screen.findByRole("link", { name: "Reviews" })).toBeTruthy();
+    expect(
+      await screen.findByRole("link", { name: "Reviews" }),
+    ).toBeInTheDocument();
   });
 
   // The matrix is the Tests tab's whole body, and it is not on the Dashboard: the two
@@ -1570,7 +1640,9 @@ describe("CoveragePlanLayout tabs", () => {
   // scroll past every block to reach a control.
   it("puts the matrix on the Tests tab and nowhere else", async () => {
     renderPlanSection([cell()], { at: "/account/coverage/p1/tests" });
-    expect(await screen.findByRole("button", { expanded: false })).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { expanded: false }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -1611,10 +1683,10 @@ describe("CoveragePlanReviewsPage", () => {
 
   it("says there is nothing to label rather than rendering an empty surface", async () => {
     renderPlanSection([cell()], { at: "/account/coverage/p1/reviews" });
-    expect(await screen.findByText(/No unreviewed runs/)).toBeTruthy();
+    expect(await screen.findByText(/No unreviewed runs/)).toBeInTheDocument();
     // Labelling, never a worklist the plan waits on.
-    expect(screen.getByText("Label runs (optional)")).toBeTruthy();
-    expect(screen.queryByText(/waiting on you/i)).toBeNull();
+    expect(screen.getByText("Label runs (optional)")).toBeInTheDocument();
+    expect(screen.queryByText(/waiting on you/i)).not.toBeInTheDocument();
   });
 });
 
@@ -1644,9 +1716,9 @@ describe("CoveragePlanLayout opening", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "▶ All missing" }),
     );
-    expect(await screen.findByText(/Filling: launched/)).toBeTruthy();
+    expect(await screen.findByText(/Filling: launched/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("link", { name: "Tests" }));
-    expect(screen.getByText(/Filling: launched/)).toBeTruthy();
+    expect(screen.getByText(/Filling: launched/)).toBeInTheDocument();
   });
 });
 
@@ -1661,13 +1733,13 @@ describe("CoveragePlanPage blocked cells", () => {
 
   it("counts the cells nothing can launch, which no other figure explains", async () => {
     renderPlanSection([cell({ unlaunchable: "slot `critic` is unbound" })]);
-    expect(await screen.findByText("Blocked cells")).toBeTruthy();
+    expect(await screen.findByText("Blocked cells")).toBeInTheDocument();
   });
 
   it("says nothing about blocked cells when there are none", async () => {
     renderPlanSection([cell()]);
     await screen.findByText("Cells filled");
-    expect(screen.queryByText("Blocked cells")).toBeNull();
+    expect(screen.queryByText("Blocked cells")).not.toBeInTheDocument();
   });
 
   // A filling plan with nothing in flight and nothing left that a launch pass could
@@ -1704,7 +1776,7 @@ describe("CoveragePlanPage blocked cells", () => {
 
   it("counts a cell blocked on used-up retries too", async () => {
     renderPlanSection([cell({ blocked: true })]);
-    expect(await screen.findByText("Blocked cells")).toBeTruthy();
+    expect(await screen.findByText("Blocked cells")).toBeInTheDocument();
   });
 
   // The control is dead because nothing is launchable, not because the plan is done —

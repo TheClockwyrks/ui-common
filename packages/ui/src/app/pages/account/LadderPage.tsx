@@ -15,11 +15,16 @@ import type {
   RungTally,
   SlotStatus,
 } from "@clockwyrks/backend-api/ladders";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router";
 
 import { caseLabel } from "./caseLabels";
 import { comboLabel } from "./comboLabels";
+import {
+  climberSearchText,
+  climberStanding,
+  type ClimberStanding,
+} from "./ladder-climbers";
 import styles from "./Coverage.module.scss";
 import { CoverageReviewQueue } from "./CoverageReviewQueue";
 import { formatInFlightLimit, inFlightStatTitle } from "./inFlightLimit";
@@ -39,6 +44,13 @@ import { routes } from "../../routes";
 import { useRunsRuntime } from "../../runtime/runsRuntime";
 import { useLiveRunUpdates } from "../../runtime/useLiveRunUpdates";
 import exec from "../runs/RunExec.module.scss";
+import { Button, Input, Pagination, Select } from "../../../index";
+import { showingLabel, useClientPage } from "../../components/use-client-page";
+import {
+  PAGE_PARAM,
+  usePagedSearchParams,
+} from "../../components/usePagedSearchParams";
+import filterStyles from "../../components/RunFilters.module.scss";
 
 // The ladder dashboard is the point of the whole feature: one card per climber, each
 // saying how far that model got and where it stands now. The status pill, the rung
@@ -69,17 +81,21 @@ export const SLOT_BADGE_LABEL: Record<SlotStatus, string> = {
 /** How a ladder's latest dispatch reads: the header's badge and the list card's. */
 export function dispatchStatusLabel(status: DispatchStatus | null): string {
   switch (status) {
-    case null:
+    case null: {
       return "Not run yet";
-    case "running":
+    }
+    case "running": {
       return "Running";
+    }
     case "needsAttention": {
       return "Needs attention";
     }
-    case "finished":
+    case "finished": {
       return "Finished";
-    case "stopped":
+    }
+    case "stopped": {
       return "Stopped";
+    }
   }
 }
 
@@ -113,14 +129,18 @@ export function climberStatusLabel(
     return `Stopped at rung ${at}`;
   }
   switch (climber.status) {
-    case "running":
+    case "running": {
       return `Running rung ${at}`;
-    case "blocked":
+    }
+    case "blocked": {
       return blockedLabel(climber.blocked, at);
-    case "failed":
+    }
+    case "failed": {
       return `Failed at rung ${at}`;
-    case "completed":
+    }
+    case "completed": {
       return "Completed";
+    }
   }
 }
 
@@ -130,14 +150,18 @@ export function climberStatusLabel(
  */
 function blockedLabel(block: ClimberBlock | undefined, at: number): string {
   switch (block?.kind) {
-    case "unlaunchable":
+    case "unlaunchable": {
       return `Blocked at rung ${at}: cannot launch`;
-    case "failing":
+    }
+    case "failing": {
       return `Blocked at rung ${at}: retries used up`;
-    case "unrated":
+    }
+    case "unrated": {
       return `Blocked at rung ${at}: ${block.runs} run${block.runs === 1 ? "" : "s"} unrated`;
-    case undefined:
+    }
+    case undefined: {
       return `Blocked at rung ${at}`;
+    }
   }
 }
 
@@ -148,21 +172,24 @@ function blockedLabel(block: ClimberBlock | undefined, at: number): string {
  */
 export function describeClimberBlock(block: ClimberBlock): string {
   switch (block.kind) {
-    case "unlaunchable":
+    case "unlaunchable": {
       return `This combination cannot be launched: ${block.reason}. Fix the combination, then retry this climber.`;
-    case "failing":
+    }
+    case "failing": {
       return (
         "A run launched for this rung used up its automatic retries without a " +
         `run that counts (${block.attempts} attempt${block.attempts === 1 ? "" : "s"}) ` +
         "and was not launched again. Fix the cause, then retry this climber to " +
         "launch it again."
       );
-    case "unrated":
+    }
+    case "unrated": {
       return (
         `${block.runs} completed run${block.runs === 1 ? "" : "s"} on this rung ` +
         `${block.runs === 1 ? "carries" : "carry"} no validator rating, so the gate ` +
         "cannot decide the rung from them. Re-push those runs."
       );
+    }
   }
 }
 
@@ -180,21 +207,22 @@ function statusClass(
   climber: LadderClimber,
   dispatch: DispatchStatus,
 ): string | undefined {
-  if (
-    dispatch === "stopped" &&
-    (climber.status === "running" || climber.status === "blocked")
-  ) {
-    return ladderStyles.statusStopped;
-  }
-  switch (climber.status) {
-    case "running":
+  switch (climberStanding(climber, dispatch)) {
+    case "stopped": {
+      return ladderStyles.statusStopped;
+    }
+    case "running": {
       return ladderStyles.statusRunning;
-    case "blocked":
+    }
+    case "blocked": {
       return ladderStyles.statusBlocked;
-    case "failed":
+    }
+    case "failed": {
       return ladderStyles.statusFailed;
-    case "completed":
+    }
+    case "completed": {
       return ladderStyles.statusCompleted;
+    }
   }
 }
 
@@ -348,30 +376,39 @@ export function climberCombo(climber: LadderClimber): ReviewPlanCombo {
 /** The badge's colour class: filled for a verdict, muted for anything undecided. */
 function slotBadgeClass(status: SlotStatus): string | undefined {
   switch (status) {
-    case "passed":
+    case "passed": {
       return ladderStyles.verdictPassed;
-    case "failed":
+    }
+    case "failed": {
       return ladderStyles.verdictFailed;
-    default:
+    }
+    default: {
       return ladderStyles.verdictUndecided;
+    }
   }
 }
 
 /** The rung-track segment's class for one slot. */
 function trackStepClass(slot: LadderSlot | undefined): string {
   switch (slot?.status) {
-    case "passed":
+    case "passed": {
       return ladderStyles.rungStepDone ?? "";
-    case "failed":
+    }
+    case "failed": {
       return ladderStyles.rungStepFailed ?? "";
-    case "running":
+    }
+    case "running": {
       return ladderStyles.rungStepCurrent ?? "";
-    case "blocked":
+    }
+    case "blocked": {
       return ladderStyles.rungStepBlocked ?? "";
-    case "skipped":
+    }
+    case "skipped": {
       return ladderStyles.rungStepSkipped ?? "";
-    default:
+    }
+    default: {
       return "";
+    }
   }
 }
 
@@ -449,6 +486,26 @@ function RungRow({
   );
 }
 
+/** How many of a climber's rungs an expanded card draws per page. */
+export const RUNGS_PER_PAGE = 5;
+
+/**
+ * The page of rungs an expanded card opens on: the one holding the rung the climber
+ * stands at (its current rung, or the one it failed, was blocked or was stopped at),
+ * so the rung the status pill names is on screen without paging. A completed climber,
+ * which stands at no rung, opens on the first page.
+ */
+function openingRungPage(
+  climber: LadderClimber,
+  rungs: LadderProgressRung[],
+): number {
+  if (climber.status === "completed" || climber.currentRung == null) return 0;
+  const index = rungs.findIndex(
+    (rung) => rung.position === climber.currentRung,
+  );
+  return index === -1 ? 0 : Math.floor(index / RUNGS_PER_PAGE);
+}
+
 // One climber's card on the board. Its header is a grid of fixed slots: the identity,
 // and under it a line of the status, the rung track, and the rung count. The status
 // slot has one width whatever it says, from "Running rung 1" to "Blocked at rung 12:
@@ -458,6 +515,11 @@ function RungRow({
 // status change adds to a card; see `.climberBlocked`). Starts collapsed: the header
 // answers the dashboard's question, and the per-rung evidence is what you open to
 // look closer.
+//
+// Expanded, the rungs are drawn a page at a time: a climb of many rungs, each of which
+// opens into its runs, would otherwise push the next climber a screen away. Opening the
+// card turns to the page of the rung the climber stands at, and the page then stays
+// where the reader puts it while the climb moves on.
 export function ClimberRow({
   climber,
   rungs,
@@ -474,6 +536,17 @@ export function ClimberRow({
   onRetry?: (climber: LadderClimber) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [rungPage, setRungPage] = useState(0);
+  const toggle = () => {
+    if (!open) setRungPage(openingRungPage(climber, rungs));
+    setOpen(!open);
+  };
+  const rungPageCount = Math.max(1, Math.ceil(rungs.length / RUNGS_PER_PAGE));
+  const currentRungPage = Math.min(rungPage, rungPageCount - 1);
+  const shownRungs = rungs.slice(
+    currentRungPage * RUNGS_PER_PAGE,
+    (currentRungPage + 1) * RUNGS_PER_PAGE,
+  );
   const passed = climber.slots.filter((s) => s.status === "passed").length;
   const status = climberStatusLabel(climber, rungs.length, dispatch);
   const slotOf = (rung: LadderProgressRung) =>
@@ -504,7 +577,7 @@ export function ClimberRow({
           type="button"
           className={ladderStyles.climberToggle}
           aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
+          onClick={toggle}
         >
           <span className={styles.twisty} aria-hidden>
             {open ? "▾" : "▸"}
@@ -532,10 +605,7 @@ export function ClimberRow({
         {/* Where the climber stands. A pointer shortcut for the toggle above, which is
             what a keyboard reaches; the track is drawn, not read, so it is hidden from
             assistive technology and its count is said in words beside it. */}
-        <div
-          className={ladderStyles.climberLine}
-          onClick={() => setOpen((v) => !v)}
-        >
+        <div className={ladderStyles.climberLine} onClick={toggle}>
           <span className={ladderStyles.climberStatusSlot}>
             <span
               className={`${ladderStyles.statusPill} ${statusClass(climber, dispatch) ?? ""}`}
@@ -587,21 +657,217 @@ export function ClimberRow({
       ))}
 
       {open && (
-        <ol className={ladderStyles.rungList}>
-          {rungs.map((rung) => {
-            const slot = slotOf(rung);
-            return (
-              <RungRow
-                key={rung.id}
-                rung={rung}
-                slot={slot}
-                climber={climber}
-                current={live && slot?.status === "running"}
-              />
-            );
-          })}
-        </ol>
+        <>
+          <ol className={ladderStyles.rungList}>
+            {shownRungs.map((rung) => {
+              const slot = slotOf(rung);
+              return (
+                <RungRow
+                  key={rung.id}
+                  rung={rung}
+                  slot={slot}
+                  climber={climber}
+                  current={live && slot?.status === "running"}
+                />
+              );
+            })}
+          </ol>
+          <Pagination
+            page={currentRungPage}
+            pageCount={rungPageCount}
+            onPageChange={setRungPage}
+          />
+        </>
       )}
+    </section>
+  );
+}
+
+/** How many climbers the board draws per page. Matches the run listings. */
+export const CLIMBERS_PER_PAGE = 20;
+
+/** The URL key the board's status filter rides in, beside `page` and `q`. */
+const STATUS_PARAM = "status";
+
+/** The status filter's wording, which is the first word of the pill it narrows to. */
+const STANDING_LABEL: Record<ClimberStanding, string> = {
+  running: "Running",
+  blocked: "Blocked",
+  failed: "Failed",
+  completed: "Completed",
+  stopped: "Stopped",
+};
+
+/**
+ * The standings a dispatch's climbers can be in, in the order the filter offers them.
+ * A stopped dispatch has no running or blocked climber left: those read as stopped.
+ */
+function standingsOf(dispatch: DispatchStatus): ClimberStanding[] {
+  return dispatch === "stopped"
+    ? ["stopped", "failed", "completed"]
+    : ["running", "blocked", "failed", "completed"];
+}
+
+// The climbers of a dispatch, a page at a time.
+//
+// The board is read whole (the summary, the status note and the controls above this
+// list all describe the whole dispatch, and are computed from it there), and this
+// list alone is windowed: a dispatch of several hundred climbers would otherwise draw
+// several hundred cards, each with a rung track, and redraw them on every read.
+//
+// The page, the search and the status filter live in the URL, so a narrowed board is
+// a link. The order is the backend's (the dispatch's climb order) and the window is
+// re-cut from it on every read, so a climber holds its page while the dispatch runs,
+// and a card that stays on the page keeps its state (it is keyed by the climber), so
+// an expanded climber stays expanded when a run finishing re-reads the board.
+function ClimberBoard({
+  climbers,
+  rungs,
+  dispatch,
+  busy,
+  onRetry,
+}: {
+  climbers: LadderClimber[];
+  rungs: LadderProgressRung[];
+  dispatch: DispatchStatus;
+  busy: boolean;
+  onRetry?: (climber: LadderClimber) => void;
+}) {
+  const { page, setPage, query, setQuery, committedQuery } =
+    usePagedSearchParams();
+  const [params, setParams] = useSearchParams();
+  const needle = committedQuery.trim().toLowerCase();
+  // Whatever the URL carries is honoured if it names a standing at all: a link to the
+  // running climbers opened after a Stop narrows to none, and says so, rather than
+  // silently showing every climber under a filter that reads as set.
+  const rawStatus = params.get(STATUS_PARAM) ?? "";
+  const status: ClimberStanding | "" = Object.hasOwn(STANDING_LABEL, rawStatus)
+    ? (rawStatus as ClimberStanding)
+    : "";
+
+  // A status change reshapes the list, so it drops the page as a new search does.
+  const setStatus = useCallback(
+    (value: string) => {
+      setParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (value) next.set(STATUS_PARAM, value);
+        else next.delete(STATUS_PARAM);
+        next.delete(PAGE_PARAM);
+        return next;
+      });
+    },
+    [setParams],
+  );
+
+  const clear = useCallback(() => {
+    // The input's immediate value too, or the debounced writer would push the text
+    // straight back into the URL.
+    setQuery("");
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("q");
+      next.delete(STATUS_PARAM);
+      next.delete(PAGE_PARAM);
+      return next;
+    });
+  }, [setQuery, setParams]);
+
+  // The climbers the search leaves, then how many of those stand in each status (the
+  // figure beside each option, so the filter says what it would show before it is
+  // chosen), then the ones the status leaves.
+  const { matched, counts } = useMemo(() => {
+    const searched = needle
+      ? climbers.filter((c) => climberSearchText(c).includes(needle))
+      : climbers;
+    const counts = new Map<ClimberStanding, number>();
+    for (const c of searched) {
+      const standing = climberStanding(c, dispatch);
+      counts.set(standing, (counts.get(standing) ?? 0) + 1);
+    }
+    const matched = status
+      ? searched.filter((c) => climberStanding(c, dispatch) === status)
+      : searched;
+    return { matched, counts };
+  }, [climbers, dispatch, needle, status]);
+
+  const shown = useClientPage(matched, CLIMBERS_PER_PAGE, page, setPage);
+  const filtered = Boolean(needle || status);
+  // A board that fits one page needs no way to narrow it, and a dispatch's climbers
+  // are fixed at Run, so the bar never appears or leaves while a dispatch is watched.
+  // A filter arriving by link on such a board still shows, so it can be cleared.
+  const showFilters = climbers.length > CLIMBERS_PER_PAGE || filtered;
+  const options = standingsOf(dispatch);
+
+  return (
+    <section className={ladderStyles.board} aria-label="Climbers">
+      {showFilters && (
+        <div
+          className={`${filterStyles.filters} ${ladderStyles.climberFilters}`}
+        >
+          <Input
+            type="search"
+            placeholder="Search climbers by harness, model, or gg configuration…"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label="Search climbers"
+          />
+          <div className={filterStyles.facets}>
+            <Select
+              className={`${filterStyles.facet} ${ladderStyles.climberStatusFilter}`}
+              value={status}
+              aria-label="Status"
+              data-set={status ? "true" : undefined}
+              onChange={(event) => setStatus(event.target.value)}
+            >
+              <option value="">All statuses</option>
+              {options.map((standing) => (
+                <option key={standing} value={standing}>
+                  {STANDING_LABEL[standing]} ({counts.get(standing) ?? 0})
+                </option>
+              ))}
+              {status && !options.includes(status) && (
+                <option value={status}>{STANDING_LABEL[status]} (0)</option>
+              )}
+            </Select>
+            <span className={ladderStyles.climberShowing} role="status">
+              {showingLabel(shown, matched.length, climbers.length, "climber")}
+            </span>
+            {filtered && (
+              <Button
+                variant="link"
+                size="small"
+                className={filterStyles.clear}
+                onClick={clear}
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {matched.length === 0 && filtered ? (
+        <p className={styles.empty}>No climbers match those filters.</p>
+      ) : (
+        <div className={ladderStyles.climbers}>
+          {shown.items.map((climber) => (
+            <ClimberRow
+              key={climber.key}
+              climber={climber}
+              rungs={rungs}
+              busy={busy}
+              dispatch={dispatch}
+              {...(onRetry ? { onRetry } : {})}
+            />
+          ))}
+        </div>
+      )}
+
+      <Pagination
+        page={shown.current}
+        pageCount={shown.pageCount}
+        onPageChange={setPage}
+      />
     </section>
   );
 }
@@ -1006,20 +1272,15 @@ export function LadderPage() {
                 />
               )}
 
-              <div className={ladderStyles.climbers}>
-                {progress.climbers.map((climber) => (
-                  <ClimberRow
-                    key={climber.key}
-                    climber={climber}
-                    rungs={progress.rungs}
-                    busy={busy}
-                    dispatch={dispatch.status}
-                    {...(backend?.retryLadderClimber
-                      ? { onRetry: (c: LadderClimber) => void retry(c) }
-                      : {})}
-                  />
-                ))}
-              </div>
+              <ClimberBoard
+                climbers={progress.climbers}
+                rungs={progress.rungs}
+                busy={busy}
+                dispatch={dispatch.status}
+                {...(backend?.retryLadderClimber
+                  ? { onRetry: (c: LadderClimber) => void retry(c) }
+                  : {})}
+              />
             </>
           )}
         </>

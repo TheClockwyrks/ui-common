@@ -6,8 +6,10 @@ import type { InProgressRun } from "./types";
 // (claimed, the driver pod being created) and `starting` (the pod up, running
 // pre-run setup) are one waiting-to-begin phase to a viewer; only the queue cares
 // which. A held-back run reads as "pending", a free-but-unclaimed one as "queued".
-// A run whose driver holds its record while it waits to store the run's files
-// reads as "storing": it has finished running but has not finished yet.
+// `validating` is kept apart from `running`: the model has finished and the driver
+// is validating its build, which a viewer watching a run wants to tell from a model
+// still at work. A run whose driver holds its record while it waits to store the
+// run's files reads as "storing": it has finished running but has not finished yet.
 //
 // Terminal states map to `null` rather than to a phase: a finished run is not
 // in-progress at all, and every caller has something better to do with it than
@@ -34,6 +36,9 @@ export function runPhase(state: string): InProgressRun["state"] | null {
     case "running": {
       return "running";
     }
+    case "validating": {
+      return "validating";
+    }
     case "storing": {
       return "storing";
     }
@@ -41,4 +46,17 @@ export function runPhase(state: string): InProgressRun["state"] | null {
       return null;
     }
   }
+}
+
+/**
+ * What a run's live monitor says while the run is `validating`, or null in any
+ * other phase. The model's session is over, so its feed has gone quiet; without
+ * this a monitor shows a live run that seems to have stopped working.
+ */
+export function validatingRunNotice(
+  run: Pick<InProgressRun, "state"> | null | undefined,
+): string | null {
+  return run?.state === "validating"
+    ? "The model has finished; validating the build."
+    : null;
 }

@@ -65,11 +65,21 @@ interface AxisLabels {
    */
   yTickFormat?: string | ((value: number) => string);
   /**
-   * Degrees to rotate the x-axis tick labels (e.g. `-40`). Use it to fit many
-   * long category labels (model ids) along the axis without overlap; the chart
-   * widens its bottom margin to make room for the tilted text.
+   * Degrees to rotate the x-axis tick labels (e.g. `40`, down to the right). Use
+   * it to fit many long category labels (model ids) along the axis without
+   * overlap; the chart widens its bottom margin to make room for the tilted
+   * text, and asks for the width that gives each category a legible slot and
+   * the last labels their full length, which `Chart` scrolls to. A negative rotation tilts the labels down to the left, where a long
+   * first label has nowhere to go but past the chart's edge.
    */
   xTickRotate?: number;
+  /**
+   * The width of the container the chart is drawn into, as `Chart` hands it to
+   * a spec. With it a chart with tilted labels fills the container with its
+   * bars, and is made wider than the container, and scrolled, by whatever its
+   * last labels reach past the last bar.
+   */
+  availableWidth?: number;
   /**
    * The bar order along x, as the full list of category labels. Pass it whenever
    * the bars carry a meaningful order — Plot otherwise sorts the ordinal domain
@@ -79,15 +89,27 @@ interface AxisLabels {
   xDomain?: readonly string[];
 }
 
-// Geometry for sizing the bottom margin under rotated x labels. A monospace
-// glyph advances ~7.2px at the chart's 12px font, and a label tilted θ° occupies
-// `width · sin θ` of vertical space; AXIS_PAD covers the tick gap and a little
-// slack. We clamp so the common case gets comfortable room while a stray very
-// long label can't blow the chart's height out.
+// Geometry for making room for rotated x labels. A monospace glyph advances
+// ~7.2px at the chart's 12px font, and a label tilted θ° occupies
+// `width · sin θ` of vertical space and `width · cos θ` of horizontal space;
+// AXIS_PAD covers the tick gap and a little slack. We clamp so the common case
+// gets comfortable room while a stray very long label can't blow the chart's
+// height out.
 const GLYPH_PX = 7.2;
 const AXIS_PAD = 34;
 const MIN_ROTATED_MARGIN = 96;
 const MAX_ROTATED_MARGIN = 220;
+// The narrowest a category's slot along x is drawn when its labels are tilted.
+// Below this the tilted labels run into each other and the bars become slivers,
+// so a chart with more categories than fit is drawn wider than its container
+// and scrolled sideways (see `Chart`) rather than squeezed.
+export const MIN_ROTATED_SLOT = 32;
+// The narrowest an arm's slot is drawn on a distribution chart with tilted
+// labels. An arm draws its interval to the left of its box and its runs to the
+// right, and all three need room to read apart from the next arm's.
+export const MIN_DISTRIBUTION_SLOT = 120;
+// Plot's own default right margin, kept as the least a chart gets.
+const DEFAULT_RIGHT_MARGIN = 20;
 
 // The bottom margin needed to fit the longest tilted category label without
 // clipping it, given the rotation in degrees. Sized to the longest label so a
@@ -103,6 +125,73 @@ function rotatedBottomMargin(
     MAX_ROTATED_MARGIN,
     Math.max(MIN_ROTATED_MARGIN, Math.ceil(height + AXIS_PAD)),
   );
+}
+
+// The layout a chart with tilted x labels takes, for the categories `order`
+// names left to right: the bottom margin the labels need, the right margin the
+// last of them need when they tilt down to the right (a positive rotation, which
+// Plot anchors at the tick), and the `width` the chart is to be drawn at.
+//
+// The bars always fill the container: the plot area is what the container
+// leaves after the left margin and Plot's own right margin, `available` being
+// the container's width, and never less than a slot of `MIN_ROTATED_SLOT` per
+// category (or of `minSlot`, for a chart whose categories need wider ones). A label starts under the middle of its own slot and extends
+// `chars · glyph · cos θ` to the right, over the slots after it. Whatever
+// reaches past the last slot is given to the right margin, which makes the
+// chart that much wider than its container instead of narrowing the bars to
+// keep the label in view. `Chart` draws the chart at this width and lets the
+// container scroll sideways to it, so both a chart with too many bars and one
+// whose last labels run off the edge are scrolled, and neither is squeezed.
+//
+// Without `available` the layout is that of the narrowest chart, a least slot
+// per category.
+function rotatedAxisLayout(
+  order: readonly string[],
+  rotateDeg: number,
+  marginLeft: number,
+  available: number | undefined,
+  minSlot: number = MIN_ROTATED_SLOT,
+): Pick<PlotOptions, "marginBottom" | "marginRight" | "width"> {
+  const marginBottom = rotatedBottomMargin(order, rotateDeg);
+  const n = order.length;
+  const plotArea = Math.max(
+    n * minSlot,
+    (available ?? 0) - marginLeft - DEFAULT_RIGHT_MARGIN,
+  );
+  const slot = n > 0 ? plotArea / n : 0;
+  const cos = Math.cos((rotateDeg * Math.PI) / 180);
+  let overhang = 0;
+  if (rotateDeg > 0) {
+    for (const [index, label] of order.entries()) {
+      const room = (n - 1 - index + 0.5) * slot;
+      overhang = Math.max(overhang, label.length * GLYPH_PX * cos - room);
+    }
+  }
+  const marginRight = Math.max(DEFAULT_RIGHT_MARGIN, Math.ceil(overhang));
+  return {
+    marginBottom,
+    marginRight,
+    width: marginLeft + plotArea + marginRight,
+  };
+}
+
+// Two labels in code-unit order, the order `<` puts strings in.
+function compareCodeUnits(a: string, b: string): number {
+  if (a < b) return -1;
+  return a > b ? 1 : 0;
+}
+
+// The categories of an ordinal axis left to right: the stated domain, or the
+// sorted distinct labels Plot would infer.
+function axisOrder(
+  labels: readonly string[],
+  domain: readonly string[] | undefined,
+): readonly string[] {
+  if (domain) return domain;
+  // Plot orders inferred ordinal labels ascending by code unit, as `<` compares them.
+  const sorted = [...new Set(labels)];
+  sorted.sort(compareCodeUnits);
+  return sorted;
 }
 
 // Both the tooltip and the hover highlight select the bar under the pointer by
@@ -182,21 +271,24 @@ export function barChart(
           ...d.distribution!,
         }))
       : null;
+  const base = basePlotOptions(palette);
   return {
-    ...basePlotOptions(palette),
-    ...(labels.xTickRotate
-      ? {
-          marginBottom: rotatedBottomMargin(
-            data.map((d) => d.label),
-            labels.xTickRotate,
-          ),
-        }
-      : {}),
+    ...base,
+    ...(labels.xTickRotate &&
+      rotatedAxisLayout(
+        axisOrder(
+          data.map((d) => d.label),
+          labels.xDomain,
+        ),
+        labels.xTickRotate,
+        Number(base.marginLeft),
+        labels.availableWidth,
+      )),
     x: {
       label: labels.x ?? null,
       type: "band",
       tickRotate: labels.xTickRotate,
-      ...(labels.xDomain ? { domain: labels.xDomain as string[] } : {}),
+      ...(labels.xDomain && { domain: labels.xDomain as string[] }),
     },
     y: { label: labels.y ?? null, grid: true, tickFormat: labels.yTickFormat },
     // Bars carry literal CSS colors, so use an identity color scale (no legend,
@@ -208,9 +300,10 @@ export function barChart(
         y: "value",
         fill: (d: BarPoint) => d.color ?? palette.accent,
         rx: 2,
-        ...(hasTips
-          ? { title: (d: BarPoint) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: BarPoint) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       Plot.ruleY([0], { stroke: palette.border }),
       // The hover affordance. A distributional chart swaps the hovered bar for the
@@ -350,6 +443,19 @@ interface StackedAxisLabels {
   yTickFormat?: string | ((value: number) => string);
   xTickRotate?: number;
   /**
+   * The width of the container the chart is drawn into, as `Chart` hands it to
+   * a spec. With it a chart with tilted labels fills the container with its
+   * bars, and is made wider than the container, and scrolled, by whatever its
+   * last labels reach past the last bar.
+   */
+  availableWidth?: number;
+  /**
+   * The narrowest a bar's slot is drawn with tilted labels, `MIN_ROTATED_SLOT`
+   * unless given; a chart that names each bar with a long label, such as an
+   * arm's, passes `MIN_DISTRIBUTION_SLOT`.
+   */
+  minSlot?: number;
+  /**
    * The bar order along x, as the full list of group names. Pass it whenever the
    * groups have a meaningful order that is not their sorted order — Plot sorts an
    * ordinal domain it infers, which puts `"100"` before `"70"` and silently
@@ -379,22 +485,26 @@ export function stackedBarChart(
   // Fixes the stacking order (first series at the baseline) and the legend.
   const order = series.map((s) => s.name);
   const hasTips = data.some((d) => d.title != null);
+  const base = basePlotOptions(palette);
   return {
-    ...basePlotOptions(palette),
-    ...(labels.xTickRotate
-      ? {
-          marginBottom: rotatedBottomMargin(
-            data.map((d) => d.group),
-            labels.xTickRotate,
-          ),
-        }
-      : {}),
+    ...base,
+    ...(labels.xTickRotate &&
+      rotatedAxisLayout(
+        axisOrder(
+          data.map((d) => d.group),
+          labels.xDomain,
+        ),
+        labels.xTickRotate,
+        Number(base.marginLeft),
+        labels.availableWidth,
+        labels.minSlot,
+      )),
     x: {
       label: null,
       type: "band",
       tickRotate: labels.xTickRotate,
-      ...(labels.xDomain ? { domain: labels.xDomain as string[] } : {}),
-      ...(labels.xTicks ? { ticks: labels.xTicks as string[] } : {}),
+      ...(labels.xDomain && { domain: labels.xDomain as string[] }),
+      ...(labels.xTicks && { ticks: labels.xTicks as string[] }),
     },
     y: { label: labels.y ?? null, grid: true, tickFormat: labels.yTickFormat },
     color: {
@@ -411,9 +521,10 @@ export function stackedBarChart(
         // of the row order in `data`.
         order,
         rx: 1,
-        ...(hasTips
-          ? { title: (d: StackedBarSegment) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: StackedBarSegment) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       Plot.ruleY([0], { stroke: palette.border }),
       // The hover highlight: a wash over the pointer-selected segment. `z` +
@@ -526,7 +637,7 @@ export function stackedAreaChart(
     ...basePlotOptions(palette),
     // A capped y scale only frames the plot; without clipping, a stack taller than
     // the cap would draw straight over the axis and the title.
-    ...(yMax != null ? { clip: true } : {}),
+    ...(yMax != null && { clip: true }),
     x: {
       label: labels.x ?? null,
       // Whole-number turn ticks; a fractional tick between turns is meaningless.
@@ -537,7 +648,7 @@ export function stackedAreaChart(
       grid: true,
       zero: true,
       tickFormat: labels.yTickFormat,
-      ...(yMax != null ? { domain: [0, yMax] } : {}),
+      ...(yMax != null && { domain: [0, yMax] }),
     },
     color: {
       legend: false,
@@ -555,9 +666,10 @@ export function stackedAreaChart(
         stroke: palette.surface,
         strokeWidth: 0.5,
         curve: "linear",
-        ...(hasTips
-          ? { title: (d: StackedAreaPoint) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: StackedAreaPoint) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       Plot.ruleY([0], { stroke: palette.border }),
       // The hover affordance: a vertical rule at the pointer-selected x, drawn over
@@ -720,7 +832,7 @@ export function timeSeriesChart(
       grid: true,
       zero: true,
       tickFormat: labels.yTickFormat,
-      ...(yMax != null ? { domain: [0, yMax] } : {}),
+      ...(yMax != null && { domain: [0, yMax] }),
     },
     color: {
       // One series is already named by the chart's title; two or more need a key.
@@ -750,9 +862,10 @@ export function timeSeriesChart(
         stroke: palette.surface,
         strokeWidth: 1,
         r: 3,
-        ...(hasTips
-          ? { title: (d: TimeSeriesPoint) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: TimeSeriesPoint) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       // The hover affordance: a crosshair at the pointer-selected instant, so which
       // bucket the tip describes is unmistakable in a dense series. Same pointer and
@@ -850,6 +963,15 @@ interface DistributionLabels {
   yTickFormat?: string | ((value: number) => string);
   /** Formats a raw value for a point's tooltip and the box's summary tooltip. */
   formatValue?: (value: number) => string;
+  /**
+   * Degrees to tilt the arm labels (e.g. `40`, down to the right), for a chart of
+   * many arms with long labels. The chart then lays its arms out as a bar chart
+   * with tilted labels does (see `AxisLabels.xTickRotate`), with a slot of at
+   * least `MIN_DISTRIBUTION_SLOT` per arm.
+   */
+  xTickRotate?: number;
+  /** The width of the container the chart is drawn into, as `Chart` hands it to a spec. */
+  availableWidth?: number;
 }
 
 // Pixel nudges that separate the three layers drawn at each arm's x position: the
@@ -920,10 +1042,24 @@ export function distributionChart(
   ) as DistributionGroup[];
 
   const domain = distributionDomain(groups);
+  const base = basePlotOptions(palette);
 
   return {
-    ...basePlotOptions(palette),
-    x: { label: null, type: "band", domain: order },
+    ...base,
+    ...(labels.xTickRotate &&
+      rotatedAxisLayout(
+        order,
+        labels.xTickRotate,
+        Number(base.marginLeft),
+        labels.availableWidth,
+        MIN_DISTRIBUTION_SLOT,
+      )),
+    x: {
+      label: null,
+      type: "band",
+      domain: order,
+      tickRotate: labels.xTickRotate,
+    },
     y: {
       label: labels.y ?? null,
       grid: true,
@@ -1005,9 +1141,10 @@ export function distributionChart(
         r: 4,
         dx: POINTS_DX,
         title: (d: (typeof points)[number]) => pointTitle(d, formatValue),
-        ...(points.some((p) => p.href != null)
-          ? { href: (d: (typeof points)[number]) => d.href, target: "_self" }
-          : {}),
+        ...(points.some((p) => p.href != null) && {
+          href: (d: (typeof points)[number]) => d.href,
+          target: "_self",
+        }),
         tip: tipBox(palette),
       }),
     ],
@@ -1135,11 +1272,16 @@ export function scatterChart(
   });
   const hasLinks = dots.some((d) => d.href != null);
 
+  const base = basePlotOptions(palette);
   return {
-    ...basePlotOptions(palette),
-    ...(labels.xTickRotate
-      ? { marginBottom: rotatedBottomMargin(order, labels.xTickRotate) }
-      : {}),
+    ...base,
+    ...(labels.xTickRotate &&
+      rotatedAxisLayout(
+        order,
+        labels.xTickRotate,
+        Number(base.marginLeft),
+        labels.availableWidth,
+      )),
     x: {
       label: labels.x ?? null,
       type: "linear",
@@ -1182,9 +1324,10 @@ export function scatterChart(
         strokeWidth: 1,
         r: 4,
         title: (d: (typeof dots)[number]) => pointTitle(d, format),
-        ...(hasLinks
-          ? { href: (d: (typeof dots)[number]) => d.href, target: "_self" }
-          : {}),
+        ...(hasLinks && {
+          href: (d: (typeof dots)[number]) => d.href,
+          target: "_self",
+        }),
         tip: tipBoxXY(palette),
       }),
     ],
@@ -1253,7 +1396,7 @@ export function metricLineChart(
       grid: true,
       zero: true,
       tickFormat: labels.yTickFormat,
-      ...(yMax != null ? { domain: [0, yMax] } : {}),
+      ...(yMax != null && { domain: [0, yMax] }),
     },
     marks: [
       Plot.ruleY([0], { stroke: palette.border }),
@@ -1272,9 +1415,10 @@ export function metricLineChart(
         stroke: palette.surface,
         strokeWidth: 1,
         r: 3,
-        ...(hasTips
-          ? { title: (d: MetricPoint) => d.title, tip: tipBox(palette) }
-          : {}),
+        ...(hasTips && {
+          title: (d: MetricPoint) => d.title,
+          tip: tipBox(palette),
+        }),
       }),
       // The hover affordance: a crosshair rule at the pointer-selected turn and a
       // widened dot on the observation itself, so the point the tip is describing is
@@ -1426,7 +1570,7 @@ export function horizontalBarChart(
     ...basePlotOptions(palette),
     marginLeft,
     marginTop: H_BAR_MARGIN_TOP,
-    ...(marginRight != null ? { marginRight } : {}),
+    ...(marginRight != null && { marginRight }),
     // The frame grows with the ranking, so every row gets the same height whatever the
     // row count, and the x-axis band below is always inside the figure.
     height: H_BAR_MARGIN_TOP + data.length * ROW_PX + 40,

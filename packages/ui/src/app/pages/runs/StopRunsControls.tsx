@@ -29,6 +29,7 @@ const WAITING_STATES: InProgressRun["state"][] = ["queued", "pending"];
 const ACTIVE_STATES: InProgressRun["state"][] = [
   "starting",
   "running",
+  "validating",
   "storing",
 ];
 

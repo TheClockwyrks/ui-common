@@ -46,6 +46,7 @@ function run(
     displayName: id,
     modelName,
     configName,
+    agents: null,
     rating,
     aesthetic: null,
     grade: null,

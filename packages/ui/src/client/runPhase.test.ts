@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runPhase } from "./runPhase";
+import { runPhase, validatingRunNotice } from "./runPhase";
 
 describe("runPhase", () => {
   it("passes through the two states the console shows verbatim", () => {
@@ -39,5 +39,24 @@ describe("runPhase", () => {
     // A state this console does not know about is not something it can place in the
     // in-flight list; the active-list caller falls back for it.
     expect(runPhase("something-new")).toBeNull();
+  });
+
+  it("keeps a run whose build is being validated apart from a running one", () => {
+    // The model has finished; a viewer waiting on it wants to know that.
+    expect(runPhase("validating")).toBe("validating");
+  });
+});
+
+describe("validatingRunNotice", () => {
+  it("says nothing outside the validating phase", () => {
+    expect(validatingRunNotice(undefined)).toBeNull();
+    expect(validatingRunNotice({ state: "running" })).toBeNull();
+    expect(validatingRunNotice({ state: "storing" })).toBeNull();
+  });
+
+  it("says the model has finished and its build is being validated", () => {
+    expect(validatingRunNotice({ state: "validating" })).toBe(
+      "The model has finished; validating the build.",
+    );
   });
 });

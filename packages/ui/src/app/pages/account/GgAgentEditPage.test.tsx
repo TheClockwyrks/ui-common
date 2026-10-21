@@ -17,8 +17,15 @@
 
 import type { GgSavedAgent } from "@clockwyrks/backend-api/gg";
 import type { ReactNode } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { Link, Outlet, RouterProvider, createMemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BackendProvider,
@@ -83,21 +90,44 @@ function backendValue(): BackendContextValue {
 // editor rather than merely clearing the form.
 const AGENT_LIST = "the gg agents list";
 
+// Somewhere else in the app, reached by a link outside the page, so a test can leave the
+// form the way an operator would rather than only through its own back control.
+const ELSEWHERE = "somewhere else in the app";
+// The page the history holds before the form, which the browser's back button returns to.
+const EARLIER = "the page before the form";
+
 function renderPage(path = "/account/gg/agents/new") {
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <BackendProvider value={backendValue()}>
-        <Routes>
-          <Route path="/account/gg/agents/new" element={<GgAgentEditPage />} />
-          <Route
-            path="/account/gg/agents/:agentId/edit"
-            element={<GgAgentEditPage />}
-          />
-          <Route path="/account/gg/agents" element={<div>{AGENT_LIST}</div>} />
-        </Routes>
-      </BackendProvider>
-    </MemoryRouter>,
+  // A data router, as the hosts mount the app under: only a data router can hold a
+  // navigation, which is how the form asks before being left.
+  const router = createMemoryRouter(
+    [
+      {
+        element: (
+          <>
+            <Link to="/elsewhere">Elsewhere</Link>
+            <Outlet />
+          </>
+        ),
+        children: [
+          { path: "/account/gg/agents/new", element: <GgAgentEditPage /> },
+          {
+            path: "/account/gg/agents/:agentId/edit",
+            element: <GgAgentEditPage />,
+          },
+          { path: "/account/gg/agents", element: <div>{AGENT_LIST}</div> },
+          { path: "/elsewhere", element: <div>{ELSEWHERE}</div> },
+          { path: "/before", element: <div>{EARLIER}</div> },
+        ],
+      },
+    ],
+    { initialEntries: ["/before", path], initialIndex: 1 },
   );
+  const view = render(
+    <BackendProvider value={backendValue()}>
+      <RouterProvider router={router} />
+    </BackendProvider>,
+  );
+  return { ...view, router };
 }
 
 // Open one of the per-agent form's tabs by its label. Matched on the label element rather
@@ -200,7 +230,9 @@ describe("GgAgentEditPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Create agent" }));
 
-    await waitFor(() => expect(createGgAgent).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(createGgAgent).toHaveBeenCalled();
+    });
     const [input] = createGgAgent.mock.calls[0]!;
     expect(input.agent.name).toBe("reviewer");
     expect(input.description).toBe("reviews what the implementer wrote");
@@ -274,7 +306,9 @@ describe("GgAgentEditPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Create agent" }));
 
-    await waitFor(() => expect(createGgAgent).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(createGgAgent).toHaveBeenCalled();
+    });
     const [input] = createGgAgent.mock.calls[0]!;
     expect(input.agent.slug).toBe("merge-bot");
     // The name the operator typed above it is untouched by the rename…
@@ -306,7 +340,9 @@ describe("GgAgentEditPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Save agent" }));
 
-    await waitFor(() => expect(updateGgAgent).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(updateGgAgent).toHaveBeenCalled();
+    });
     const [id, input] = updateGgAgent.mock.calls[0]!;
     expect(id).toBe("saved-1");
     expect(input.agent.slug).toBe("merge-bot");
@@ -333,5 +369,91 @@ describe("GgAgentEditPage", () => {
     expect(
       screen.getByText(/slug must be lowercase letters and digits/),
     ).toBeVisible();
+  });
+});
+
+function editName() {
+  fireEvent.change(screen.getByLabelText(/^Agent name/), {
+    target: { value: "Reviewer" },
+  });
+}
+function backControl() {
+  return screen.getByRole("button", { name: "All gg agents" });
+}
+function followLink() {
+  fireEvent.click(screen.getByRole("link", { name: "Elsewhere" }));
+}
+
+// Leaving the page with work to lose, by any route: its own back control, a link elsewhere
+// in the app, or the browser's back button. Each is held and asked about through one
+// dialog, which offers to save and go, to discard and go, or to keep editing.
+describe("leaving the agent editor", () => {
+  beforeEach(() => createGgAgent.mockClear());
+
+  it("leaves without asking when nothing was edited", async () => {
+    renderPage();
+    fireEvent.click(backControl());
+    expect(await screen.findByText(AGENT_LIST)).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+
+  it("asks before the back control discards an edited agent", async () => {
+    renderPage();
+    editName();
+
+    fireEvent.click(backControl());
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Keep editing" }),
+    );
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^Agent name/)).toHaveValue("Reviewer");
+
+    fireEvent.click(backControl());
+    fireEvent.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Discard changes",
+      }),
+    );
+    expect(await screen.findByText(AGENT_LIST)).toBeInTheDocument();
+    expect(createGgAgent).not.toHaveBeenCalled();
+  });
+
+  it("holds a link elsewhere, and saves and goes where it led when told to", async () => {
+    renderPage();
+    editName();
+
+    followLink();
+    fireEvent.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Create agent",
+      }),
+    );
+    await waitFor(() => {
+      expect(createGgAgent).toHaveBeenCalledTimes(1);
+    });
+    expect(await screen.findByText(ELSEWHERE)).toBeInTheDocument();
+  });
+
+  it("holds the browser's back button, and lets it through once discarded", async () => {
+    const { router } = renderPage();
+    editName();
+
+    await act(() => router.navigate(-1));
+    fireEvent.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Discard changes",
+      }),
+    );
+    expect(await screen.findByText(EARLIER)).toBeInTheDocument();
+  });
+
+  it("leaves without asking once its own Save has stored the work", async () => {
+    renderPage();
+    editName();
+
+    fireEvent.click(screen.getByRole("button", { name: "Create agent" }));
+    expect(await screen.findByText(AGENT_LIST)).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 });

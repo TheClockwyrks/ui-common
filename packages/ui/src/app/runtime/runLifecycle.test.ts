@@ -221,4 +221,10 @@ describe("runListAction", () => {
     };
     expect(runListAction(unknown, [tracked("a")])).toEqual({ kind: "ignore" });
   });
+
+  it("moves a run whose model has finished into validating", () => {
+    expect(
+      runListAction(event("state-changed", "validating"), [tracked("a")]),
+    ).toEqual({ kind: "update", runId: "a", state: "validating" });
+  });
 });

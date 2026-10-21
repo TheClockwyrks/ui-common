@@ -171,4 +171,11 @@ describe("reconcileActiveRuns", () => {
     );
     expect(toUpdate).toEqual([]);
   });
+
+  it("moves a tracked run into validating once its model has finished", () => {
+    const reported = [ok(run("a", "validating"))];
+    expect(
+      reconcileActiveRuns([run("a", "running")], reported).toUpdate,
+    ).toEqual([{ runId: "a", state: "validating" }]);
+  });
 });

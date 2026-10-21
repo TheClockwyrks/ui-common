@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -6,7 +7,7 @@ import {
   within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { Link, Outlet, RouterProvider, createMemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_GG_SYSTEM_PROMPT_TEMPLATE_CODE } from "@clockwyrks/backend-api/gg-system-prompt";
 import {
@@ -91,7 +92,7 @@ function savedAgent(id: string, name: string) {
     id,
     name,
     description: "reviews what the implementer wrote",
-    agent: set.agents![0]!,
+    agent: set.agents[0]!,
     updatedAt: "2026-08-18T00:00:00Z",
   };
 }
@@ -148,21 +149,41 @@ beforeEach(() => {
 // editor actually left it rather than merely closing a dialog.
 const CONFIG_LIST = "the gg configurations list";
 
+// Somewhere else in the app, reached by a link outside the page, so a test can leave the
+// form the way an operator would rather than only through its own back control.
+const ELSEWHERE = "somewhere else in the app";
+// The page the history holds before the form, which the browser's back button returns to.
+const EARLIER = "the page before the form";
+
 function renderPage(path = "/account/gg/new") {
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <BackendProvider value={backendValue()}>
-        <Routes>
-          <Route path="/account/gg/new" element={<GgConfigEditPage />} />
-          <Route
-            path="/account/gg/:configId/edit"
-            element={<GgConfigEditPage />}
-          />
-          <Route path="/account/gg" element={<div>{CONFIG_LIST}</div>} />
-        </Routes>
-      </BackendProvider>
-    </MemoryRouter>,
+  // A data router, as the hosts mount the app under: only a data router can hold a
+  // navigation, which is how the form asks before being left.
+  const router = createMemoryRouter(
+    [
+      {
+        element: (
+          <>
+            <Link to="/elsewhere">Elsewhere</Link>
+            <Outlet />
+          </>
+        ),
+        children: [
+          { path: "/account/gg/new", element: <GgConfigEditPage /> },
+          { path: "/account/gg/:configId/edit", element: <GgConfigEditPage /> },
+          { path: "/account/gg", element: <div>{CONFIG_LIST}</div> },
+          { path: "/elsewhere", element: <div>{ELSEWHERE}</div> },
+          { path: "/before", element: <div>{EARLIER}</div> },
+        ],
+      },
+    ],
+    { initialEntries: ["/before", path], initialIndex: 1 },
   );
+  const view = render(
+    <BackendProvider value={backendValue()}>
+      <RouterProvider router={router} />
+    </BackendProvider>,
+  );
+  return { ...view, router };
 }
 
 // Open one of the form's tabs by its label. Matched on the label element rather than the
@@ -339,7 +360,9 @@ describe("GgConfigEditPage", () => {
     expect(save).toBeEnabled();
     fireEvent.click(save);
 
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const input = createGgConfig.mock.calls[0]![0];
     expect(input.name).toBe("shell-heavy");
     expect(input.capabilitySet.preset).toBe("shell-heavy");
@@ -377,7 +400,9 @@ describe("GgConfigEditPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     // The allowlist is per agent, and it is written in the tool vocabulary because this
     // agent answers with tool calls.
     const { tools, operations } =
@@ -426,7 +451,9 @@ describe("GgConfigEditPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const { agents } = createGgConfig.mock.calls[0]![0].capabilitySet;
     expect(agents.map((a: { name: string }) => a.name)).toEqual([
       "Root",
@@ -461,7 +488,9 @@ describe("GgConfigEditPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const { agents } = createGgConfig.mock.calls[0]![0].capabilitySet;
     expect(agents.map((a: { name: string }) => a.name)).toEqual(["conductor"]);
   });
@@ -480,7 +509,9 @@ describe("GgConfigEditPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const { agents } = createGgConfig.mock.calls[0]![0].capabilitySet;
     expect(agents.map((a: { name: string }) => a.name)).toEqual([
       "agent-2",
@@ -545,7 +576,9 @@ describe("GgConfigEditPage", () => {
     const save = screen.getByRole("button", { name: "Create configuration" });
     expect(save).toBeEnabled();
     fireEvent.click(save);
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const { agents } = createGgConfig.mock.calls[0]![0].capabilitySet;
     // The rename moved the display name and left the reference where it was: the roster
     // points at the profile's internal id, which no rename of either name touches.
@@ -574,7 +607,9 @@ describe("GgConfigEditPage", () => {
     expect(save).toBeEnabled();
     fireEvent.click(save);
 
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const { agents, modelSlots } =
       createGgConfig.mock.calls[0]![0].capabilitySet;
     // Declared on the profile, and asked for at launch under the name that profile lends
@@ -623,7 +658,9 @@ describe("GgConfigEditPage", () => {
       screen.getByRole("button", { name: "Create configuration" }),
     );
 
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const agents = createGgConfig.mock.calls[0]![0].capabilitySet.agents;
     expect(agents[0].promptCacheTtl).toBe("extended");
     // The untouched agent writes no key at all, so it keeps paying the base rate.
@@ -652,7 +689,9 @@ describe("GgConfigEditPage", () => {
       screen.getByRole("button", { name: "Create configuration" }),
     );
 
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const agents = createGgConfig.mock.calls[0]![0].capabilitySet.agents;
     expect(agents[0].reasoning).toEqual({ effort: "low" });
     // The untouched agent writes no key at all, and runs at its provider's default.
@@ -677,7 +716,9 @@ describe("GgConfigEditPage", () => {
       screen.getByRole("button", { name: "Create configuration" }),
     );
 
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const agents = createGgConfig.mock.calls[0]![0].capabilitySet.agents;
     expect(agents[0].reasoning).toEqual({ maxTokens: 8000 });
   });
@@ -692,7 +733,9 @@ describe("GgConfigEditPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     // The default template is seeded into the editor but not stored as an override.
     expect(
       createGgConfig.mock.calls[0]![0].capabilitySet.agents[0]
@@ -745,7 +788,9 @@ describe("GgConfigEditPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     expect(
       createGgConfig.mock.calls[0]![0].capabilitySet.agents[0]
         .systemPromptTemplate,
@@ -753,17 +798,17 @@ describe("GgConfigEditPage", () => {
   });
 });
 
+// The back control, which is a button (not a link) while an agent is open.
+function backControl() {
+  return screen.getByRole("button", { name: /^Back to / });
+}
+
 // The back chevron beside the title goes up exactly one step. While an agent is open that
 // step is the **configuration**, not the list of configurations — the list is two steps up
 // and leaving for it would throw away the whole configuration rather than this agent's
 // edits. It behaves like Cancel, except that it asks first when there is something to lose.
 describe("going back from an open agent", () => {
   beforeEach(() => createGgConfig.mockClear());
-
-  // The back control, which is a button (not a link) while an agent is open.
-  function backControl() {
-    return screen.getByRole("button", { name: /^Back to / });
-  }
 
   it("returns to the configuration without asking when nothing was edited", async () => {
     renderPage();
@@ -863,6 +908,12 @@ describe("going back from an open agent", () => {
   });
 });
 
+// The back control on the configuration itself, which is a button rather than a link
+// because leaving has to wait for the dialog's answer.
+function configBackControl() {
+  return screen.getByRole("button", { name: "All gg configurations" });
+}
+
 // The configuration's own back control leaves for the list of configurations, and asks
 // the same question an open agent's does — through the same dialog. Two prompts for one
 // question (a browser `confirm` here, a component dialog one step in) made a single form
@@ -870,17 +921,11 @@ describe("going back from an open agent", () => {
 describe("going back from the configuration", () => {
   beforeEach(() => createGgConfig.mockClear());
 
-  // The back control on the configuration itself, which is a button rather than a link
-  // because leaving has to wait for the dialog's answer.
-  function backControl() {
-    return screen.getByRole("button", { name: "All gg configurations" });
-  }
-
   it("leaves without asking when nothing was edited", async () => {
     renderPage();
     await screen.findByText("Run limits");
 
-    fireEvent.click(backControl());
+    fireEvent.click(configBackControl());
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(screen.getByText(CONFIG_LIST)).toBeInTheDocument();
   });
@@ -892,7 +937,7 @@ describe("going back from the configuration", () => {
       target: { value: "no-shell" },
     });
 
-    fireEvent.click(backControl());
+    fireEvent.click(configBackControl());
     const dialog = screen.getByRole("alertdialog");
     fireEvent.click(
       within(dialog).getByRole("button", { name: "Keep editing" }),
@@ -910,7 +955,7 @@ describe("going back from the configuration", () => {
       target: { value: "no-shell" },
     });
 
-    fireEvent.click(backControl());
+    fireEvent.click(configBackControl());
     fireEvent.click(
       within(screen.getByRole("alertdialog")).getByRole("button", {
         name: "Discard changes",
@@ -929,13 +974,15 @@ describe("going back from the configuration", () => {
       target: { value: "no-shell" },
     });
 
-    fireEvent.click(backControl());
+    fireEvent.click(configBackControl());
     fireEvent.click(
       within(screen.getByRole("alertdialog")).getByRole("button", {
         name: "Create configuration",
       }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     expect(createGgConfig.mock.calls[0]![0].name).toBe("no-shell");
     expect(await screen.findByText(CONFIG_LIST)).toBeInTheDocument();
   });
@@ -954,7 +1001,7 @@ describe("going back from the configuration", () => {
       screen.getByRole("button", { name: /^Remove the .* agent$/ }),
     );
 
-    fireEvent.click(backControl());
+    fireEvent.click(configBackControl());
     const dialog = screen.getByRole("alertdialog");
     expect(
       within(dialog).getByRole("button", { name: "Create configuration" }),
@@ -962,6 +1009,184 @@ describe("going back from the configuration", () => {
     expect(within(dialog).getByText(/at least one agent/i)).toBeInTheDocument();
   });
 });
+
+async function editName() {
+  fireEvent.change(await screen.findByPlaceholderText("e.g. no-compaction"), {
+    target: { value: "no-shell" },
+  });
+}
+function followLink() {
+  fireEvent.click(screen.getByRole("link", { name: "Elsewhere" }));
+}
+
+// Leaving the page by any other way than its back control: a link elsewhere in the app,
+// or the browser's own back button. Each is a navigation the page did not start, held by
+// the leave guard and asked about through the same dialog the back control raises.
+describe("leaving the configuration by any route", () => {
+  beforeEach(() => createGgConfig.mockClear());
+
+  it("follows a link without asking when nothing was edited", async () => {
+    renderPage();
+    await screen.findByText("Run limits");
+
+    followLink();
+    expect(await screen.findByText(ELSEWHERE)).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+
+  it("holds a link with work to lose, and stays if told to keep editing", async () => {
+    renderPage();
+    await editName();
+
+    followLink();
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Keep editing" }),
+    );
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.queryByText(ELSEWHERE)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText("e.g. no-compaction")).toHaveValue(
+      "no-shell",
+    );
+  });
+
+  it("goes where the link led once the work is discarded", async () => {
+    renderPage();
+    await editName();
+
+    followLink();
+    fireEvent.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Discard changes",
+      }),
+    );
+    expect(await screen.findByText(ELSEWHERE)).toBeInTheDocument();
+    expect(createGgConfig).not.toHaveBeenCalled();
+  });
+
+  // Saving from the dialog goes on to where the operator was headed, not to the list of
+  // configurations the header's own Save returns to.
+  it("saves and goes where the link led", async () => {
+    renderPage();
+    await editName();
+
+    followLink();
+    fireEvent.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Create configuration",
+      }),
+    );
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
+    expect(await screen.findByText(ELSEWHERE)).toBeInTheDocument();
+    expect(screen.queryByText(CONFIG_LIST)).not.toBeInTheDocument();
+  });
+
+  it("stays on the form, error showing, when the save fails", async () => {
+    createGgConfig.mockRejectedValueOnce(new Error("the backend is down"));
+    renderPage();
+    await editName();
+
+    followLink();
+    fireEvent.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Create configuration",
+      }),
+    );
+    expect(await screen.findByText(/the backend is down/)).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.queryByText(ELSEWHERE)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText("e.g. no-compaction")).toHaveValue(
+      "no-shell",
+    );
+  });
+
+  it("holds the browser's back button, and lets it through once discarded", async () => {
+    const { router } = renderPage();
+    await editName();
+
+    await act(() => router.navigate(-1));
+    fireEvent.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Discard changes",
+      }),
+    );
+    expect(await screen.findByText(EARLIER)).toBeInTheDocument();
+  });
+
+  // An open agent's edits are already the configuration's, so leaving the page with one
+  // open asks about the configuration as a whole — and says the agent goes with it.
+  it("asks about the whole configuration when left with an edited agent open", async () => {
+    renderPage();
+    await screen.findByText("Run limits");
+    openFirstAgent();
+    fireEvent.change(nameField(), { target: { value: "conductor" } });
+
+    followLink();
+    const dialog = await screen.findByRole("alertdialog");
+    expect(
+      within(dialog).getByText("Unsaved changes to this configuration"),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/the agent open in it/),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Keep editing" }),
+    );
+    expect(nameField()).toHaveValue("conductor");
+  });
+
+  // The agent's own back control may already be asking when a navigation away arrives
+  // (the browser's back button, say). One dialog asks at a time: the page-level question
+  // covers the agent too, and the agent's comes back if the operator keeps editing.
+  it("asks one question at a time when leaving while the agent's dialog is up", async () => {
+    const { router } = renderPage();
+    await screen.findByText("Run limits");
+    openFirstAgent();
+    fireEvent.change(nameField(), { target: { value: "conductor" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Back to / }));
+    expect(screen.getAllByRole("alertdialog")).toHaveLength(1);
+
+    await act(() => router.navigate(-1));
+    const dialogs = await screen.findAllByRole("alertdialog");
+    expect(dialogs).toHaveLength(1);
+    expect(
+      within(dialogs[0]!).getByText("Unsaved changes to this configuration"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(dialogs[0]!).getByRole("button", { name: "Keep editing" }),
+    );
+    expect(screen.getAllByRole("alertdialog")).toHaveLength(1);
+    expect(
+      screen.getByText("Unsaved changes to conductor"),
+    ).toBeInTheDocument();
+  });
+
+  // The header's own Save leaves for the list once the work is stored, and that exit is
+  // not itself asked about: there is nothing left to lose.
+  it("leaves without asking once the header's Save has stored the work", async () => {
+    renderPage();
+    await editName();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create configuration" }),
+    );
+    expect(await screen.findByText(CONFIG_LIST)).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+});
+
+async function importReviewer() {
+  renderPage();
+  fireEvent.change(await screen.findByPlaceholderText("e.g. no-compaction"), {
+    target: { value: "review arm" },
+  });
+  openTab("Agents");
+  pickFromLibrary(/^reviewer/);
+  saveAgent();
+}
 
 // Importing a saved agent into a configuration.
 //
@@ -971,23 +1196,15 @@ describe("going back from the configuration", () => {
 describe("a configuration that imports a saved agent", () => {
   beforeEach(() => createGgConfig.mockClear());
 
-  async function importReviewer() {
-    renderPage();
-    fireEvent.change(await screen.findByPlaceholderText("e.g. no-compaction"), {
-      target: { value: "review arm" },
-    });
-    openTab("Agents");
-    pickFromLibrary(/^reviewer/);
-    saveAgent();
-  }
-
   it("saves the agent written out in full, beside where it came from", async () => {
     await importReviewer();
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
 
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalled();
+    });
     const [input] = createGgConfig.mock.calls[0]!;
     const reviewer = input.capabilitySet.agents.find(
       (a: { name: string }) => a.name === "reviewer",
@@ -1029,7 +1246,9 @@ describe("a configuration that imports a saved agent", () => {
       screen.getByRole("button", { name: "Create configuration" }),
     );
 
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalled();
+    });
     const [input] = createGgConfig.mock.calls[0]!;
     const reviewer = input.capabilitySet.agents.find(
       (a: { name: string }) => a.name === "reviewer",
@@ -1054,7 +1273,9 @@ describe("a configuration and the agent library", () => {
     openFirstAgent();
     fireEvent.click(screen.getByRole("button", { name: "Save to library" }));
 
-    await waitFor(() => expect(createGgAgent).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(createGgAgent).toHaveBeenCalled();
+    });
     const [body] = createGgAgent.mock.calls[0]!;
     expect(body.agent.name).toBe("Root");
     // The slot the profile defers to travels *on* it, so importing it elsewhere asks for
@@ -1085,6 +1306,20 @@ describe("a configuration and the agent library", () => {
   });
 });
 
+// One line of the Slots tab's "Exposed at launch" summary, by the name the launch form
+// will ask under.
+function launchRow(name: string): HTMLElement {
+  return screen.getByText(name, { selector: "code" }).closest("li")!;
+}
+// Clear the passthrough flag on the open agent's one slot, which is what leaves it to a
+// configuration slot to fill. A slot reaches the launch form one way or the other, and
+// never both.
+function clearPassthrough() {
+  openTab("Slots");
+  fireEvent.click(screen.getByRole("checkbox", { name: /^Passthrough/ }));
+  saveAgent();
+}
+
 // The **launch inputs** a configuration asks for, which is the one thing neither half of
 // the model mapping says on its own: the agents declare the slots their bindings defer to,
 // this page's Slots tab declares the inputs that fill them, and a run collects exactly one
@@ -1093,21 +1328,6 @@ describe("a configuration and the agent library", () => {
 // all is a binding with nowhere to get a model from, which the page refuses to save.
 describe("a configuration's launch inputs", () => {
   beforeEach(() => createGgConfig.mockClear());
-
-  // One line of the Slots tab's "Exposed at launch" summary, by the name the launch form
-  // will ask under.
-  function launchRow(name: string): HTMLElement {
-    return screen.getByText(name, { selector: "code" }).closest("li")!;
-  }
-
-  // Clear the passthrough flag on the open agent's one slot, which is what leaves it to a
-  // configuration slot to fill. A slot reaches the launch form one way or the other, and
-  // never both.
-  function clearPassthrough() {
-    openTab("Slots");
-    fireEvent.click(screen.getByRole("checkbox", { name: /^Passthrough/ }));
-    saveAgent();
-  }
 
   it("fills two agents' slots from one launch input, and stores what it fills", async () => {
     renderPage();
@@ -1144,7 +1364,9 @@ describe("a configuration's launch inputs", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const { capabilitySet } = createGgConfig.mock.calls[0]![0];
     // The launch input names the agent slots it fills, by each profile's **internal id**
     // and the name the slot carries on it. The id rather than the slug, because a mapping
@@ -1225,7 +1447,9 @@ describe("a configuration's agent slugs", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const { agents } = createGgConfig.mock.calls[0]![0].capabilitySet;
     expect(agents[1].slug).toBe("critic");
     // One string moved and nothing else did: the display name the slug was minted from is
@@ -1255,6 +1479,18 @@ describe("a configuration's agent slugs", () => {
   });
 });
 
+// The library holds one entry, saved under the name a fresh configuration's first
+// profile already carries — so it imports under that profile's slug.
+async function importRoot() {
+  listGgAgents = vi.fn().mockResolvedValue([SAVED_ROOT]);
+  renderPage();
+  fireEvent.change(await screen.findByPlaceholderText("e.g. no-compaction"), {
+    target: { value: "colliding" },
+  });
+  openTab("Agents");
+  pickFromLibrary(/^Root/);
+}
+
 // Importing a saved agent under a slug the configuration already uses.
 //
 // Nothing is uniquified on the way in: a silently renamed import is a profile the
@@ -1263,18 +1499,6 @@ describe("a configuration's agent slugs", () => {
 // resolves on the operator's behalf.
 describe("an import that lands on a slug a profile already carries", () => {
   beforeEach(() => createGgConfig.mockClear());
-
-  // The library holds one entry, saved under the name a fresh configuration's first
-  // profile already carries — so it imports under that profile's slug.
-  async function importRoot() {
-    listGgAgents = vi.fn().mockResolvedValue([SAVED_ROOT]);
-    renderPage();
-    fireEvent.change(await screen.findByPlaceholderText("e.g. no-compaction"), {
-      target: { value: "colliding" },
-    });
-    openTab("Agents");
-    pickFromLibrary(/^Root/);
-  }
 
   it("will not commit the profile, and says which one thing is wrong with it", async () => {
     await importRoot();
@@ -1324,7 +1548,9 @@ describe("an import that lands on a slug a profile already carries", () => {
     const save = screen.getByRole("button", { name: "Create configuration" });
     expect(save).toBeEnabled();
     fireEvent.click(save);
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const [input] = createGgConfig.mock.calls[0]!;
     const [root, imported] = input.capabilitySet.agents;
     expect(root.slug).toBe("root");
@@ -1354,7 +1580,9 @@ describe("an import that lands on a slug a profile already carries", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const [input] = createGgConfig.mock.calls[0]!;
     const [root, imported] = input.capabilitySet.agents;
     expect(root.slug).toBe("conductor");
@@ -1364,6 +1592,23 @@ describe("an import that lands on a slug a profile already carries", () => {
     ]);
   });
 });
+
+// Two imports of `saved-1` into a fresh configuration, which therefore holds the Root it
+// was born with and two profiles following one library entry. The first import is
+// committed with Save agent; the second cannot be — it is the collision — so it is closed
+// with Cancel, which keeps it.
+async function importReviewerTwice() {
+  renderPage();
+  fireEvent.change(await screen.findByPlaceholderText("e.g. no-compaction"), {
+    target: { value: "two reviewers" },
+  });
+  openTab("Agents");
+  for (const close of ["Save agent", "Cancel"]) {
+    pickFromLibrary(/^reviewer/);
+    fireEvent.click(screen.getByRole("button", { name: close }));
+  }
+  openTab("Agents");
+}
 
 // One saved agent imported twice.
 //
@@ -1376,23 +1621,6 @@ describe("an import that lands on a slug a profile already carries", () => {
 // leaves the first as the library wrote it, and removing one removes one.
 describe("one saved agent imported twice", () => {
   beforeEach(() => createGgConfig.mockClear());
-
-  // Two imports of `saved-1` into a fresh configuration, which therefore holds the Root it
-  // was born with and two profiles following one library entry. The first import is
-  // committed with Save agent; the second cannot be — it is the collision — so it is closed
-  // with Cancel, which keeps it.
-  async function importReviewerTwice() {
-    renderPage();
-    fireEvent.change(await screen.findByPlaceholderText("e.g. no-compaction"), {
-      target: { value: "two reviewers" },
-    });
-    openTab("Agents");
-    for (const close of ["Save agent", "Cancel"]) {
-      pickFromLibrary(/^reviewer/);
-      fireEvent.click(screen.getByRole("button", { name: close }));
-    }
-    openTab("Agents");
-  }
 
   it("yields two profiles under one slug, each opened and edited on its own", async () => {
     await importReviewerTwice();
@@ -1425,7 +1653,9 @@ describe("one saved agent imported twice", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const [input] = createGgConfig.mock.calls[0]!;
     const [, first, second] = input.capabilitySet.agents;
     // Told apart by the ids nobody is shown…
@@ -1457,7 +1687,9 @@ describe("one saved agent imported twice", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Create configuration" }),
     );
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     const [input] = createGgConfig.mock.calls[0]!;
     const { agents } = input.capabilitySet;
     expect(agents.map((a: { name: string }) => a.name)).toEqual([
@@ -1472,6 +1704,18 @@ describe("one saved agent imported twice", () => {
   });
 });
 
+async function openStored() {
+  renderPage("/account/gg/cfg-1/edit");
+  await waitFor(() => {
+    expect(
+      (screen.getByLabelText("Configuration name") as HTMLInputElement).value,
+    ).toBe("Duo");
+  });
+}
+function save(label = "Save configuration") {
+  fireEvent.click(screen.getByRole("button", { name: label }));
+}
+
 // A gg coverage cell and a ladder climber are identified by the configuration's id, so
 // what a saved configuration writes into its own capability set is that id. The name
 // rides beside it as display text and as the run log's slice-by facet, which is why
@@ -1482,23 +1726,12 @@ describe("GgConfigEditPage attribution", () => {
     updateGgConfig.mockClear();
   });
 
-  async function openStored() {
-    renderPage("/account/gg/cfg-1/edit");
-    await waitFor(() =>
-      expect(
-        (screen.getByLabelText("Configuration name") as HTMLInputElement).value,
-      ).toBe("Duo"),
-    );
-  }
-
-  function save(label = "Save configuration") {
-    fireEvent.click(screen.getByRole("button", { name: label }));
-  }
-
   it("stores the configuration's own id beside its name", async () => {
     await openStored();
     save();
-    await waitFor(() => expect(updateGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(updateGgConfig).toHaveBeenCalledTimes(1);
+    });
     const [, input] = updateGgConfig.mock.calls[0]!;
     expect(input.capabilitySet.presetId).toBe("cfg-1");
     expect(input.capabilitySet.preset).toBe("Duo");
@@ -1510,7 +1743,9 @@ describe("GgConfigEditPage attribution", () => {
       target: { value: "Duo v2" },
     });
     save();
-    await waitFor(() => expect(updateGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(updateGgConfig).toHaveBeenCalledTimes(1);
+    });
     const [, input] = updateGgConfig.mock.calls[0]!;
     expect(input.name).toBe("Duo v2");
     // The name moved; the identity did not, so every cell built on this configuration
@@ -1525,7 +1760,9 @@ describe("GgConfigEditPage attribution", () => {
       target: { value: "fresh" },
     });
     save("Create configuration");
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     expect(createGgConfig.mock.calls[0]![0].capabilitySet.presetId).toBe(
       undefined,
     );
@@ -1533,13 +1770,15 @@ describe("GgConfigEditPage attribution", () => {
 
   it("writes no id for a duplicate, which must not answer for its original", async () => {
     renderPage("/account/gg/new?from=saved:cfg-1");
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
         (screen.getByLabelText("Configuration name") as HTMLInputElement).value,
-      ).toBe("Duo (copy)"),
-    );
+      ).toBe("Duo (copy)");
+    });
     save("Create configuration");
-    await waitFor(() => expect(createGgConfig).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(createGgConfig).toHaveBeenCalledTimes(1);
+    });
     expect(createGgConfig.mock.calls[0]![0].capabilitySet.presetId).toBe(
       undefined,
     );

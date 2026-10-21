@@ -135,33 +135,106 @@ describe("decideValidatorRun", () => {
     expect(decision.rating).toBe("scuffed");
     expect(decision.score).toMatchObject({ earned: 1.5, total: 3 });
   });
+
+  it("is Broken at zero over the declared weight when nothing was decided", () => {
+    // Every validator was inconclusive: no scored point is decided.
+    const undecided = {
+      id: "r-2",
+      validation: {
+        debugScripts: ["serve", "ai", "hud"].map((sub) => ({
+          itemId: "rules",
+          subItemId: sub,
+          title: "Rules",
+          categoryTitle: "Rules",
+          script: "validation/rules.mjs",
+          gates: true,
+          ran: false,
+          preconditionUnmet: true,
+          inconclusive: "timedOut",
+          verdicts: [],
+          outputs: [],
+        })),
+      },
+    } as unknown as RunRecord;
+    const decision = decideValidatorRun(undecided, model);
+    expect(decision.rating).toBe("broken");
+    expect(decision.undecided).toBe(true);
+    expect(decision.domainRatings.get("single-player")).toBe("broken");
+    expect(decision.domainRatings.get("versus")).toBe("broken");
+    expect(decision.score).toMatchObject({ earned: 0, total: 3 });
+
+    // A review deciding one point lifts it for that review.
+    const reviewed = decideValidatorRun(undecided, model, [
+      { checklist: [{ id: "rules.hud", status: "pass" }] },
+    ]);
+    expect(reviewed.rating).toBe("flawless");
+    expect(reviewed.undecided).toBe(false);
+    expect(reviewed.score).toMatchObject({ earned: 1, total: 1 });
+
+    // A run with no debug scripts at all reads the same.
+    const empty = decideValidatorRun(
+      { id: "r-3", validation: {} } as unknown as RunRecord,
+      model,
+    );
+    expect(empty.rating).toBe("broken");
+    expect(empty.score).toMatchObject({ earned: 0, total: 3 });
+  });
+
+  it("is not marked undecided when a decided failure broke it", () => {
+    const decision = decideValidatorRun(
+      run([{ id: "rules.serve", pass: false }]),
+      model,
+    );
+    expect(decision.rating).toBe("broken");
+    expect(decision.undecided).toBe(false);
+  });
 });
 
 describe("ValidatorVerdict", () => {
+  it("says why a run nothing decided is Broken", () => {
+    render(
+      <ValidatorVerdict
+        run={{ id: "r-3", validation: {} } as unknown as RunRecord}
+        model={model}
+        reviews={[]}
+      />,
+    );
+    expect(screen.getByText("0 / 3")).toBeInTheDocument();
+    expect(
+      screen.getByText(/no checklist point was decided/),
+    ).toBeInTheDocument();
+  });
+
   it("shows the rating, points, and a compact per-domain strip", () => {
     render(<ValidatorVerdict run={run()} model={model} reviews={[]} />);
 
     // The headline: the validator-decided rating and score, before any review.
-    expect(screen.getByText("1 / 3")).toBeTruthy();
+    expect(screen.getByText("1 / 3")).toBeInTheDocument();
     // No reviewer has rated the aesthetic channel yet, so there is no aesthetic
     // badge — only the functional one.
-    expect(screen.queryByLabelText(/^Aesthetic:/)).toBeNull();
+    expect(screen.queryByLabelText(/^Aesthetic:/)).not.toBeInTheDocument();
     // No explainer paragraph: the item browser's per-point cap badges carry
     // what a failure cap is, so the header is badges and points alone.
-    expect(screen.queryByText(/verdicts are this run/)).toBeNull();
-    expect(screen.queryByText(/no reviewer has rated it yet/)).toBeNull();
+    expect(screen.queryByText(/verdicts are this run/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no reviewer has rated it yet/),
+    ).not.toBeInTheDocument();
 
     // Per domain: the effective functional badge ONLY — no "capped by" list
     // (that detail lives in the item browser now) and no per-domain aesthetic.
     const single = screen.getByText("Single player").closest("li")!;
-    expect(within(single).getByText("Scuffed")).toBeTruthy();
-    expect(within(single).queryByLabelText("Capped by")).toBeNull();
+    expect(within(single).getByText("Scuffed")).toBeInTheDocument();
+    expect(
+      within(single).queryByLabelText("Capped by"),
+    ).not.toBeInTheDocument();
     expect(
       within(single).queryByText("AI paddle tracks the ball (Solo)"),
-    ).toBeNull();
+    ).not.toBeInTheDocument();
     const versus = screen.getByText("Versus").closest("li")!;
-    expect(within(versus).getByText("Great")).toBeTruthy();
-    expect(within(versus).queryByLabelText("Capped by")).toBeNull();
+    expect(within(versus).getByText("Great")).toBeInTheDocument();
+    expect(
+      within(versus).queryByLabelText("Capped by"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the aggregate run-wide aesthetic once reviewed", () => {
@@ -198,7 +271,7 @@ describe("ValidatorVerdict", () => {
         ]}
       />,
     );
-    expect(screen.getByLabelText("Aesthetic: Okay")).toBeTruthy();
+    expect(screen.getByLabelText("Aesthetic: Okay")).toBeInTheDocument();
   });
 
   it("folds a reviewer's override into the shown rating and score", () => {
@@ -216,16 +289,16 @@ describe("ValidatorVerdict", () => {
     );
     // The recovered AI point lifts the score to 2 / 3 and the rating to Great:
     // the headline badge and both domain badges now read Great.
-    expect(screen.getByText("2 / 3")).toBeTruthy();
+    expect(screen.getByText("2 / 3")).toBeInTheDocument();
     expect(screen.getAllByText("Great").length).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByText("Scuffed")).toBeNull();
+    expect(screen.queryByText("Scuffed")).not.toBeInTheDocument();
   });
 
   it("renders no checklist and no script table — the item browser owns that detail", () => {
     render(<ValidatorVerdict run={run()} model={model} reviews={[]} />);
-    expect(screen.queryByText("Automated validation")).toBeNull();
-    expect(screen.queryByRole("radiogroup")).toBeNull();
-    expect(screen.queryByText(/Restore/)).toBeNull();
-    expect(screen.queryByText("validation/rules.mjs")).toBeNull();
+    expect(screen.queryByText("Automated validation")).not.toBeInTheDocument();
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Restore/)).not.toBeInTheDocument();
+    expect(screen.queryByText("validation/rules.mjs")).not.toBeInTheDocument();
   });
 });

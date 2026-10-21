@@ -232,6 +232,12 @@ function renderPage(stubs: ClientStubs = probeStubs()) {
   );
 }
 
+// Each wait is one live status region whose text is its label alone, with the
+// ship beside it hidden: the history row's Running and the detail's
+// Probing…, and the two loads before either arrives.
+const statusTexts = () =>
+  screen.queryAllByRole("status").map((el) => el.textContent);
+
 describe("ModelProbesPage", () => {
   it("renders the probe history and the newest probe's detail", async () => {
     renderPage();
@@ -256,7 +262,9 @@ describe("ModelProbesPage", () => {
 
     // The history still reads; only the trigger is absent.
     expect(await screen.findAllByText("Ready")).not.toHaveLength(0);
-    expect(screen.queryByRole("button", { name: /run probe/i })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /run probe/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("triggers a probe with the seeded defaults and shows the new row", async () => {
@@ -272,16 +280,41 @@ describe("ModelProbesPage", () => {
 
     // The defaults: 8 samples per input prompt, every language (no `language`
     // field), the default route (no `provider`).
-    await waitFor(() =>
+    await waitFor(() => {
       expect(trigger).toHaveBeenCalledWith("claude-x", {
         samples: 8,
         maxTokens: 3500,
-      }),
-    );
+      });
+    });
     // The accepted probe lands at the head of the history immediately, still
     // running, marked as probing every language.
     expect(await screen.findByText("Running")).toBeInTheDocument();
     expect(screen.getAllByText("all languages").length).toBeGreaterThan(0);
+  });
+
+  it("announces each running wait by its label alone", async () => {
+    renderPage(
+      probeStubs({ listModelProbes: vi.fn().mockResolvedValue([RUNNING]) }),
+    );
+
+    await waitFor(() => {
+      expect(statusTexts()).toEqual(["Running", "Probing…"]);
+    });
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("announces the loads of the history and of a probe", async () => {
+    const never = new Promise<never>(vi.fn());
+    renderPage(
+      probeStubs({
+        getModelProbe: vi.fn().mockReturnValue(never),
+      }),
+    );
+
+    expect(statusTexts()).toEqual(["Loading probes…"]);
+    await waitFor(() => {
+      expect(statusTexts()).toEqual(["Loading probe…"]);
+    });
   });
 
   it("pins the probe to one language arm through the selector", async () => {
@@ -298,13 +331,13 @@ describe("ModelProbesPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /run probe/i }));
 
-    await waitFor(() =>
+    await waitFor(() => {
       expect(trigger).toHaveBeenCalledWith("claude-x", {
         samples: 8,
         maxTokens: 3500,
         language: "rust",
-      }),
-    );
+      });
+    });
   });
 
   it("refuses an out-of-range sample count before any request", async () => {
@@ -321,6 +354,30 @@ describe("ModelProbesPage", () => {
       expect.stringMatching(/between 1 and 128/),
     );
     expect(trigger).not.toHaveBeenCalled();
+  });
+
+  // A phone stacks each rollup row into its cells, each printed beside its
+  // column's name, and wraps a call's facts between facts with the separators
+  // hidden; the text itself reads the same at every width.
+  it("names each rollup cell by its column and keeps a call's facts in one line of text", async () => {
+    renderPage();
+
+    const scenario = await screen.findByRole("cell", { name: "baseline" });
+    const cells = [...scenario.closest("tr")!.querySelectorAll("td")];
+    expect(cells.map((cell) => cell.dataset.label)).toEqual([
+      "Language",
+      "Scenario",
+      "Pass",
+      "Labels",
+      "Providers",
+    ]);
+    expect(
+      screen.getAllByText((_, el) =>
+        el?.tagName === "SPAN"
+          ? el.textContent === "DeepInfra · tool_calls · 5.3s · $0.0041"
+          : false,
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it("surfaces the backend's error envelope in the alert", async () => {
