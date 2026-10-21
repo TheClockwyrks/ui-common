@@ -44,10 +44,10 @@
     "dev:preview": "vite --config preview/vite.config.ts"
   },
   "dependencies": {
-    "@clockwyrks/backend-api": "0.2.3",
+    "@clockwyrks/backend-api": "0.2.4",
     "@clockwyrks/lattice-runtime": "1.1.2",
     "@clockwyrks/particle-runtime": "1.1.2",
-    "@clockwyrks/run-record": "0.2.3",
+    "@clockwyrks/run-record": "0.2.4",
     "@clockwyrks/run-stats": "0.1.0",
     "@clockwyrks/voxel-runtime": "1.1.2",
     "@dnd-kit/core": "^6.3.1",

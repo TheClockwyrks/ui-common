@@ -34,8 +34,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@clockwyrks/backend-api": "0.2.3",
-    "@clockwyrks/run-record": "0.2.3"
+    "@clockwyrks/backend-api": "0.2.4",
+    "@clockwyrks/run-record": "0.2.4"
   },
   "devDependencies": {
     "typescript": "^6",
