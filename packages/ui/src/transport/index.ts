@@ -17,6 +17,7 @@ export {
   createBackendExec,
   createHttpBackend,
   referenceMediaKey,
+  SHELL_RESUME_EVENT,
 } from "./httpBackend";
 export {
   ARENA_PATH,
