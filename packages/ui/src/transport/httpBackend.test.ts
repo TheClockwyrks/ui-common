@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createBackendExec, createHttpBackend } from "./httpBackend";
+import {
+  createBackendExec,
+  createHttpBackend,
+  SHELL_RESUME_EVENT,
+} from "./httpBackend";
 
 const BACKEND = "https://backend.example";
 const ARTIFACTS = "https://artifacts.example";
@@ -595,7 +599,23 @@ describe("case showcase and starter workspace", () => {
 });
 
 describe("createBackendExec console stream", () => {
+  // Every subscription a test opens is closed after it. A subscription listens on
+  // the window for the operator client's resume event, so one left open would
+  // reopen its stream into a later test's sources.
+  const live: (() => void)[] = [];
+  const subscribeNotifications = (
+    client: ReturnType<typeof createBackendExec>,
+    handlers: Parameters<
+      ReturnType<typeof createBackendExec>["subscribeToNotifications"]
+    >[0],
+  ): (() => void) => {
+    const unsubscribe = client.subscribeToNotifications(handlers);
+    live.push(unsubscribe);
+    return unsubscribe;
+  };
+
   afterEach(() => {
+    for (const unsubscribe of live.splice(0)) unsubscribe();
     vi.useRealTimers();
   });
 
@@ -608,7 +628,7 @@ describe("createBackendExec console stream", () => {
     const sources = useFakeEventSource();
 
     const client = createBackendExec(BACKEND, ARTIFACTS);
-    client.subscribeToNotifications({ onNotification: () => {} });
+    subscribeNotifications(client, { onNotification: () => {} });
     const first = sources.instances[0]!;
     first.open();
     first.emit("stream", { streamId: "s1" });
@@ -642,7 +662,7 @@ describe("createBackendExec console stream", () => {
     const sources = useFakeEventSource();
 
     const client = createBackendExec(BACKEND, ARTIFACTS);
-    client.subscribeToNotifications({ onNotification: () => {} });
+    subscribeNotifications(client, { onNotification: () => {} });
     await client.setRunLifecycleEnabled(true);
     expect(fetchMock).not.toHaveBeenCalled();
 
@@ -667,7 +687,7 @@ describe("createBackendExec console stream", () => {
     const sources = useFakeEventSource();
 
     const client = createBackendExec(BACKEND, ARTIFACTS);
-    client.subscribeToNotifications({ onNotification: () => {} });
+    subscribeNotifications(client, { onNotification: () => {} });
     sources.instances[0]!.open();
     expect(sources.instances).toHaveLength(1);
 
@@ -688,7 +708,7 @@ describe("createBackendExec console stream", () => {
     const sources = useFakeEventSource();
 
     const client = createBackendExec(BACKEND, ARTIFACTS);
-    client.subscribeToNotifications({ onNotification: () => {} });
+    subscribeNotifications(client, { onNotification: () => {} });
     sources.instances[0]!.open();
     sources.instances[0]!.fail(FakeEventSource.CONNECTING);
     await vi.advanceTimersByTimeAsync(2_000);
@@ -708,7 +728,7 @@ describe("createBackendExec console stream", () => {
     const sources = useFakeEventSource();
 
     const client = createBackendExec(BACKEND, ARTIFACTS);
-    client.subscribeToNotifications({ onNotification: () => {} });
+    subscribeNotifications(client, { onNotification: () => {} });
     sources.instances[0]!.open();
 
     await vi.advanceTimersByTimeAsync(60_000);
@@ -727,7 +747,7 @@ describe("createBackendExec console stream", () => {
     const sources = useFakeEventSource();
 
     const client = createBackendExec(BACKEND, ARTIFACTS);
-    client.subscribeToNotifications({ onNotification: () => {} });
+    subscribeNotifications(client, { onNotification: () => {} });
     const source = sources.instances[0]!;
     source.open();
 
@@ -750,7 +770,7 @@ describe("createBackendExec console stream", () => {
     const sources = useFakeEventSource();
 
     const client = createBackendExec(BACKEND, ARTIFACTS);
-    const unsubscribe = client.subscribeToNotifications({
+    const unsubscribe = subscribeNotifications(client, {
       onNotification: () => {},
     });
     sources.instances[0]!.open();
@@ -760,6 +780,61 @@ describe("createBackendExec console stream", () => {
 
     expect(sources.instances).toHaveLength(1);
     expect(sources.instances[0]!.closed).toBe(true);
+  });
+
+  it("reopens the stream at once when the operator client resumes", async () => {
+    // A WebView returning from the background holds a socket that is usually
+    // half-open. The shell's resume event replaces it immediately, without waiting
+    // out the watchdog or the backoff a run of earlier failures built up.
+    vi.useFakeTimers();
+    const sources = useFakeEventSource();
+    const source = (index: number): FakeEventSource => {
+      const found = sources.instances[index];
+      if (!found)
+        throw new Error(`no stream was opened at index ${String(index)}`);
+      return found;
+    };
+
+    const client = createBackendExec(BACKEND, ARTIFACTS);
+    subscribeNotifications(client, { onNotification: vi.fn() });
+    // Build up some backoff first: two give-ups, each reopened by the transport.
+    source(0).fail(FakeEventSource.CLOSED);
+    await vi.advanceTimersByTimeAsync(1000);
+    source(1).fail(FakeEventSource.CLOSED);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(sources.instances).toHaveLength(3);
+
+    dispatchEvent(new Event(SHELL_RESUME_EVENT));
+
+    // Synchronously, with no timer advanced: the old stream is closed and a new
+    // one is already connecting.
+    expect(sources.instances).toHaveLength(4);
+    expect(source(2).closed).toBe(true);
+    expect(source(3).closed).toBe(false);
+    expect(source(3).url).toBe(`${BACKEND}/notifications`);
+  });
+
+  it("stops listening for the resume event once unsubscribed", () => {
+    // A torn-down subscription must not be resurrected by the shell either.
+    const sources = useFakeEventSource();
+    const addSpy = vi.spyOn(globalThis, "addEventListener");
+    const removeSpy = vi.spyOn(globalThis, "removeEventListener");
+
+    const client = createBackendExec(BACKEND, ARTIFACTS);
+    const unsubscribe = subscribeNotifications(client, {
+      onNotification: vi.fn(),
+    });
+    const listener = addSpy.mock.calls.find(
+      ([type]) => type === SHELL_RESUME_EVENT,
+    )?.[1];
+    expect(listener).toBeDefined();
+    unsubscribe();
+
+    expect(removeSpy).toHaveBeenCalledWith(SHELL_RESUME_EVENT, listener);
+    dispatchEvent(new Event(SHELL_RESUME_EVENT));
+    expect(sources.instances).toHaveLength(1);
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
   });
 
   it("delivers each frame kind to its handler", async () => {
@@ -773,7 +848,7 @@ describe("createBackendExec console stream", () => {
     const onResync = vi.fn();
 
     const client = createBackendExec(BACKEND, ARTIFACTS);
-    client.subscribeToNotifications({
+    subscribeNotifications(client, {
       onNotification,
       onRunLifecycle,
       onResync,
@@ -803,7 +878,7 @@ describe("createBackendExec console stream", () => {
     const onNotification = vi.fn();
 
     const client = createBackendExec(BACKEND, ARTIFACTS);
-    client.subscribeToNotifications({ onNotification });
+    subscribeNotifications(client, { onNotification });
     const source = sources.instances[0]!;
     source.open();
     for (const handler of ["notification"]) {
