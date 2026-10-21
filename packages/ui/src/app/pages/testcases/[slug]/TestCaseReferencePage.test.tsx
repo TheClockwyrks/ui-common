@@ -1,12 +1,19 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
   waitFor,
   within,
 } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { type ReactNode, useEffect } from "react";
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+  useNavigationType,
+} from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import type { TestCaseDetail, VariantSummary } from "../../../data/testCases";
 import { routePatterns, routes } from "../../../routes";
@@ -60,18 +67,29 @@ function variant(extra: Partial<VariantSummary> = {}): VariantSummary {
 }
 
 // The gallery-data stub for one test: the affordance flags, a fresh coordinate
-// resolver answering with exactly the given variant, and (optionally) the
-// media resolver.
-function seedGalleryData(
-  resolved: VariantSummary,
-  extra: Record<string, unknown> = {},
-) {
+// resolver, and (optionally) the media resolver. The resolver's answer is held
+// back until the test releases it. Between the resolution and what a test
+// asserts lie several hops React schedules (the layout's state update, the
+// redirect's `<Navigate>` effect, the router's location update), so a test
+// that polls for the outcome races those hops against a timer and fails when
+// the process stalls past it. Releasing the answer inside `act` drains every
+// hop before `act` returns, so the outcome is asserted synchronously and no
+// timer is involved.
+function seedGalleryData(extra: Record<string, unknown> = {}) {
+  let release!: (resolved: VariantSummary) => void;
+  // The workspace's `lib` predates ES2024, so `Promise.withResolvers` is not typed.
+  // eslint-disable-next-line unicorn/prefer-promise-with-resolvers
+  const answer = new Promise<VariantSummary>((resolve) => {
+    release = resolve;
+  });
+  const fetchCaseVariant = vi.fn(() => answer);
   galleryData.mockReturnValue({
     canExecute: false,
     arena: undefined,
-    fetchCaseVariant: () => Promise.resolve(resolved),
+    fetchCaseVariant,
     ...extra,
   });
+  return { answer, release, fetchCaseVariant };
 }
 
 // A catalog entry carrying only the fields the Reference tab and its layout read.
@@ -109,9 +127,39 @@ function LandingProbe() {
   return <p>landing{search}</p>;
 }
 
-function renderReference(search = "", slug = "lattice-belt") {
-  return render(
+// Every location the router commits, with how it got there, so a test observes
+// the navigation the page performs rather than only where it ends up.
+interface Navigation {
+  action: string;
+  path: string;
+}
+
+function NavigationLog({ into }: { into: Navigation[] }) {
+  const location = useLocation();
+  const action = useNavigationType();
+  useEffect(() => {
+    into.push({ action, path: location.pathname + location.search });
+  }, [into, action, location]);
+  return null;
+}
+
+// Render the tab for a coordinate the resolver answers with `resolved`: assert
+// the layout holds the body while the coordinate is unresolved, then release
+// the answer inside `act` (see `seedGalleryData`). Returns the router's
+// navigation log.
+async function renderResolved(
+  resolved: VariantSummary,
+  {
+    search = "",
+    slug = "lattice-belt",
+    gallery = {},
+  }: { search?: string; slug?: string; gallery?: Record<string, unknown> } = {},
+) {
+  const { answer, release, fetchCaseVariant } = seedGalleryData(gallery);
+  const navigations: Navigation[] = [];
+  render(
     <MemoryRouter initialEntries={[routes.testCaseReference(slug) + search]}>
+      <NavigationLog into={navigations} />
       <Routes>
         <Route
           path={routePatterns.testCaseReference}
@@ -121,24 +169,31 @@ function renderReference(search = "", slug = "lattice-belt") {
       </Routes>
     </MemoryRouter>,
   );
+
+  expect(fetchCaseVariant).toHaveBeenCalled();
+  expect(screen.getByText("Loading test case…")).toBeInTheDocument();
+  expect(screen.queryByText(/^landing/)).toBeNull();
+
+  await act(async () => {
+    release(resolved);
+    await answer;
+  });
+  return { navigations };
 }
 
 describe("TestCaseReferencePage", () => {
   it("renders the published frames and their action logs for an asset case", async () => {
     catalog.mockReturnValue({ testCases: [testCase()], status: "ready" });
-    seedGalleryData(variant({ referenceSheet: { frames: [0, 1] } }), {
-      referenceMediaUrl,
+    await renderResolved(variant({ referenceSheet: { frames: [0, 1] } }), {
+      gallery: { referenceMediaUrl },
     });
-    renderReference();
 
     // One image per published frame, at the deterministic key.
-    const frame0 = (await screen.findByAltText(
-      "Reference frame 0",
-    )) as HTMLImageElement;
+    const frame0 = screen.getByAltText("Reference frame 0") as HTMLImageElement;
     expect(frame0.src).toBe(
       "https://snap.example/media/references/lattice-belt/v1.0.0/base/frames/0.png",
     );
-    expect(screen.getByAltText("Reference frame 1")).toBeTruthy();
+    expect(screen.getByAltText("Reference frame 1")).toBeInTheDocument();
 
     // The action log — the output a run is actually scored on — is reachable from
     // every frame, at its own key beside the image.
@@ -150,12 +205,12 @@ describe("TestCaseReferencePage", () => {
 
     // The case's own sheet spec supplies the sequences, so the motion is played
     // rather than only listed.
-    expect(screen.getByLabelText("Run")).toBeTruthy();
-    expect(screen.getByText("Run")).toBeTruthy();
+    expect(screen.getByLabelText("Run")).toBeInTheDocument();
+    expect(screen.getByText("Run")).toBeInTheDocument();
 
     // A published sheet is a reference in its own right, so the layout offers the
     // tab off that signal alone — no `referenceBuilds` involved.
-    expect(screen.getByRole("link", { name: "Reference" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Reference" })).toBeInTheDocument();
   });
 
   it("resolves the frames under the ANCHORED version, not the latest", async () => {
@@ -176,14 +231,12 @@ describe("TestCaseReferencePage", () => {
       ],
       status: "ready",
     });
-    seedGalleryData(variant({ referenceSheet: { frames: [0] } }), {
-      referenceMediaUrl,
+    await renderResolved(variant({ referenceSheet: { frames: [0] } }), {
+      search: "?version=v1.0.0",
+      gallery: { referenceMediaUrl },
     });
-    renderReference("?version=v1.0.0");
 
-    const frame0 = (await screen.findByAltText(
-      "Reference frame 0",
-    )) as HTMLImageElement;
+    const frame0 = screen.getByAltText("Reference frame 0") as HTMLImageElement;
     expect(frame0.src).toBe(
       "https://snap.example/media/references/lattice-belt/v1.0.0/base/frames/0.png",
     );
@@ -192,10 +245,9 @@ describe("TestCaseReferencePage", () => {
   it("degrades to a placeholder when the host serves no reference media", async () => {
     catalog.mockReturnValue({ testCases: [testCase()], status: "ready" });
     // A host with no snapshot bucket wired up supplies no resolver at all.
-    seedGalleryData(variant({ referenceSheet: { frames: [0] } }));
-    renderReference();
+    await renderResolved(variant({ referenceSheet: { frames: [0] } }));
 
-    expect(await screen.findByText(/not available here/)).toBeTruthy();
+    expect(screen.getByText(/not available here/)).toBeInTheDocument();
     expect(screen.queryByAltText("Reference frame 0")).toBeNull();
   });
 
@@ -206,12 +258,11 @@ describe("TestCaseReferencePage", () => {
       testCases: [testCase({ sheet: null })],
       status: "ready",
     });
-    seedGalleryData(variant({ referenceSheet: { frames: [0, 1] } }), {
-      referenceMediaUrl,
+    await renderResolved(variant({ referenceSheet: { frames: [0, 1] } }), {
+      gallery: { referenceMediaUrl },
     });
-    renderReference();
 
-    expect(await screen.findByAltText("Reference frame 0")).toBeTruthy();
+    expect(screen.getByAltText("Reference frame 0")).toBeInTheDocument();
     expect(screen.queryByText("Animated sequences")).toBeNull();
   });
 
@@ -230,17 +281,25 @@ describe("TestCaseReferencePage", () => {
       ],
       status: "ready",
     });
-    seedGalleryData(
+    const { navigations } = await renderResolved(
       variant({
         referenceBuilds: {
           "simple-2d": "https://ref.example/carom/base/simple-2d/",
         },
       }),
+      { search: "?engine=simple-2d" },
     );
-    renderReference("?engine=simple-2d");
 
-    expect(await screen.findByText("landing?engine=simple-2d")).toBeTruthy();
+    expect(screen.getByText("landing?engine=simple-2d")).toBeInTheDocument();
     expect(document.querySelector("iframe")).toBeNull();
+    // One hop, replacing the /reference entry rather than stacking on it.
+    expect(navigations).toEqual([
+      {
+        action: "POP",
+        path: "/test-cases/lattice-belt/reference?engine=simple-2d",
+      },
+      { action: "REPLACE", path: "/test-cases/lattice-belt?engine=simple-2d" },
+    ]);
   });
 
   it("plays the scored factories through the reference engine for the performance case", async () => {
@@ -260,21 +319,20 @@ describe("TestCaseReferencePage", () => {
       ],
       status: "ready",
     });
-    seedGalleryData(variant());
-    renderReference("", "lattice");
+    await renderResolved(variant(), { slug: "lattice" });
 
     // All three factories, each launchable, each labelled by scale and grid — and
     // nothing else. The tab is the reference, so the rows carry no prose.
-    const play = await screen.findAllByRole("button", { name: "▶ Play" });
+    const play = screen.getAllByRole("button", { name: "▶ Play" });
     expect(play).toHaveLength(3);
-    expect(screen.getByText("Small — 24×12")).toBeTruthy();
-    expect(screen.getByText("Medium — 48×32")).toBeTruthy();
-    expect(screen.getByText("Large — 72×40")).toBeTruthy();
+    expect(screen.getByText("Small — 24×12")).toBeInTheDocument();
+    expect(screen.getByText("Medium — 48×32")).toBeInTheDocument();
+    expect(screen.getByText("Large — 72×40")).toBeInTheDocument();
 
     // The tab is offered off the CASE alone — this variant declares neither of the
     // published reference signals, so the layout and the page have to agree that a
     // bundled playback is a reference in its own right.
-    expect(screen.getByRole("link", { name: "Reference" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Reference" })).toBeInTheDocument();
 
     // Nothing plays until asked: stepping a factory builds thousands of frames.
     expect(
@@ -284,7 +342,7 @@ describe("TestCaseReferencePage", () => {
     const player = screen.getByRole("dialog", { name: "Factory playback" });
     // The player carries the same name that was clicked, so a full-viewport player
     // is still identifiable.
-    expect(within(player).getByText("Large — 72×40")).toBeTruthy();
+    expect(within(player).getByText("Large — 72×40")).toBeInTheDocument();
 
     // The player then goes off to fetch the vendored engine and scenario, which
     // jsdom cannot serve (there is no canvas or wasm here either — that stack is
@@ -294,7 +352,7 @@ describe("TestCaseReferencePage", () => {
     await waitFor(() =>
       expect(
         within(player).getByText(/Could not play this scenario/),
-      ).toBeTruthy(),
+      ).toBeInTheDocument(),
     );
   });
 
@@ -313,11 +371,19 @@ describe("TestCaseReferencePage", () => {
       ],
       status: "ready",
     });
-    seedGalleryData(variant());
-    renderReference("", "some-other-performance-case");
+    const { navigations } = await renderResolved(variant(), {
+      slug: "some-other-performance-case",
+    });
 
-    expect(await screen.findByText("landing")).toBeTruthy();
+    expect(screen.getByText("landing")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "▶ Play" })).toBeNull();
+    expect(navigations).toEqual([
+      {
+        action: "POP",
+        path: "/test-cases/some-other-performance-case/reference",
+      },
+      { action: "REPLACE", path: "/test-cases/some-other-performance-case" },
+    ]);
   });
 
   it("redirects to the detail landing when the variant declares no reference at all", async () => {
@@ -325,9 +391,12 @@ describe("TestCaseReferencePage", () => {
     // not dead-end on an empty page — which is also what a backend old enough to
     // send no `referenceSheet` field produces.
     catalog.mockReturnValue({ testCases: [testCase()], status: "ready" });
-    seedGalleryData(variant());
-    renderReference();
+    const { navigations } = await renderResolved(variant());
 
-    expect(await screen.findByText("landing")).toBeTruthy();
+    expect(screen.getByText("landing")).toBeInTheDocument();
+    expect(navigations).toEqual([
+      { action: "POP", path: "/test-cases/lattice-belt/reference" },
+      { action: "REPLACE", path: "/test-cases/lattice-belt" },
+    ]);
   });
 });
