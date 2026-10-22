@@ -1446,6 +1446,15 @@ const STREAM_STALE_MS = 50_000;
 const STREAM_REOPEN_BASE_MS = 1_000;
 const STREAM_REOPEN_MAX_MS = 30_000;
 
+/**
+ * The `window` event the operator client dispatches when it returns from the
+ * background (`window.dispatchEvent(new Event("tcab:resume"))`). A suspended
+ * WebView's socket is usually half-open on resume, so the console stream reopens
+ * on it at once rather than waiting out the stale-stream watchdog. See the
+ * operator client's page, `/components/client/overview/`.
+ */
+export const SHELL_RESUME_EVENT = "tcab:resume";
+
 // The topic-control path for one connected stream.
 const topicsPath = (streamId: string): string =>
   `/notifications/${encodeURIComponent(streamId)}/topics`;
@@ -1805,10 +1814,33 @@ export function createBackendExec(
         };
       };
 
+      // The operator client says it has just come back from the background. The
+      // stream is very likely half-open, and the watchdog would take up to
+      // `STREAM_STALE_MS` to notice, so replace it now. The backoff is reset and
+      // the reopen is immediate rather than delayed: this is a single event per
+      // resume, not a failure loop, so there is nothing to back off from, and the
+      // operator is looking at the screen waiting for it to update. Should the new
+      // connection fail, its own error path backs off from the base as usual.
+      const onResume = () => {
+        if (unsubscribed) return;
+        clearTimers();
+        source?.close();
+        source = null;
+        streamId = null;
+        attempt = 0;
+        open();
+      };
+      // Guarded because the transport is also imported where there is no window
+      // to listen on (Node tooling, tests outside jsdom).
+      const resumeTarget =
+        typeof addEventListener === "function" ? globalThis : null;
+      resumeTarget?.addEventListener(SHELL_RESUME_EVENT, onResume);
+
       open();
 
       return () => {
         unsubscribed = true;
+        resumeTarget?.removeEventListener(SHELL_RESUME_EVENT, onResume);
         clearTimers();
         streamId = null;
         source?.close();
