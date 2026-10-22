@@ -1,18 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
-import {
-  NavigationType,
-  useLocation,
-  useNavigate,
-  useNavigationType,
-} from "react-router";
+import { createContext, useCallback, useContext, type MouseEvent } from "react";
+import { NavigationType, useLocation, useNavigate } from "react-router";
 
 // The in-app history of this browser tab, so an on-page back control can return to
 // the page the viewer was actually on before this one rather than to a fixed parent
@@ -34,6 +21,10 @@ import {
 // navigations in one render (a handler that navigates twice) put two entries in the
 // browser's history behind one in the record; the counter still says exactly how far
 // back the target lies.
+//
+// The record itself is kept by `NavHistoryProvider` (nav-history-provider.tsx), which
+// the gallery app mounts once around its routes; this module holds the record's rules
+// and the hook a back control reads it through.
 
 /** One recorded history entry. */
 export interface HistoryEntry {
@@ -76,7 +67,7 @@ export function advanceHistory(
   const fresh: NavHistory = { entries: [entry], index: 0 };
   if (!prev || prev.entries.length === 0) return fresh;
   const current = prev.entries[prev.index];
-  if (current && current.key === entry.key && current.href === entry.href) {
+  if (current?.key === entry.key && current.href === entry.href) {
     return prev;
   }
   switch (type) {
@@ -96,19 +87,21 @@ export function advanceHistory(
       const index = prev.entries.findIndex(
         (e) => e.key === entry.key && e.href === entry.href,
       );
-      return index < 0 ? fresh : { entries: prev.entries, index };
+      return index === -1 ? fresh : { entries: prev.entries, index };
     }
   }
 }
 
-function load(): NavHistory | null {
+/** The record as this tab last saved it, or `null` when there is none to trust. */
+export function loadHistory(): NavHistory | null {
   try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as NavHistory;
     return Array.isArray(parsed.entries) &&
       typeof parsed.index === "number" &&
-      parsed.entries[parsed.index]
+      parsed.index >= 0 &&
+      parsed.index < parsed.entries.length
       ? parsed
       : null;
   } catch {
@@ -116,50 +109,26 @@ function load(): NavHistory | null {
   }
 }
 
-function save(history: NavHistory): void {
+/** Keep the record for a reload of this tab. */
+export function saveHistory(history: NavHistory): void {
   try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(history));
   } catch {
     // Storage unavailable (a private window, blocked site data): the record still
     // works for this page's lifetime, it just does not survive a reload.
   }
 }
 
-const NavHistoryContext = createContext<NavHistory | null>(null);
+/** The record, as `NavHistoryProvider` hands it to the back controls beneath it. */
+export const NavHistoryContext = createContext<NavHistory | null>(null);
 
 /** The browser router's position counter for the current entry, when there is one. */
-function browserIdx(): number | null {
+export function browserIdx(): number | null {
   if (typeof window === "undefined") return null;
-  const state: unknown = window.history.state;
+  const state: unknown = history.state;
   const idx =
     state && typeof state === "object" && "idx" in state ? state.idx : null;
   return typeof idx === "number" ? idx : null;
-}
-
-/**
- * Record the tab's in-app history for every back control beneath it. The gallery app
- * mounts this once around its routes; without it every back control uses its fallback.
- */
-export function NavHistoryProvider({ children }: { children: ReactNode }) {
-  const location = useLocation();
-  const type = useNavigationType();
-  const [recorded, setRecorded] = useState<NavHistory | null>(load);
-  // Folded during render (React's derived-state pattern), so a page rendered for this
-  // location already sees itself as the current entry. A navigation already folded in
-  // returns the record unchanged, which ends the re-render.
-  const history = advanceHistory(recorded, type, {
-    key: location.key,
-    pathname: location.pathname,
-    href: `${location.pathname}${location.search}${location.hash}`,
-    idx: browserIdx(),
-  });
-  if (history !== recorded) setRecorded(history);
-  useEffect(() => save(history), [history]);
-  return (
-    <NavHistoryContext.Provider value={history}>
-      {children}
-    </NavHistoryContext.Provider>
-  );
 }
 
 /**
@@ -171,7 +140,7 @@ export type BackScope = string | readonly string[];
 /** Whether `pathname` is within `scope`: one of its paths or a route beneath one. */
 export function withinScope(pathname: string, scope: BackScope): boolean {
   return (typeof scope === "string" ? [scope] : scope).some((path) => {
-    const base = path.split(/[?#]/, 1)[0]!.replace(/\/+$/, "");
+    const base = path.replace(/[?#].*$/s, "").replace(/\/+$/, "");
     return pathname === base || pathname.startsWith(`${base}/`);
   });
 }
@@ -204,24 +173,29 @@ export function useBackTarget(
   const location = useLocation();
   const navigate = useNavigate();
 
-  let targetIndex = -1;
+  const current = history?.entries[history.index];
+  let target: HistoryEntry | null = null;
+  // How far back the target lies in the record: a negative count of entries.
+  let recordSteps = 0;
   // The record must be describing this very location, or its neighbours are not
   // this page's.
-  if (scope !== null && history?.entries[history.index]?.key === location.key) {
+  if (scope !== null && history && current?.key === location.key) {
     for (let i = history.index - 1; i >= 0; i--) {
-      if (!withinScope(history.entries[i]!.pathname, scope)) {
-        targetIndex = i;
+      const entry = history.entries[i];
+      if (entry && !withinScope(entry.pathname, scope)) {
+        target = entry;
+        recordSteps = i - history.index;
         break;
       }
     }
   }
-  const target = targetIndex >= 0 ? history!.entries[targetIndex]! : null;
-  const current = history?.entries[history.index];
-  const delta = !target
-    ? 0
-    : typeof target.idx === "number" && typeof current?.idx === "number"
-      ? target.idx - current.idx
-      : targetIndex - history!.index;
+  let delta = 0;
+  if (target) {
+    delta =
+      typeof target.idx === "number" && typeof current?.idx === "number"
+        ? target.idx - current.idx
+        : recordSteps;
+  }
 
   const go = useCallback(() => {
     if (delta < 0) void navigate(delta);
@@ -230,18 +204,19 @@ export function useBackTarget(
 
   const onClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
+      // A modified click (a new tab, a new window) is the link's own, and a link to
+      // the fallback is an ordinary link that navigates itself.
       if (
         event.defaultPrevented ||
         event.button !== 0 ||
         event.metaKey ||
         event.altKey ||
         event.ctrlKey ||
-        event.shiftKey
+        event.shiftKey ||
+        delta >= 0
       ) {
         return;
       }
-      // A link to the fallback is an ordinary link and navigates itself.
-      if (delta >= 0) return;
       event.preventDefault();
       go();
     },

@@ -45,7 +45,7 @@ import {
   type WorkersContextValue,
 } from "../../../client/context";
 import { BackChevron } from "../../components/BackChevron";
-import { NavHistoryProvider } from "../../components/navHistory";
+import { NavHistoryProvider } from "../../components/nav-history-provider";
 import {
   GalleryDataProvider,
   type GalleryDataInput,
@@ -1050,6 +1050,16 @@ const shownRunIds = () =>
     .getAllByRole("link")
     .map((link) => link.getAttribute("href")?.split("/", 3)[2]);
 
+// Stands in for a run's page: its back control, as the run detail layout renders it.
+function QueueRunStub() {
+  return (
+    <>
+      <BackChevron scope="/runs/r1" fallback="/runs" label="All runs" />
+      <p>a run</p>
+    </>
+  );
+}
+
 // The queue is the review loop's list: it must open runs in the plan's own order and
 // leave a back-return behind it, so reviewing walks the buffer and lands back on the
 // plan rather than on the runs index.
@@ -1057,16 +1067,6 @@ describe("CoverageReviewQueue", () => {
   // Stands in for the dashboard the queue sits on.
   function Dashboard() {
     return <CoverageReviewQueue queue={queue()} />;
-  }
-
-  // Stands in for a run's page: its back control, as the run detail layout renders it.
-  function RunStub() {
-    return (
-      <>
-        <BackChevron scope="/runs/r1" fallback="/runs" label="All runs" />
-        <p>a run</p>
-      </>
-    );
   }
 
   function renderQueueAt(url: string, count: number) {
@@ -1176,7 +1176,7 @@ describe("CoverageReviewQueue", () => {
           <GalleryDataProvider value={galleryValue()}>
             <Routes>
               <Route path="/account/coverage/:planId" element={<Dashboard />} />
-              <Route path="/runs/:runId/verdict" element={<RunStub />} />
+              <Route path="/runs/:runId/verdict" element={<QueueRunStub />} />
             </Routes>
           </GalleryDataProvider>
         </NavHistoryProvider>
@@ -1185,10 +1185,13 @@ describe("CoverageReviewQueue", () => {
     fireEvent.click(screen.getAllByRole("link")[0]!);
     expect(screen.getByText("a run")).toBeInTheDocument();
     const back = screen.getByRole("link", { name: "Back" });
-    expect(back.getAttribute("href")).toBe("/account/coverage/p1");
+    expect(back).toHaveAttribute("href", "/account/coverage/p1");
     fireEvent.click(back);
-    await waitFor(() => expect(screen.queryByText("a run")).toBeNull());
-    expect(screen.getAllByRole("link")[0]!.getAttribute("href")).toBe(
+    await waitFor(() => {
+      expect(screen.queryByText("a run")).not.toBeInTheDocument();
+    });
+    expect(screen.getAllByRole("link")[0]).toHaveAttribute(
+      "href",
       "/runs/r1/verdict",
     );
   });

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { useBackTarget, type BackScope } from "./navHistory";
+import { useBackTarget, type BackScope } from "./nav-history";
 import styles from "./BackChevron.module.scss";
 
 /** The label a back control carries when it returns through history. */

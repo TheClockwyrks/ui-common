@@ -9,16 +9,18 @@ import {
   useNavigate,
 } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { BackChevron, BackLink } from "./BackChevron";
-import {
-  NavHistoryProvider,
-  advanceHistory,
-  withinScope,
-  type HistoryEntry,
-} from "./navHistory";
+import { advanceHistory, withinScope, type HistoryEntry } from "./nav-history";
+import { NavHistoryProvider } from "./nav-history-provider";
 
 function entry(key: string, href: string): HistoryEntry {
-  return { key, pathname: href.split(/[?#]/, 1)[0]!, href, idx: null };
+  return { key, pathname: href.replace(/[?#].*$/s, ""), href, idx: null };
+}
+
+// Stands in for the browser opening a link's href in a new tab, which jsdom cannot.
+function browserOpensHref(event: Event) {
+  event.preventDefault();
 }
 
 describe("advanceHistory", () => {
@@ -131,7 +133,9 @@ const click = (name: string) =>
   fireEvent.click(screen.getByRole("link", { name }));
 
 describe("a back control", () => {
-  beforeEach(() => window.sessionStorage.clear());
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
 
   it("returns from a run to the test case's Runs tab it was opened from", async () => {
     renderAt("/test-cases/end-to-end");
@@ -140,9 +144,11 @@ describe("a back control", () => {
     click("open run abc");
     expect(at()).toBe("/runs/abc");
     const back = screen.getByRole("link", { name: "Back" });
-    expect(back.getAttribute("href")).toBe("/test-cases/pong/runs");
+    expect(back).toHaveAttribute("href", "/test-cases/pong/runs");
     fireEvent.click(back);
-    await waitFor(() => expect(at()).toBe("/test-cases/pong/runs"));
+    await waitFor(() => {
+      expect(at()).toBe("/test-cases/pong/runs");
+    });
   });
 
   it("skips the page's own tabs", async () => {
@@ -151,7 +157,9 @@ describe("a back control", () => {
     click("run logs tab");
     expect(at()).toBe("/runs/abc/logs");
     click("Back");
-    await waitFor(() => expect(at()).toBe("/test-cases/pong/runs"));
+    await waitFor(() => {
+      expect(at()).toBe("/test-cases/pong/runs");
+    });
   });
 
   it("walks the trail back step by step instead of ping-ponging", async () => {
@@ -159,20 +167,25 @@ describe("a back control", () => {
     click("open pong");
     click("open run abc");
     click("Back");
-    await waitFor(() => expect(at()).toBe("/test-cases/pong"));
+    await waitFor(() => {
+      expect(at()).toBe("/test-cases/pong");
+    });
     // The case's own back control now returns to where the case was opened from,
     // not to the run just left.
-    expect(
-      screen.getByRole("link", { name: "Back" }).getAttribute("href"),
-    ).toBe("/test-cases/end-to-end");
+    expect(screen.getByRole("link", { name: "Back" })).toHaveAttribute(
+      "href",
+      "/test-cases/end-to-end",
+    );
     click("Back");
-    await waitFor(() => expect(at()).toBe("/test-cases/end-to-end"));
+    await waitFor(() => {
+      expect(at()).toBe("/test-cases/end-to-end");
+    });
   });
 
   it("falls back to the named parent on a deep link with nothing behind it", () => {
     renderAt("/runs/abc");
     const back = screen.getByRole("link", { name: "All runs" });
-    expect(back.getAttribute("href")).toBe("/runs");
+    expect(back).toHaveAttribute("href", "/runs");
     fireEvent.click(back);
     expect(at()).toBe("/runs");
   });
@@ -180,16 +193,14 @@ describe("a back control", () => {
   it("leaves a modified click to the link's own href", () => {
     renderAt("/test-cases/pong/runs");
     click("open run abc");
-    // Stands in for the browser opening the href in a new tab, which jsdom cannot;
-    // registered on the document so it runs after the app's own handlers.
-    const browser = (e: Event) => e.preventDefault();
-    document.addEventListener("click", browser);
+    // Registered on the document so it runs after the app's own handlers.
+    document.addEventListener("click", browserOpensHref);
     try {
       fireEvent.click(screen.getByRole("link", { name: "Back" }), {
         ctrlKey: true,
       });
     } finally {
-      document.removeEventListener("click", browser);
+      document.removeEventListener("click", browserOpensHref);
     }
     expect(at()).toBe("/runs/abc");
   });
@@ -200,45 +211,49 @@ describe("a back control", () => {
     // The page is a review-scoped link here only to exercise BackLink; from the run
     // the previous page is the case.
     const back = screen.getByRole("link", { name: "← Back" });
-    expect(back.getAttribute("href")).toBe("/test-cases/pong");
+    expect(back).toHaveAttribute("href", "/test-cases/pong");
     fireEvent.click(back);
-    await waitFor(() => expect(at()).toBe("/test-cases/pong"));
+    await waitFor(() => {
+      expect(at()).toBe("/test-cases/pong");
+    });
   });
 
   it("names its fallback when there is no history (text link)", () => {
     renderAt("/runs/abc");
-    expect(
-      screen.getByRole("link", { name: "← Results" }).getAttribute("href"),
-    ).toBe("/runs/abc");
+    expect(screen.getByRole("link", { name: "← Results" })).toHaveAttribute(
+      "href",
+      "/runs/abc",
+    );
   });
 });
+
+// Two navigations in one click handler, beside a back control scoped to the last.
+function TwoStep() {
+  const navigate = useNavigate();
+  return (
+    <>
+      <p data-testid="at">{useLocation().pathname}</p>
+      <button
+        type="button"
+        onClick={() => {
+          void navigate("/c");
+          void navigate("/d");
+        }}
+      >
+        two steps
+      </button>
+      <BackChevron scope="/d" fallback="/" label="Home" />
+      <Link to="/b">to b</Link>
+    </>
+  );
+}
 
 // Under a browser router two navigations in one handler can render once, leaving the
 // record one entry short of the browser's history; the step must still land on the
 // page the control points at.
 describe("a back control under a browser router", () => {
-  function TwoStep() {
-    const navigate = useNavigate();
-    return (
-      <>
-        <p data-testid="at">{useLocation().pathname}</p>
-        <button
-          type="button"
-          onClick={() => {
-            void navigate("/c");
-            void navigate("/d");
-          }}
-        >
-          two steps
-        </button>
-        <BackChevron scope="/d" fallback="/" label="Home" />
-        <Link to="/b">to b</Link>
-      </>
-    );
-  }
-
   it("lands on the entry it names after a skipped render", async () => {
-    window.history.replaceState(null, "", "/a");
+    history.replaceState(null, "", "/a");
     const wrapped = createBrowserRouter([
       {
         path: "*",
@@ -251,14 +266,20 @@ describe("a back control under a browser router", () => {
     ]);
     render(<RouterProvider router={wrapped} />);
     click("to b");
-    await waitFor(() => expect(at()).toBe("/b"));
+    await waitFor(() => {
+      expect(at()).toBe("/b");
+    });
     fireEvent.click(screen.getByRole("button", { name: "two steps" }));
-    await waitFor(() => expect(at()).toBe("/d"));
+    await waitFor(() => {
+      expect(at()).toBe("/d");
+    });
     // The record saw /a, /b and /d; the browser holds /c between /b and /d too.
     const back = screen.getByRole("link", { name: "Back" });
-    expect(back.getAttribute("href")).toBe("/b");
+    expect(back).toHaveAttribute("href", "/b");
     fireEvent.click(back);
-    await waitFor(() => expect(at()).toBe("/b"));
+    await waitFor(() => {
+      expect(at()).toBe("/b");
+    });
     wrapped.dispose();
   });
 });

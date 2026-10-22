@@ -4,8 +4,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useBackend } from "../../../client/context";
 import type { Model } from "../../../client/types";
 import { BackChevron } from "../../components/BackChevron";
-import { useBackTarget } from "../../components/navHistory";
 import { LoadingState } from "../../components/LoadingState";
+import { useBackTarget } from "../../components/nav-history";
 import { PageLayout } from "../../components/PageLayout";
 import { useLeaveGuard } from "../../components/use-leave-guard";
 import { UnsavedChangesDialog } from "./UnsavedChangesDialog";
@@ -79,6 +79,7 @@ export function GgConfigEditPage() {
       : routes.accountGgConfigNew(),
     routes.accountGgConfigs(),
   );
+  const configBackLabel = back.fromHistory ? "Back" : "All gg configurations";
   // The account's agent library: what the Agents section imports from, and what an
   // already-imported profile is resolved against on the way in.
   const {
@@ -428,9 +429,7 @@ export function GgConfigEditPage() {
           label={
             openAgent
               ? `Back to ${name.trim() || "the configuration"}`
-              : back.fromHistory
-                ? "Back"
-                : "All gg configurations"
+              : configBackLabel
           }
           onBack={openAgent ? backFromAgent : backFromConfig}
         />

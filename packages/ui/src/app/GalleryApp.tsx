@@ -1,7 +1,7 @@
 import { Backdrop } from "./components/Backdrop";
 import { ConfirmDialogProvider } from "./components/ConfirmDialog";
+import { NavHistoryProvider } from "./components/nav-history-provider";
 import { NotificationsLayer } from "./components/NotificationsLayer";
-import { NavHistoryProvider } from "./components/navHistory";
 import { PageErrorBoundary } from "./components/PageErrorBoundary";
 import { useGalleryData } from "./data/galleryContext";
 import { AppRoutes } from "./pages/router";

@@ -3,6 +3,7 @@ import type { RunRecord } from "@clockwyrks/run-record";
 import type { StoredReview } from "../../../../client/types";
 import { Markdown, Panel } from "../../../../index";
 import { useIdentity } from "../../../../client/identity";
+import { BackLink } from "../../../components/BackChevron";
 import { useGalleryData } from "../../../data/galleryContext";
 import { useReviewModel } from "../../../data/useRunVariant";
 import {
@@ -17,7 +18,6 @@ import {
   verdictIdsForItem,
   worstRating,
 } from "../../../data/ratings";
-import { BackLink } from "../../../components/BackChevron";
 import { RunDetailLayout } from "../../../layouts/runs/RunDetailLayout";
 import { routes } from "../../../routes";
 import { PublishedVerdict } from "./RunVerdictPage";

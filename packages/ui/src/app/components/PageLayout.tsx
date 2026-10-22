@@ -6,7 +6,7 @@ import { useIdentity } from "../../client/identity";
 import { selectUnreadCount, useNotifications } from "../runtime/notifications";
 import { BellIcon } from "./BellIcon";
 import { CabinetIcon } from "./CabinetIcon";
-import { useBackTarget } from "./navHistory";
+import { useBackTarget } from "./nav-history";
 import styles from "./PageLayout.module.scss";
 import exec from "../pages/runs/RunExec.module.scss";
 
@@ -160,6 +160,9 @@ export function PageLayout({
     chrome?.back?.scope ?? null,
     chrome?.home ?? routes.home(),
   );
+  // What a mode's brand control says it does: return to the previous page, or, with
+  // nothing behind the mode, leave it for the mode's `home`.
+  const exitTitle = exit.fromHistory ? "Back" : "Back to The Test Cabinet";
   // The consoles reach run configuration through the Settings gear; the static
   // site keeps the About link in the nav. Both surface the Settings gear — on
   // the site it opens the Appearance-only settings (the sun and feed-style
@@ -216,13 +219,7 @@ export function PageLayout({
             to={exit.href}
             onClick={exit.onClick}
             className={styles.brand}
-            title={
-              !chrome?.back
-                ? undefined
-                : exit.fromHistory
-                  ? "Back"
-                  : "Back to The Test Cabinet"
-            }
+            title={chrome?.back ? exitTitle : undefined}
           >
             {chrome?.back ? (
               <BackArrowIcon className={styles.mark} />

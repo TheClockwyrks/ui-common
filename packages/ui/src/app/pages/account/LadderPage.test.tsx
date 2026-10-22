@@ -37,7 +37,7 @@ import {
   type BackendContextValue,
 } from "../../../client/context";
 import { BackChevron } from "../../components/BackChevron";
-import { NavHistoryProvider } from "../../components/navHistory";
+import { NavHistoryProvider } from "../../components/nav-history-provider";
 import {
   GalleryDataProvider,
   type GalleryDataInput,
@@ -802,18 +802,18 @@ function Dashboard() {
   );
 }
 
+// Stands in for a run's page: its back control, as the run detail layout renders it.
+function RunStub() {
+  return (
+    <>
+      <BackChevron scope="/runs/run-1" fallback="/runs" label="All runs" />
+      <p>the run</p>
+    </>
+  );
+}
+
 // The review loop: a rung's runs must open with a return to the ladder behind them.
 describe("the ladder's back-return", () => {
-  // Stands in for a run's page: its back control, as the run detail layout renders it.
-  function RunStub() {
-    return (
-      <>
-        <BackChevron scope="/runs/run-1" fallback="/runs" label="All runs" />
-        <p>the run</p>
-      </>
-    );
-  }
-
   it("returns a run's back control to the ladder it was opened from", async () => {
     render(
       <MemoryRouter initialEntries={["/account/ladders/l1"]}>
@@ -841,9 +841,11 @@ describe("the ladder's back-return", () => {
     fireEvent.click(row);
     expect(screen.getByText("the run")).toBeInTheDocument();
     const back = screen.getByRole("link", { name: "Back" });
-    expect(back.getAttribute("href")).toBe("/account/ladders/l1");
+    expect(back).toHaveAttribute("href", "/account/ladders/l1");
     fireEvent.click(back);
-    await waitFor(() => expect(screen.queryByText("the run")).toBeNull());
+    await waitFor(() => {
+      expect(screen.queryByText("the run")).not.toBeInTheDocument();
+    });
     expect(screen.getAllByRole("button").length).toBeGreaterThan(0);
   });
 });
