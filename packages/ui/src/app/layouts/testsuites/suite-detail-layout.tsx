@@ -135,9 +135,13 @@ export function SuiteDetailLayout({ tab, children }: SuiteDetailLayoutProps) {
       <header className={styles.header}>
         <div className={styles.titleRow}>
           <div className={styles.titleGroup}>
+            {/* Back returns to the page the viewer came from (the suites listing, a
+                case that names this suite); moving between the suite's own tabs and
+                versions stays within its scope, and a fresh deep link falls back to
+                the suites listing. */}
             <BackChevron
-              to={routes.testCasesSuites()}
-              section="testCases"
+              scope={routes.testSuiteDetail(suite.slug)}
+              fallback={routes.testCasesSuites()}
               label="All test suites"
             />
             <h1 className={styles.title}>{identity?.name ?? suite.slug}</h1>

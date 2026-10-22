@@ -5,7 +5,6 @@ import { Link } from "react-router";
 import { CatalogTabs } from "./catalog-tabs";
 import styles from "./TestCasesPage.module.scss";
 import { Input } from "../../../primitives";
-import { useRecordSectionIndex } from "../../components/backReturn";
 import { CabinetIcon } from "../../components/CabinetIcon";
 import { LoadingState } from "../../components/LoadingState";
 import { PageLayout } from "../../components/PageLayout";
@@ -71,9 +70,6 @@ export function TestCasesPage({ tab }: TestCasesPageProps) {
   // returns to the 40/60 default.
   const [splitFraction, setSplitFraction] = useState(SPLIT_DEFAULT);
   const splitRef = useRef<HTMLDivElement | null>(null);
-  // Remember the viewed tab so a case's detail back-control returns here, not to
-  // the catalog default tab.
-  useRecordSectionIndex("testCases");
 
   // What decides this page's body: the catalog it holds, not the last read's
   // outcome. An empty-but-settled catalog still renders the chrome and its empty

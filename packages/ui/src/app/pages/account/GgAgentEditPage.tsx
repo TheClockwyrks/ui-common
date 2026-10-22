@@ -5,6 +5,7 @@ import { useBackend } from "../../../client/context";
 import type { Model } from "../../../client/types";
 import { BackChevron } from "../../components/BackChevron";
 import { LoadingState } from "../../components/LoadingState";
+import { useBackTarget } from "../../components/nav-history";
 import { PageLayout } from "../../components/PageLayout";
 import { useLeaveGuard } from "../../components/use-leave-guard";
 import { UnsavedChangesDialog } from "./UnsavedChangesDialog";
@@ -81,6 +82,12 @@ export function GgAgentEditPage() {
   const from = params.get("from");
   const { client: backend } = useBackend();
   const navigate = useNavigate();
+  // The back control returns to the page the operator came from (the agents list,
+  // a configuration that linked here), through the leave guard like any navigation.
+  const back = useBackTarget(
+    agentId ? routes.accountGgAgentEdit(agentId) : routes.accountGgAgentNew(),
+    routes.accountGgAgents(),
+  );
 
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
@@ -215,10 +222,10 @@ export function GgAgentEditPage() {
     <header className={styles.detailHeader}>
       <div className={styles.detailTitleRow}>
         <BackChevron
-          label="All gg agents"
+          label={back.fromHistory ? "Back" : "All gg agents"}
           // A navigation like any other: the leave guard asks first when there is work
           // to lose.
-          onBack={() => navigate(routes.accountGgAgents())}
+          onBack={back.go}
         />
         <h1 className={styles.detailTitle}>
           {editing ? agent?.name.trim() || "Agent" : "New gg agent"}

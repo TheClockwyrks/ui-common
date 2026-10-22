@@ -5,6 +5,7 @@ import { useBackend } from "../../../client/context";
 import type { Model } from "../../../client/types";
 import { BackChevron } from "../../components/BackChevron";
 import { LoadingState } from "../../components/LoadingState";
+import { useBackTarget } from "../../components/nav-history";
 import { PageLayout } from "../../components/PageLayout";
 import { useLeaveGuard } from "../../components/use-leave-guard";
 import { UnsavedChangesDialog } from "./UnsavedChangesDialog";
@@ -70,6 +71,15 @@ export function GgConfigEditPage() {
   const from = params.get("from");
   const { client: backend } = useBackend();
   const navigate = useNavigate();
+  // The configuration's back control returns to the page the operator came from (the
+  // configurations list, a run or plan that linked here).
+  const back = useBackTarget(
+    configId
+      ? routes.accountGgConfigEdit(configId)
+      : routes.accountGgConfigNew(),
+    routes.accountGgConfigs(),
+  );
+  const configBackLabel = back.fromHistory ? "Back" : "All gg configurations";
   // The account's agent library: what the Agents section imports from, and what an
   // already-imported profile is resolved against on the way in.
   const {
@@ -276,11 +286,11 @@ export function GgConfigEditPage() {
     else cancelAgent();
   }
 
-  // The back control beside the title on the configuration itself, one step up to the
-  // list of configurations. It is a navigation like any other, so the leave guard asks
+  // The back control beside the title on the configuration itself, back to the page
+  // the operator came from. It is a navigation like any other, so the leave guard asks
   // about it, through the same dialog every other way out raises.
   function backFromConfig() {
-    navigate(routes.accountGgConfigs());
+    back.go();
   }
 
   // Write the open profile to the account's agent library and leave this configuration
@@ -419,7 +429,7 @@ export function GgConfigEditPage() {
           label={
             openAgent
               ? `Back to ${name.trim() || "the configuration"}`
-              : "All gg configurations"
+              : configBackLabel
           }
           onBack={openAgent ? backFromAgent : backFromConfig}
         />
