@@ -153,11 +153,26 @@ export function useReplayClock(
   // reviewer moved to another output — so the position starts over rather than
   // pointing at a frame the new one may not have. Keyed on the length rather than the
   // array's identity for the reason above: identity changes every render.
-  useEffect(() => {
-    frameRef.current = 0;
-    spentRef.current = 0;
+  //
+  // The reset is made while rendering, against the length the position was last
+  // set for, not in an effect after the commit. An effect leaves a window in which
+  // the new length is on screen with the old position beside it, and a scrub made
+  // in that window is queued BEFORE the effect's reset, which then wins: the
+  // reviewer's move is silently undone. Made here, the render that shows the new
+  // length is the render that shows frame 0, and every seek comes after it.
+  const [pacedFrames, setPacedFrames] = useState(frames);
+  const [pacedAutoPlay, setPacedAutoPlay] = useState(autoPlay);
+  if (pacedFrames !== frames || pacedAutoPlay !== autoPlay) {
+    setPacedFrames(frames);
+    setPacedAutoPlay(autoPlay);
     setFrame(0);
     setPlaying(autoPlay);
+  }
+  // The part of a frame's hold already spent belongs to the old timeline too. It is
+  // only read by the playback loop, which restarts on the new length after this
+  // runs, so clearing it after the commit is in time.
+  useEffect(() => {
+    spentRef.current = 0;
   }, [frames, autoPlay]);
 
   useEffect(() => {
