@@ -1,6 +1,6 @@
 {
   "name": "@clockwyrks/run-stats",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "license": "MIT",
   "type": "module",
   "description": "Framework-free run scoring and set-level rollups: the rules every surface that reports a Test Cabinet figure shares.",
