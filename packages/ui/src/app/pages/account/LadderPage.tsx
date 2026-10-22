@@ -37,7 +37,6 @@ import { BackChevron } from "../../components/BackChevron";
 import { useConfirm } from "../../components/ConfirmDialog";
 import { LoadingState } from "../../components/LoadingState";
 import { PageLayout } from "../../components/PageLayout";
-import { useRecordSectionIndex } from "../../components/backReturn";
 import { SubmitNotice } from "../../components/SubmitNotice";
 import { useTestCaseName } from "../../data/useTestCaseName";
 import { routes } from "../../routes";
@@ -903,10 +902,6 @@ export function LadderPage() {
   const { client: backend } = useBackend();
   const { confirm } = useConfirm();
 
-  // Record this dashboard as the coverage section's index, so a run opened from a rung
-  // or from the review queue can return here (see `backReturn`).
-  useRecordSectionIndex("coverage");
-
   // This board lists runs — an expanded rung shows its own, in flight ones included —
   // so it needs the console stream's run-lifecycle topic for exactly as long as it is
   // open. Without it a rung's runs would be a snapshot taken when it was expanded.
@@ -1100,7 +1095,11 @@ export function LadderPage() {
     <PageLayout>
       <header className={styles.detailHeader}>
         <div className={[styles.detailTitleRow, styles.dashTitleRow].join(" ")}>
-          <BackChevron to={routes.accountLadders()} label="All ladders" />
+          <BackChevron
+            scope={routes.accountLadder(ladderId)}
+            fallback={routes.accountLadders()}
+            label="All ladders"
+          />
           <h1 className={[styles.detailTitle, styles.dashTitle].join(" ")}>
             {ladder?.name ?? ladderId}
           </h1>
@@ -1266,7 +1265,6 @@ export function LadderPage() {
               {queue && (
                 <CoverageReviewQueue
                   queue={queue}
-                  returnLabel="Back to the ladder"
                   title="Label runs (optional)"
                   intro="Completed runs of this dispatch you have not reviewed, in the order it climbs them. A review adds an aesthetic rating and a writeup after the fact; it never moves the climb."
                 />
