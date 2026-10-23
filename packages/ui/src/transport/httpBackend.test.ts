@@ -90,9 +90,66 @@ describe("createBackendExec media resolvers", () => {
     );
   });
 
+  it("resolves every kind of run media against the artifact service", () => {
+    const client = createBackendExec(BACKEND, "/artifacts");
+    expect(client.proofMediaUrl?.("run-1", "p.png")).toBe(
+      "/artifacts/runs/run-1/proof/p.png",
+    );
+    expect(client.assetMediaUrl?.("run-1", "mesh.glb")).toBe(
+      "/artifacts/runs/run-1/asset/mesh.glb",
+    );
+    expect(client.validationMediaUrl?.("run-1", "a__b.json.gz")).toBe(
+      "/artifacts/runs/run-1/validation/a__b.json.gz",
+    );
+  });
+
   it("resolves no showcase file without an artifact service", () => {
     const client = createBackendExec(BACKEND, null);
     expect(client.showcaseMediaUrl?.("run-1", "title.png")).toBeNull();
+  });
+});
+
+describe("createBackendExec code analysis", () => {
+  it("reads the document from the artifact service", async () => {
+    const document = { analyzerVersion: 3, files: [] };
+    const fetchMock = vi.fn(() => Promise.resolve(Response.json(document)));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createBackendExec(BACKEND, "/artifacts");
+    await expect(client.readCodeAnalysis?.("run 1")).resolves.toEqual(document);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/artifacts/runs/run%201/code-analysis",
+      expect.anything(),
+    );
+  });
+
+  it("answers null for a run the analyzer never saw", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("not found", { status: 404 }))),
+    );
+    const client = createBackendExec(BACKEND, ARTIFACTS);
+    await expect(client.readCodeAnalysis?.("run-1")).resolves.toBeNull();
+  });
+
+  it("rejects a failed read", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("boom", { status: 502 }))),
+    );
+    const client = createBackendExec(BACKEND, ARTIFACTS);
+    await expect(client.readCodeAnalysis?.("run-1")).rejects.toThrow(
+      "HTTP 502",
+    );
+  });
+
+  it("answers null without fetching when no artifact service is configured", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const client = createBackendExec(BACKEND, null);
+    await expect(client.readCodeAnalysis?.("run-1")).resolves.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

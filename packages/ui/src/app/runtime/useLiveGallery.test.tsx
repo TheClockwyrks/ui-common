@@ -115,6 +115,13 @@ function worker(ids: string[]): WorkerHandle & {
   } as unknown as WorkerHandle & { listRuns: ReturnType<typeof vi.fn> };
 }
 
+// A transport media resolver of one kind, shaped the way the HTTP transport's
+// points at the artifacts service.
+function media(kind: string) {
+  return (runId: string, file: string): string =>
+    `/artifacts/runs/${runId}/${kind}/${file}`;
+}
+
 // The hook under the three providers it reads, with the backend swappable
 // between renders (the wrapper reads it off a holder, and `rerender()` renders
 // the whole tree again).
@@ -498,21 +505,76 @@ describe("useLiveGallery", () => {
       expect(after.localIds).toBe(before.localIds);
     });
 
-    // Identity is held by reading the worklist through a ref, which is only
-    // right if the resolvers still answer from the CURRENT worklist.
-    it("still answer from the current worklist", async () => {
+    // The artifacts service holds every run's tree, produced or published, and
+    // the backend serves no run media, so a run's media resolves through the
+    // transport's own resolver whether or not the run is in the worklist.
+    it("resolve every run's media through the transport", async () => {
+      const { client } = backend();
+      const active = worker(["run-a"]);
+      Object.assign(active.client, {
+        proofMediaUrl: media("proof"),
+        assetMediaUrl: media("asset"),
+        validationMediaUrl: media("validation"),
+        showcaseMediaUrl: media("showcase"),
+      });
+      const { result } = mount(client, active);
+      await waitFor(() => {
+        expect(result.current.gallery.localIds.has("run-a")).toBe(true);
+      });
+      const gallery = result.current.gallery;
+      for (const runId of ["run-a", "run-b"]) {
+        expect(gallery.proofMediaUrl?.(runId, "p.png")).toBe(
+          `/artifacts/runs/${runId}/proof/p.png`,
+        );
+        expect(gallery.assetMediaUrl?.(runId, "a.png")).toBe(
+          `/artifacts/runs/${runId}/asset/a.png`,
+        );
+        expect(gallery.validationMediaUrl?.(runId, "v.png")).toBe(
+          `/artifacts/runs/${runId}/validation/v.png`,
+        );
+        expect(gallery.showcaseMediaUrl?.(runId, "s.png")).toBe(
+          `/artifacts/runs/${runId}/showcase/s.png`,
+        );
+      }
+    });
+
+    // A transport with no resolver serves no media; nothing falls back to a
+    // service URL that does not serve it.
+    it("resolve media to nothing without a transport resolver", async () => {
       const { client } = backend();
       const { result } = mount(client, worker(["run-a"]));
-      await waitFor(() =>
-        expect(result.current.gallery.localIds.has("run-a")).toBe(true),
-      );
-      const { proofMediaUrl } = result.current.gallery;
-      // A produced run's media is the worker's; any other run's would be the
-      // backend's, which this host has no URL for.
-      expect(proofMediaUrl?.("run-a", "p.png")).toBe(
-        "https://w1.example/runs/run-a/proof/p.png",
-      );
-      expect(proofMediaUrl?.("run-b", "p.png")).toBeNull();
+      await waitFor(() => {
+        expect(result.current.gallery.localIds.has("run-a")).toBe(true);
+      });
+      const gallery = result.current.gallery;
+      expect(gallery.proofMediaUrl?.("run-a", "p.png")).toBeNull();
+      expect(gallery.showcaseMediaUrl?.("run-b", "s.png")).toBeNull();
+    });
+
+    // The code analysis is read from the run's tree through the transport too,
+    // and a transport that cannot read it answers "not available here".
+    it("read the code analysis through the transport", async () => {
+      const { client } = backend();
+      const active = worker([]);
+      const document = { analyzerVersion: 1 };
+      const readCodeAnalysis = vi.fn(() => Promise.resolve(document));
+      Object.assign(active.client, { readCodeAnalysis });
+      const { result } = mount(client, active);
+      await waitFor(() => {
+        expect(result.current.gallery.runsLoading).toBe(false);
+      });
+      await expect(
+        result.current.gallery.readCodeAnalysis?.("run-b"),
+      ).resolves.toBe(document);
+      expect(readCodeAnalysis).toHaveBeenCalledWith("run-b");
+
+      const bare = mount(client, worker([]));
+      await waitFor(() => {
+        expect(bare.result.current.gallery.runsLoading).toBe(false);
+      });
+      await expect(
+        bare.result.current.gallery.readCodeAnalysis?.("run-b"),
+      ).resolves.toBeNull();
     });
   });
 });

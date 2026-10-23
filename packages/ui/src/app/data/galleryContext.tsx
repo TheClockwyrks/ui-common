@@ -514,7 +514,7 @@ export interface GalleryDataInput {
    *
    * A host hook rather than a client call because the two hosts source it completely
    * differently, exactly as they do for {@link fetchRunEvents}: a console reads the
-   * backend's `GET /runs/{id}/code-analysis`, the static site fetches the
+   * artifacts service's `GET /runs/{id}/code-analysis`, the static site fetches the
    * generation-keyed snapshot object the publish emitted. Omitted by a host that
    * cannot reach the document at all, which the tab reports as "not available here".
    *
@@ -540,8 +540,8 @@ export interface GalleryDataInput {
   /**
    * Resolve the loadable URL for one run's proof media file (`<proof-id>.<ext>`),
    * or null when the host cannot serve it (so the UI shows presence only). Each
-   * host wires its own source: the consoles point at the backend (published) or
-   * worker (produced) proof endpoint, the static site at the snapshot asset.
+   * host wires its own source: the console points at the artifacts service's proof
+   * route, which serves every run's tree, the static site at the snapshot asset.
    * Omitted by a host that serves no proof media.
    */
   proofMediaUrl?: (runId: string, file: string) => string | null;
@@ -550,8 +550,8 @@ export interface GalleryDataInput {
    * sprite's `regenerated.png`/`preview.png`/`target.png`/`actions.json`, or a
    * sprite sheet's per-frame `regenerated-<index>.png` (etc.) — or null when the
    * host cannot serve it. Each host wires its own source the same way it
-   * wires {@link proofMediaUrl}: the consoles point at the backend (published) or
-   * worker (produced) asset endpoint, the static site at the snapshot asset.
+   * wires {@link proofMediaUrl}: the console points at the artifacts service's
+   * asset route, the static site at the snapshot asset.
    * Omitted by a host that serves no asset media.
    */
   assetMediaUrl?: (runId: string, file: string) => string | null;
@@ -584,9 +584,9 @@ export interface GalleryDataInput {
    * Resolve the loadable URL for one run's **actual** automated-validation media
    * file — a debug script's synthesized `<item>__<output>.<ext>`, captured from the
    * model's build — or null when the host cannot serve it. Run-scoped, wired the
-   * same way {@link proofMediaUrl} and {@link assetMediaUrl} are: the consoles point
-   * at the backend (published) or worker (produced) validation endpoint, the static
-   * site at the snapshot asset. Omitted by a host that serves no validation media.
+   * same way {@link proofMediaUrl} and {@link assetMediaUrl} are: the console points
+   * at the artifacts service's validation route, the static site at the snapshot
+   * asset. Omitted by a host that serves no validation media.
    */
   validationMediaUrl?: (runId: string, file: string) => string | null;
   /**
@@ -594,9 +594,8 @@ export interface GalleryDataInput {
    * media file, or an image the description references by bare relative path — or
    * null when the host cannot serve it. `file` is the plain file name the record's
    * carousel (or the description) carries. Run-scoped, wired the same way
-   * {@link proofMediaUrl} and {@link validationMediaUrl} are: the consoles point at
-   * the backend (published) or worker (produced) showcase endpoint, the static site
-   * at the snapshot asset (where a video's `.webm` name resolves to its published
+   * {@link proofMediaUrl} and {@link validationMediaUrl} are: the console points at
+   * the artifacts service's showcase route, the static site at the snapshot asset (where a video's `.webm` name resolves to its published
    * `.mp4`). Omitted by a host that serves no showcase media.
    */
   showcaseMediaUrl?: (runId: string, file: string) => string | null;
