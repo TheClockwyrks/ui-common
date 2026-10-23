@@ -96,6 +96,27 @@ export {
   type EngineOption,
 } from "./data/engines";
 
+// The showcase presentation, for a host that renders a showcase outside the
+// gallery. The Spec Cabinet's showcase editor stages its preview through exactly
+// these, so what an author sees while writing a suite's landing page is what The
+// Test Cabinet renders it as rather than a second implementation of it.
+export {
+  ShowcaseCarousel,
+  type ShowcaseCarouselEntry,
+} from "./components/showcase-carousel";
+export { MediaView } from "./components/MediaView";
+
+// A suite's bundled assets, played through the runtimes and viewers a run's
+// produced assets are played through. The Spec Cabinet's asset editor previews
+// what it is authoring with exactly this, so an author sees the asset the way The
+// Test Cabinet renders it rather than a second implementation of it.
+export { SuiteAssetPreview } from "./components/suite-asset-preview";
+export {
+  previewedFiles,
+  type SuiteAssetPreviewKind,
+} from "./data/suite-asset-files";
+export { showcaseMediaKind } from "./data/showcase-media-kind";
+
 // Route builders/patterns, for hosts that link into the app (e.g. after a run
 // launches).
 export { routes, routePatterns } from "./routes";

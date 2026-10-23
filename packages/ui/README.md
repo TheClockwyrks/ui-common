@@ -12,7 +12,8 @@ The package is published as its `dist/`: `npm run build` empties it, copies
 every source file the TypeScript emit does not carry (the stylesheets, the
 Markdown, the JSON, the images and the wasm) to the same relative path, and
 emits the JavaScript and the declarations beside them. The entries are `.`,
-`./app`, `./client`, `./routes`, `./transport` and `./tokens.css`.
+`./app`, `./client`, `./embed`, `./routes`, `./transport` and
+`./tokens.css`.
 
 The emitted modules keep the imports a bundler resolves: Sass stylesheets and
 CSS modules, Vite's `?raw`, `?url` and `?worker` imports, and relative
