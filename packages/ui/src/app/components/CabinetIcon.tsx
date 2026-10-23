@@ -11,8 +11,10 @@ interface CabinetIconProps {
 // stripes are a mask rather than shapes painted over it, so the mark sits on
 // any background. Drawn in `currentColor` so callers set its color (and size)
 // from CSS; `brand` swaps that for the brand gradient, as the topbar draws it.
-// The favicon at `public/cabinet.svg` draws the same geometry on a dark rounded
-// rect; keep the two artworks in sync.
+// The Spec Cabinet's `CabinetMark` (`src/components/CabinetMark.tsx` in the
+// `the-spec-cabinet` repository) draws the same geometry, and each app's favicon
+// at `public/cabinet.svg` draws it on a dark rounded rect; keep the three
+// artworks in sync.
 export function CabinetIcon({ className, brand = false }: CabinetIconProps) {
   const id = useId();
   const maskId = `${id}-stripes`;

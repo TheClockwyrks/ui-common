@@ -22,6 +22,10 @@
       "types": "./dist/client/index.d.ts",
       "default": "./dist/client/index.js"
     },
+    "./embed": {
+      "types": "./dist/app/embed.d.ts",
+      "default": "./dist/app/embed.js"
+    },
     "./routes": {
       "types": "./dist/app/routes.d.ts",
       "default": "./dist/app/routes.js"
