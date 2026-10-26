@@ -450,7 +450,6 @@ export function useLiveGallery(arena?: ArenaApi): GalleryDataInput {
   const [modelsStatus, setModelsStatus] = useState<CatalogStatus>("loading");
 
   const workerClient = worker?.client ?? null;
-  const workerUrl = worker?.url ?? null;
 
   // The produced worklist, for the resolvers below to consult WITHOUT depending
   // on it. Every callback this hook hands the gallery is keyed on by some
@@ -466,77 +465,37 @@ export function useLiveGallery(arena?: ArenaApi): GalleryDataInput {
   const localIdsRef = useRef(localIds);
   localIdsRef.current = localIds;
 
-  // Resolve a run's proof media URL: a produced (local) run is served by its
-  // worker, any other (published) run by the backend. A worker that supplies its
-  // own resolver — `proofMediaUrl`, which the HTTP transport points at the
-  // artifact service — is asked first; otherwise the proof resolves under the
-  // worker's base URL. When the resolver declines the proof is not URL-loadable
-  // here and resolves to null (the UI then shows presence without media).
+  // A run's proof, asset, validation and showcase media are served by the
+  // artifacts service alone, which holds every run's tree, produced or published:
+  // the backend keeps no copy, and publishing copies the media to the public bucket
+  // without moving the tree. So there is no published-vs-local split and no backend
+  // fallback; the transport's own resolvers (which the HTTP transport points at the
+  // artifacts service) are the single source, and a transport that has none
+  // resolves null, the UI then showing the media's presence without it.
   const proofMediaUrl = useCallback(
-    (runId: string, file: string): string | null => {
-      const path = `/runs/${encodeURIComponent(runId)}/proof/${encodeURIComponent(file)}`;
-      if (localIdsRef.current.has(runId)) {
-        if (workerClient?.proofMediaUrl) {
-          return workerClient.proofMediaUrl(runId, file);
-        }
-        return workerUrl ? joinPath(workerUrl, path) : null;
-      }
-      return backendUrl ? joinPath(backendUrl, path) : null;
-    },
-    [backendUrl, workerUrl, workerClient],
+    (runId: string, file: string): string | null =>
+      workerClient?.proofMediaUrl?.(runId, file) ?? null,
+    [workerClient],
   );
 
-  // Asset-generation run media (regenerated/preview/target/actions) resolves the
-  // same way proof media does: the worker's own resolver when it has one, else an
-  // HTTP endpoint on the worker or backend.
   const assetMediaUrl = useCallback(
-    (runId: string, file: string): string | null => {
-      const path = `/runs/${encodeURIComponent(runId)}/asset/${encodeURIComponent(file)}`;
-      if (localIdsRef.current.has(runId)) {
-        if (workerClient?.assetMediaUrl) {
-          return workerClient.assetMediaUrl(runId, file);
-        }
-        return workerUrl ? joinPath(workerUrl, path) : null;
-      }
-      return backendUrl ? joinPath(backendUrl, path) : null;
-    },
-    [backendUrl, workerUrl, workerClient],
+    (runId: string, file: string): string | null =>
+      workerClient?.assetMediaUrl?.(runId, file) ?? null,
+    [workerClient],
   );
 
-  // A run's automated-validation media (a debug script's synthesized actual/baseline
-  // clips and stills) resolves exactly the way proof and asset media do: the
-  // worker's own resolver when it has one, else an HTTP endpoint under
-  // `/runs/{id}/validation/{file}`.
   const validationMediaUrl = useCallback(
-    (runId: string, file: string): string | null => {
-      const path = `/runs/${encodeURIComponent(runId)}/validation/${encodeURIComponent(file)}`;
-      if (localIdsRef.current.has(runId)) {
-        if (workerClient?.validationMediaUrl) {
-          return workerClient.validationMediaUrl(runId, file);
-        }
-        return workerUrl ? joinPath(workerUrl, path) : null;
-      }
-      return backendUrl ? joinPath(backendUrl, path) : null;
-    },
-    [backendUrl, workerUrl, workerClient],
+    (runId: string, file: string): string | null =>
+      workerClient?.validationMediaUrl?.(runId, file) ?? null,
+    [workerClient],
   );
 
-  // A run's showcase files (the carousel media, plus any image the description
-  // references by bare relative path) resolve exactly the way proof and asset
-  // media do: the worker's own resolver when it has one, else an HTTP endpoint
-  // under `/runs/{id}/showcase/{file}`.
+  // A run's showcase files: the carousel media, plus any image the description
+  // references by bare relative path.
   const showcaseMediaUrl = useCallback(
-    (runId: string, file: string): string | null => {
-      const path = `/runs/${encodeURIComponent(runId)}/showcase/${encodeURIComponent(file)}`;
-      if (localIdsRef.current.has(runId)) {
-        if (workerClient?.showcaseMediaUrl) {
-          return workerClient.showcaseMediaUrl(runId, file);
-        }
-        return workerUrl ? joinPath(workerUrl, path) : null;
-      }
-      return backendUrl ? joinPath(backendUrl, path) : null;
-    },
-    [backendUrl, workerUrl, workerClient],
+    (runId: string, file: string): string | null =>
+      workerClient?.showcaseMediaUrl?.(runId, file) ?? null,
+    [workerClient],
   );
 
   // A CASE variant's authored showcase media — the case-side counterpart of the
@@ -601,12 +560,9 @@ export function useLiveGallery(arena?: ArenaApi): GalleryDataInput {
     [backendUrl],
   );
 
-  // A run's whole-tree download resolves differently from the media above: it is
-  // served **only** by the artifact service, which holds every uploaded tree —
-  // publishing a run copies its media to the backend but does not move (or remove)
-  // the tree. So there is no published-vs-local split and no backend fallback; the
-  // transport's own resolver is the single source, and a transport that has none
-  // resolves null and the console simply offers no download.
+  // A run's whole-tree download resolves the way its media above does, from the
+  // artifacts service through the transport's own resolver; a transport that has
+  // none resolves null and the console simply offers no download.
   const runArchiveUrl = useCallback(
     (runId: string): string | null =>
       workerClient?.runArchiveUrl?.(runId) ?? null,
@@ -940,24 +896,23 @@ export function useLiveGallery(arena?: ArenaApi): GalleryDataInput {
     [backend, workerClient],
   );
 
-  // Resolve a run's unbounded code-analysis document from the backend's store-backed
-  // route. Console-only in practice: the worker holds a run's tree, not the mirrored
-  // document, so a produced run's explorer waits on the run reaching the backend. A
-  // transport that cannot reach it (`NotSupportedError`, or no backend at all) resolves
-  // to null, which the tab reports as "not available here" rather than as an error; a
-  // run that was simply never analysed resolves to null the same way through the
+  // Resolve a run's unbounded code-analysis document from the run's tree on the
+  // artifacts service, through the transport, published or not. A transport that
+  // cannot reach it (`NotSupportedError`, or no resolver at all) resolves to null,
+  // which the tab reports as "not available here" rather than as an error; a run
+  // that was simply never analysed resolves to null the same way through the
   // client's 404 handling.
   const readCodeAnalysis = useCallback(
     async (runId: string) => {
-      if (!backend?.readCodeAnalysis) return null;
+      if (!workerClient?.readCodeAnalysis) return null;
       try {
-        return await backend.readCodeAnalysis(runId);
+        return await workerClient.readCodeAnalysis(runId);
       } catch (e) {
         if (e instanceof NotSupportedError) return null;
         throw e;
       }
     },
-    [backend],
+    [workerClient],
   );
 
   // Resolve a single run's detail by id for a run the loaded list doesn't carry

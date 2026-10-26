@@ -407,22 +407,6 @@ export interface BackendClient {
   ): Promise<RunEventStreams>;
 
   /**
-   * A run's stored **code-analysis document** (`GET /runs/{id}/code-analysis`), or `null`
-   * when the run has none. Backs the run-detail Code tab's explorer: the bounded summary
-   * rides on the record, and this is the unbounded tier behind it — every authored file,
-   * every function with its complexity, every import edge, cycle and clone group.
-   *
-   * Not harness-specific: analysing a directory involves no harness-specific work, so the
-   * tab is offered on every run that carries an analysis. A `null` means the run predates
-   * the analyzer — [the corpus is not
-   * backfilled](https://docs.testcabinet.ai/gg/analysis/code-analysis/#publishing-and-the-analyzer-version)
-   * — not that anything failed. Optional so a transport that cannot reach per-run media
-   * omits it and the tab falls back to the summary alone, which is the same pattern the
-   * other console-only reads use.
-   */
-  readCodeAnalysis?(id: string): Promise<CodeAnalysisDocument | null>;
-
-  /**
    * The reviewer checklist items a case declares for a variant (`commonReviewItems`
    * plus the variant's own), resolved from the version manifest. These are
    * definitional catalog data — keyed by the case identity a run record carries,
@@ -1083,12 +1067,18 @@ export interface WorkerClient {
    */
   cancelAllRuns?(): Promise<BulkCancelOut>;
 
+  // A run's tree — its media, its gg session record and its code analysis — is
+  // held by the artifacts service alone, published or not: the backend keeps no
+  // copy (backend overview, "Durable state"), and publishing copies the media to
+  // the public bucket without moving the tree. So the readers below are this
+  // client's, the one that knows where the artifacts service is, and a host that
+  // omits one (or answers null) serves no such thing.
+
   /**
-   * The URL to load one of a produced run's proof-of-implementation media files
-   * (`<proof-id>.<ext>`) from, or null when this worker cannot serve it. Optional:
-   * without it the gallery resolves the file against the worker's base URL. The
-   * HTTP transport implements it to point at the artifact service, which serves a
-   * pre-publish run's media apart from the control-plane backend.
+   * The URL to load one of a run's proof-of-implementation media files
+   * (`<proof-id>.<ext>`) from, or null when this worker cannot serve it. The HTTP
+   * transport points it at the artifacts service's `GET /runs/{id}/proof/{file}`.
+   * Optional: without it the gallery shows the proof's presence without its media.
    */
   proofMediaUrl?(runId: string, file: string): string | null;
   /**
@@ -1103,17 +1093,32 @@ export interface WorkerClient {
    * script's synthesized `<item>__<output>.<ext>` (the model's build) or
    * `<item>__<output>.baseline.<ext>` (the reference implementation) — or null
    * when this worker cannot serve it. Optional, mirroring {@link proofMediaUrl}
-   * and {@link assetMediaUrl}: a worker reachable over HTTP needs no override.
+   * and {@link assetMediaUrl}.
    */
   validationMediaUrl?(runId: string, file: string): string | null;
   /**
    * The URL to load one of a run's showcase files — a carousel media file, or an
    * image the description references by bare relative path (`file` is the plain
    * name in the produced tree's `showcase/`) — or null when this worker cannot
-   * serve it. Optional, mirroring {@link proofMediaUrl} and {@link assetMediaUrl}:
-   * a worker reachable over HTTP needs no override.
+   * serve it. Optional, mirroring {@link proofMediaUrl} and {@link assetMediaUrl}.
    */
   showcaseMediaUrl?(runId: string, file: string): string | null;
+  /**
+   * A run's stored **code-analysis document** (the artifacts service's
+   * `GET /runs/{id}/code-analysis`), or `null` when the run has none. Backs the
+   * run-detail Code tab's explorer: the bounded summary rides on the record, and
+   * this is the unbounded tier behind it — every authored file, every function with
+   * its complexity, every import edge, cycle and clone group.
+   *
+   * Not harness-specific: analysing a directory involves no harness-specific work, so the
+   * tab is offered on every run that carries an analysis. A `null` means the run predates
+   * the analyzer — [the corpus is not
+   * backfilled](https://docs.testcabinet.ai/gg/analysis/code-analysis/#publishing-and-the-analyzer-version)
+   * — not that anything failed — or that this worker knows no artifacts service.
+   * Optional so a transport that cannot reach a run's tree omits it and the tab falls
+   * back to the summary alone.
+   */
+  readCodeAnalysis?(id: string): Promise<CodeAnalysisDocument | null>;
   /**
    * The URL to download a run's entire produced tree from as one gzip tar, or null
    * when this worker cannot serve it. Unlike the media resolvers above this is not
