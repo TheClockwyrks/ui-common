@@ -21,12 +21,12 @@ interface TournamentAck {
   eventsUrl: string;
 }
 
-// The arena service's `GET /tournaments/{id}` JOB status. On success it already
-// carries the finished record, so the subscriber reads it straight off this — no
-// second fetch (and no read-after-publish race).
+// The arena service's `GET /tournaments/{id}` status, read from the backend's
+// record. On success it already carries the finished record, so the subscriber
+// reads it straight off this, with no second fetch.
 interface TournamentStatus {
   id: string;
-  state: "running" | "succeeded" | "failed";
+  state: "queued" | "running" | "succeeded" | "failed";
   record?: TournamentRecord;
   detail?: string;
 }
@@ -144,9 +144,9 @@ export function createHttpArena(
 }
 
 // Consume the arena service's NDJSON `/tournaments/{id}/events` progress stream,
-// then read the terminal JOB status back from the arena (not the backend — the job
-// tracker is the arena's). The status response already carries the finished record
-// on success, so the subscriber resolves it straight from there.
+// then read the status back from the arena, which reads it from the backend's
+// record. The status response already carries the finished record on success, so
+// the subscriber resolves it straight from there.
 async function streamTournament(
   baseUrl: string,
   id: string,
@@ -188,13 +188,19 @@ async function streamTournament(
     const tail = buffer.trim();
     if (tail) emitProgress(tail, handlers);
 
-    // The stream closes when the field finishes; read the terminal status back.
+    // The stream closes when the field finishes, or when the arena stops driving it
+    // (a shutdown, which a restarted arena resumes); read the status back.
     const status = await getJson<TournamentStatus>(
       baseUrl,
       `/tournaments/${encodeURIComponent(id)}`,
     );
     if (status.state === "succeeded" && status.record) {
       handlers.onDone(status.record);
+    } else if (status.state === "queued" || status.state === "running") {
+      handlers.onDone(
+        null,
+        "The arena stopped playing this tournament; it resumes when the arena restarts.",
+      );
     } else {
       handlers.onDone(
         null,
