@@ -1270,33 +1270,6 @@ export function createHttpBackend(baseUrl: string): BackendClient {
       );
       return { events, raw: null };
     },
-
-    async readCodeAnalysis(id: string): Promise<CodeAnalysisDocument | null> {
-      // Same shape as the replay read, and for the same reasons: the backend serves the
-      // stored document as JSON and 404s for a run that has none — which is every run
-      // recorded before the analyzer shipped, since the corpus is not backfilled. A raw
-      // fetch lets that 404 resolve to `null` (a tidy "not analysed" state) while any
-      // other non-2xx still surfaces as an error.
-      //
-      // The request advertises no `accept-encoding` of its own: the browser always sends
-      // one, and the route negotiates the stored gzip against the *request's* header.
-      //
-      // The document is not version-tagged the way a replay record is, and does not need
-      // to be: it carries `analyzerVersion` as data (which generation computed the
-      // figures, so a mixed corpus is visible rather than a silent step change), while
-      // the document's *shape* is the contract type this app is compiled against.
-      const res = await fetch(
-        joinUrl(baseUrl, `/runs/${encodeURIComponent(id)}/code-analysis`),
-        { headers: { accept: "application/json" } },
-      );
-      // Classified through the shared seam, so this resolver's `null` means the
-      // one thing it is allowed to mean and its failures carry their status as
-      // data like every other read's.
-      if (readOutcome(res, `code analysis for run ${id}`) === "absent") {
-        return null;
-      }
-      return (await res.json()) as CodeAnalysisDocument;
-    },
   };
 }
 
@@ -1494,9 +1467,9 @@ export function referenceMediaKey(
 // endpoints (review, publish).
 //
 // `backendUrl` is the single backend the console talks to; `artifactsUrl` is the
-// artifacts service's base ({@link ARTIFACTS_PATH} of the console's own origin), used
-// to resolve a pre-publish run's build and media links, or null to leave them
-// unresolved.
+// artifacts service's base ({@link ARTIFACTS_PATH} of the console's own origin), which
+// holds every run's tree, published or not, and serves its build, media and code
+// analysis; null leaves those unresolved.
 // The driver pushes a finished run's record to the backend itself, so there is no
 // `POST /push` here — `push` is a no-op that echoes the run's already-resolved
 // links.
@@ -1519,9 +1492,9 @@ export function createBackendExec(
   let streamId: string | null = null;
   let runLifecycleWanted = false;
 
-  // Prefix the artifact service's base URL to a root-relative media path. When no
-  // artifact service is configured the path is left unresolved (null), matching
-  // the unpublished-run behavior before artifacts were served separately.
+  // Prefix the artifact service's base URL to a run's media path. The backend
+  // serves no run media, so when no artifact service is configured the media is
+  // left unresolved (null) and the console shows its presence without it.
   const mediaUrl = (
     runId: string,
     kind: string,
@@ -2008,6 +1981,37 @@ export function createBackendExec(
     },
     showcaseMediaUrl(runId: string, file: string): string | null {
       return mediaUrl(runId, "showcase", file);
+    },
+
+    async readCodeAnalysis(id: string): Promise<CodeAnalysisDocument | null> {
+      // The artifacts service serves the document from the run's tree and 404s for a
+      // run that has none — which is every run recorded before the analyzer shipped,
+      // since the corpus is not backfilled. A raw fetch lets that 404 resolve to
+      // `null` (a tidy "not analysed" state) while any other non-2xx still surfaces
+      // as an error. With no artifacts service there is no tree to read, which is
+      // the same "not available here" answer.
+      //
+      // The request advertises no `accept-encoding` of its own: the browser always
+      // sends one, and the route negotiates the stored gzip against the *request's*
+      // header.
+      //
+      // The document is not version-tagged the way a session record is, and does not
+      // need to be: it carries `analyzerVersion` as data (which generation computed
+      // the figures, so a mixed corpus is visible rather than a silent step change),
+      // while the document's *shape* is the contract type this app is compiled
+      // against.
+      if (!artifactsUrl) return null;
+      const res = await fetch(
+        joinUrl(artifactsUrl, `/runs/${encodeURIComponent(id)}/code-analysis`),
+        { headers: { accept: "application/json" } },
+      );
+      // Classified through the shared seam, so this resolver's `null` means the
+      // one thing it is allowed to mean and its failures carry their status as
+      // data like every other read's.
+      if (readOutcome(res, `code analysis for run ${id}`) === "absent") {
+        return null;
+      }
+      return (await res.json()) as CodeAnalysisDocument;
     },
 
     // The whole run tree as one gzip tar, served by the artifact service (which

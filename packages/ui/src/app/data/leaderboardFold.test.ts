@@ -76,7 +76,7 @@ describe("foldLeaderboardEntries", () => {
       run("d", { score: null }),
     ]);
     expect(entries).toHaveLength(1);
-    expect(entries[0]!.earned).toEqual([4]);
+    expect(entries[0]?.earned).toEqual([4]);
   });
 
   it("splits rows by harness and canonicalizes the model id", () => {
@@ -106,14 +106,14 @@ describe("foldLeaderboardEntries", () => {
     ];
     const merged = foldLeaderboardEntries(runs);
     expect(merged).toHaveLength(1);
-    expect(merged[0]!.engineSlug).toBeNull();
+    expect(merged[0]?.engineSlug).toBeNull();
 
     const split = foldLeaderboardEntries(runs, { keyEngine: true });
     expect(split.map((e) => e.engineSlug).sort()).toEqual([
       "none",
       "simple-2d",
     ]);
-    expect(split.find((e) => e.engineSlug === "none")!.earned).toEqual([4, 4]);
+    expect(split.find((e) => e.engineSlug === "none")?.earned).toEqual([4, 4]);
   });
 
   it("carries per-run earned points AND score fractions", () => {
@@ -125,8 +125,59 @@ describe("foldLeaderboardEntries", () => {
       run("c", { score: { earned: 0, total: 0 } }),
     ]);
     expect(entries).toHaveLength(1);
-    expect(entries[0]!.earned).toEqual([4, 9, 0]);
-    expect(entries[0]!.fractions).toEqual([0.8, 0.45, 0]);
+    expect(entries[0]?.earned).toEqual([4, 9, 0]);
+    expect(entries[0]?.fractions).toEqual([0.8, 0.45, 0]);
+  });
+
+  it("carries exactly the runs each row counts, beside what it took from them", () => {
+    const entries = foldLeaderboardEntries(
+      [
+        run("a", { score: { earned: 4, total: 5 }, rating: "great" }),
+        // Excluded runs never reach a row's run list…
+        run("failed", { state: "harness_error" }),
+        run("gg", { harness: "gg" }),
+        run("unscored", { score: null }),
+        // …and another row's run stays in its own.
+        run("other", { engine: "simple-2d" }),
+        run("b", { score: { earned: 0, total: 0 }, rating: null }),
+      ],
+      { keyEngine: true },
+    );
+    const row = entries.find((e) => e.engineSlug === "none")!;
+    expect(row.runs.map((r) => r.run.id)).toEqual(["a", "b"]);
+    // The per-run lists are these runs' figures, index for index, so a surface
+    // listing the runs shows the numbers the row's mean is taken over.
+    expect(row.runs.map((r) => r.fraction)).toEqual(row.fractions);
+    expect(row.runs.map((r) => r.scored.earned)).toEqual(row.earned);
+    expect(row.runs[0]?.scored).toMatchObject({
+      earned: 4,
+      total: 5,
+      rating: "great",
+    });
+    const other = entries.find((e) => e.engineSlug === "simple-2d")!;
+    expect(other.runs.map((r) => r.run.id)).toEqual(["other"]);
+  });
+
+  it("carries the writeup-resolved score of a run scored through the variant", () => {
+    const variant = {
+      reviewItems: [
+        { id: "a", title: "A", weight: 3 },
+        { id: "b", title: "B", weight: 2 },
+      ],
+    } as unknown as VariantSummary;
+    const writeup = {
+      ratings: [{ domain: "gameplay", rating: "great" }],
+      aesthetics: [],
+      checklist: [{ id: "a", status: "pass" }],
+    } as unknown as ParsedWriteup;
+    const entries = foldLeaderboardEntries([run("a", { score: null })], {
+      variant,
+      findReview: () => writeup,
+      localWriteups: {},
+    });
+    expect(entries[0]?.runs).toHaveLength(1);
+    expect(entries[0]?.runs[0]?.scored).toMatchObject({ earned: 3, total: 5 });
+    expect(entries[0]?.runs[0]?.fraction).toBe(0.6);
   });
 
   it("collects ratings, aesthetics, and grades only from runs carrying them", () => {
@@ -135,9 +186,9 @@ describe("foldLeaderboardEntries", () => {
       run("b", { rating: "passable", aesthetic: null }),
       run("c", { rating: null, overallGrade: "incredible" }),
     ]);
-    expect(entries[0]!.ratings).toEqual(["great", "passable"]);
-    expect(entries[0]!.aesthetics).toEqual(["amazing"]);
-    expect(entries[0]!.grades).toEqual(["incredible"]);
+    expect(entries[0]?.ratings).toEqual(["great", "passable"]);
+    expect(entries[0]?.aesthetics).toEqual(["amazing"]);
+    expect(entries[0]?.grades).toEqual(["incredible"]);
   });
 
   it("excludes unknown costs and unreported tokens from their lists", () => {
@@ -147,8 +198,8 @@ describe("foldLeaderboardEntries", () => {
       // A known free run's 0.0 is a real cost.
       run("c", { cost: 0, tokens: 500 }),
     ]);
-    expect(entries[0]!.costs).toEqual([2.5, 0]);
-    expect(entries[0]!.tokens).toEqual([1_000, 500]);
+    expect(entries[0]?.costs).toEqual([2.5, 0]);
+    expect(entries[0]?.tokens).toEqual([1_000, 500]);
   });
 
   it("excludes unrecorded session durations from the list", () => {
@@ -158,7 +209,7 @@ describe("foldLeaderboardEntries", () => {
       run("b", { sessionSeconds: null }),
       run("c", { sessionSeconds: 150 }),
     ]);
-    expect(entries[0]!.sessions).toEqual([90, 150]);
+    expect(entries[0]?.sessions).toEqual([90, 150]);
   });
 
   it("keeps the most recent contributing run's start time", () => {
@@ -167,7 +218,7 @@ describe("foldLeaderboardEntries", () => {
       run("b", { startedAt: "2026-03-01T00:00:00Z" }),
       run("c", { startedAt: "2026-01-01T00:00:00Z" }),
     ]);
-    expect(entries[0]!.latestStartedAt).toBe("2026-03-01T00:00:00Z");
+    expect(entries[0]?.latestStartedAt).toBe("2026-03-01T00:00:00Z");
   });
 
   it("resolves display names through the caller's resolver, canonical id fallback", () => {
@@ -205,8 +256,8 @@ describe("foldLeaderboardEntries", () => {
       localWriteups: {},
     });
     expect(entries).toHaveLength(1);
-    expect(entries[0]!.earned).toEqual([3]);
-    expect(entries[0]!.ratings).toEqual(["great"]);
+    expect(entries[0]?.earned).toEqual([3]);
+    expect(entries[0]?.ratings).toEqual(["great"]);
   });
 });
 

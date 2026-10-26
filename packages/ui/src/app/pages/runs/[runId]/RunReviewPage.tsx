@@ -3,6 +3,7 @@ import type { RunRecord } from "@clockwyrks/run-record";
 import type { StoredReview } from "../../../../client/types";
 import { Markdown, Panel } from "../../../../index";
 import { useIdentity } from "../../../../client/identity";
+import { BackLink } from "../../../components/BackChevron";
 import { useGalleryData } from "../../../data/galleryContext";
 import { useReviewModel } from "../../../data/useRunVariant";
 import {
@@ -30,6 +31,7 @@ import styles from "./RunDetailPages.module.scss";
 // reviewer (or their own earlier self) said for every checklist item. Rendered
 // under the same run chrome as the Verdict tab, which it belongs to.
 export function RunReviewPage() {
+  const { reviewerId } = useParams<{ reviewerId: string }>();
   return (
     <RunDetailLayout tab="verdict">
       {({ run, reviews, validatorRated }) =>
@@ -41,9 +43,13 @@ export function RunReviewPage() {
         run.subject.testType === "performance" ? (
           <Panel>
             <div className={styles.reviewTopBar}>
-              <Link to={routes.runVerdict(run.id)} className={styles.backLink}>
-                ← Results
-              </Link>
+              <BackLink
+                scope={routes.runReview(run.id, reviewerId ?? "")}
+                fallback={routes.runVerdict(run.id)}
+                className={styles.backLink}
+              >
+                Results
+              </BackLink>
             </div>
             <p className={styles.empty}>
               A performance run is graded automatically on correctness and fuel,
@@ -125,9 +131,15 @@ function SingleReview({
   return (
     <Panel>
       <div className={styles.reviewTopBar}>
-        <Link to={routes.runVerdict(run.id)} className={styles.backLink}>
-          ← All reviews
-        </Link>
+        {/* Back to wherever the review was opened from (the Verdict tab's review
+            list, the account's Reviews tab), else the run's reviews. */}
+        <BackLink
+          scope={routes.runReview(run.id, reviewerId ?? "")}
+          fallback={routes.runVerdict(run.id)}
+          className={styles.backLink}
+        >
+          All reviews
+        </BackLink>
         {canEdit && (
           <Link
             to={routes.runVerdict(run.id, { edit: true })}

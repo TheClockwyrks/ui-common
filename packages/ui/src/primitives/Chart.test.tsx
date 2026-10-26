@@ -7,7 +7,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Chart } from "./Chart";
-import { barChart, horizontalBarChart } from "./plot/charts";
+import { barChart, horizontalBarChart, stackedBarChart } from "./plot/charts";
 import type { ChartPalette } from "./plot/theme";
 
 const bars = [
@@ -62,6 +62,37 @@ function tapAway(target: Element = document.body) {
   target.dispatchEvent(
     new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
   );
+}
+
+// The bubble lives on document.body, outside the chart and every card around
+// it, which is what keeps a wide tip from being clipped.
+const pageTip = (): HTMLElement | null =>
+  [...document.body.querySelectorAll<HTMLElement>("[aria-hidden=true]")].find(
+    (el) => el.textContent?.includes("src/"),
+  ) ?? null;
+function hoverChart(container: HTMLElement) {
+  container.querySelector("svg")?.dispatchEvent(
+    new PointerEvent("pointermove", {
+      pointerType: "mouse",
+      bubbles: true,
+      clientX: 100,
+      clientY: 20,
+    }),
+  );
+}
+function placeOver(bar: Partial<DOMRect>) {
+  vi.spyOn(SVGElement.prototype, "getBoundingClientRect").mockReturnValue({
+    left: 0,
+    right: 0,
+    top: 200,
+    bottom: 213,
+    width: 0,
+    height: 13,
+    ...bar,
+  } as DOMRect);
+  vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(200);
+  vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(40);
+  vi.spyOn(Element.prototype, "clientWidth", "get").mockReturnValue(1280);
 }
 
 describe("Chart", () => {
@@ -145,30 +176,12 @@ describe("Chart", () => {
     const rowSpec = (palette: ChartPalette) =>
       horizontalBarChart(rows, palette);
 
-    // The bubble lives on document.body, outside the chart and every card around
-    // it, which is what keeps a wide tip from being clipped.
-    const pageTip = (): HTMLElement | null =>
-      [
-        ...document.body.querySelectorAll<HTMLElement>("[aria-hidden=true]"),
-      ].find((el) => el.textContent?.includes("src/")) ?? null;
-
-    function hoverChart(container: HTMLElement) {
-      container.querySelector("svg")!.dispatchEvent(
-        new PointerEvent("pointermove", {
-          pointerType: "mouse",
-          bubbles: true,
-          clientX: 100,
-          clientY: 20,
-        }),
-      );
-    }
-
     it("shows the pointed-at bar's title outside the chart", () => {
       const { container } = render(<Chart title="Ranking" spec={rowSpec} />);
       hoverChart(container);
       const tip = pageTip();
       expect(tip).not.toBeNull();
-      expect(tip!.hidden).toBe(false);
+      expect(tip?.hidden).toBe(false);
       expect(container.contains(tip)).toBe(false);
       // Plot's own in-SVG tip is not drawn alongside it.
       expect(tipShowing(container)).toBe(false);
@@ -180,31 +193,12 @@ describe("Chart", () => {
       vi.restoreAllMocks();
     });
 
-    function placeOver(bar: Partial<DOMRect>) {
-      vi.spyOn(SVGElement.prototype, "getBoundingClientRect").mockReturnValue({
-        left: 0,
-        right: 0,
-        top: 200,
-        bottom: 213,
-        width: 0,
-        height: 13,
-        ...bar,
-      } as DOMRect);
-      vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(
-        200,
-      );
-      vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(
-        40,
-      );
-      vi.spyOn(Element.prototype, "clientWidth", "get").mockReturnValue(1280);
-    }
-
     it("centres the bubble on a bar with length", () => {
       placeOver({ left: 300, right: 400, width: 100 });
       const { container } = render(<Chart title="Ranking" spec={rowSpec} />);
       hoverChart(container);
       // Centred on the bar's middle (350), half the box's width either side.
-      expect(pageTip()!.style.left).toBe("250px");
+      expect(pageTip()!).toHaveStyle({ left: "250px" });
     });
 
     it("opens rightward from the bar start for a 0% bar", () => {
@@ -213,7 +207,7 @@ describe("Chart", () => {
       hoverChart(container);
       // The arrow's inset short of the bar start, rather than 100px back over
       // the labels.
-      expect(pageTip()!.style.left).toBe("288px");
+      expect(pageTip()!).toHaveStyle({ left: "288px" });
     });
 
     it("hides when the pointer leaves the chart", () => {
@@ -224,7 +218,7 @@ describe("Chart", () => {
         .dispatchEvent(
           new PointerEvent("pointerleave", { pointerType: "mouse" }),
         );
-      expect(pageTip()!.hidden).toBe(true);
+      expect(pageTip()?.hidden).toBe(true);
     });
 
     it("is removed from the page on unmount", () => {
@@ -235,5 +229,75 @@ describe("Chart", () => {
       unmount();
       expect(pageTip()).toBeNull();
     });
+  });
+});
+
+const widths = (labels: number) =>
+  barChart(
+    Array.from({ length: labels }, (_, index) => ({
+      label: `model-${String(index)}`,
+      value: index + 1,
+    })),
+    {
+      text: "#fff",
+      muted: "#aaa",
+      border: "#333",
+      surface: "#000",
+      accent: "#f90",
+      accent2: "#f30",
+    },
+    { xTickRotate: 40 },
+  );
+const stacked = (palette: ChartPalette) =>
+  stackedBarChart(
+    Array.from({ length: 60 }, (_, index) => ({
+      group: `model-${String(index)}`,
+      series: "Great",
+      value: 1,
+    })),
+    palette,
+    [{ name: "Great", color: "#4ade80" }],
+    { xTickRotate: 40 },
+  );
+
+// A chart with more bars than its column can show legibly is drawn wider than
+// the column, which then scrolls it sideways. jsdom lays nothing out, so the
+// column's width is stated here.
+describe("a chart wider than its container", () => {
+  function renderAt(containerWidth: number, labels: number): SVGSVGElement {
+    const clientWidth = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(containerWidth);
+    render(<Chart title="wide" spec={() => widths(labels)} />);
+    clientWidth.mockRestore();
+    return screen.getByRole("img", { name: "wide" }).querySelector("svg")!;
+  }
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("is drawn at the width its bars need, not squeezed into the container", () => {
+    const needed = Number(widths(60).width);
+    expect(needed).toBeGreaterThan(400);
+    expect(Number(renderAt(400, 60).getAttribute("width"))).toBe(needed);
+  });
+
+  it("holds the legend at the container's edge while the chart scrolls", () => {
+    const clientWidth = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(400);
+    render(<Chart title="legend" spec={stacked} />);
+    clientWidth.mockRestore();
+    const figure = screen
+      .getByRole("img", { name: "legend" })
+      .querySelector("figure")!;
+    const legend = figure.firstElementChild as HTMLElement;
+    expect(legend.tagName).not.toBe("svg");
+    expect(legend).toHaveStyle({ position: "sticky" });
+    expect(legend).toHaveStyle({ maxWidth: "400px" });
+    expect(figure).toHaveStyle({ width: "max-content" });
+  });
+
+  it("fills a container that is wider than the bars need", () => {
+    expect(Number(renderAt(1200, 3).getAttribute("width"))).toBe(1200);
   });
 });

@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
+
+import { LiveAssetView } from "./LiveAssetView";
 import { useWorkers } from "../../../../client/context";
+import { validatingRunNotice } from "../../../../client/runPhase";
 import type {
   AssetPreview,
   HarnessEvent,
@@ -11,13 +14,12 @@ import { KillRunControl } from "../../../components/KillRunControl";
 import { PageLayout } from "../../../components/PageLayout";
 import { PromptHeader } from "../../../components/PromptHeader";
 import { useTestCase } from "../../../data/useTestCase";
+import tabStyles from "../../../layouts/runs/RunDetailLayout.module.scss";
 import { routes } from "../../../routes";
 import { useRunsRuntime } from "../../../runtime/runsRuntime";
 import { useLiveRunUpdates } from "../../../runtime/useLiveRunUpdates";
 import { useAppSettings } from "../../../store/appSettings";
-import tabStyles from "../../../layouts/runs/RunDetailLayout.module.scss";
 import styles from "../RunExec.module.scss";
-import { LiveAssetView } from "./LiveAssetView";
 
 type MonitorStatus =
   | { kind: "running" }
@@ -62,6 +64,7 @@ export function RunMonitorPage() {
   // slots the asset view shows as soon as the page loads, before the model has
   // drawn anything.
   const inProgress = runtime.inProgress.find((r) => r.runId === runId);
+  const validatingNotice = validatingRunNotice(inProgress);
   // The declared slots come off the case's `sheet`/`model`, which are detail —
   // not part of the catalog listing — so the run's own case is fetched by slug.
   const { testCase: caseSummary } = useTestCase(inProgress?.testCaseSlug);
@@ -179,6 +182,14 @@ export function RunMonitorPage() {
         <p className={`${styles.notice} ${styles.warn}`}>
           No worker connected. The live stream comes from the worker that ran
           this job.
+        </p>
+      )}
+
+      {/* The model has finished and its build is being validated: the feed has
+          gone quiet because the session is over, not because the run stalled. */}
+      {status.kind === "running" && validatingNotice && (
+        <p className={styles.notice} role="status">
+          {validatingNotice}
         </p>
       )}
 

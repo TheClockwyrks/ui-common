@@ -3,7 +3,6 @@ import { Link } from "react-router";
 
 import { CatalogTabs } from "./catalog-tabs";
 import styles from "./test-suites-page.module.scss";
-import { useRecordSectionIndex } from "../../components/backReturn";
 import { LoadingState } from "../../components/LoadingState";
 import { PageLayout } from "../../components/PageLayout";
 import { PromptHeader } from "../../components/PromptHeader";
@@ -30,9 +29,6 @@ function newestVersion(suite: SuiteOut): SuiteVersionIdentity | undefined {
 
 export function TestSuitesPage() {
   const { suites, status, error } = useTestSuites();
-  // Remember the viewed tab so a suite's detail back-control returns here rather
-  // than to the catalog's default tab, exactly as the catalog page does.
-  useRecordSectionIndex("testCases");
 
   // What decides this page's body: the listing it HOLDS, not the last read's
   // outcome — the same data-first order the catalog page renders in. A settled

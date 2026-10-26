@@ -1,6 +1,6 @@
 {
   "name": "@clockwyrks/run-stats",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "license": "MIT",
   "type": "module",
   "description": "Framework-free run scoring and set-level rollups: the rules every surface that reports a Test Cabinet figure shares.",
@@ -34,8 +34,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@clockwyrks/backend-api": "0.2.3",
-    "@clockwyrks/run-record": "0.2.3"
+    "@clockwyrks/backend-api": "0.2.4",
+    "@clockwyrks/run-record": "0.2.4"
   },
   "devDependencies": {
     "typescript": "^6",

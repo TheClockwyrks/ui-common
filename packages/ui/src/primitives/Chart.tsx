@@ -8,10 +8,12 @@ import styles from "./Chart.module.scss";
 interface ChartProps {
   /**
    * Builds the Plot spec for the chart. It receives the live palette (read from
-   * the theme on the client) so marks can be themed. Use the helpers in
-   * `plot/charts.ts` (e.g. `barChart`) to build the returned options.
+   * the theme on the client) so marks can be themed, and the width of the
+   * container the chart is drawn into, for a helper whose layout depends on it
+   * (`availableWidth`). Use the helpers in `plot/charts.ts` (e.g. `barChart`)
+   * to build the returned options.
    */
-  spec: (palette: ChartPalette) => PlotOptions;
+  spec: (palette: ChartPalette, width?: number) => PlotOptions;
   /** Accessible title describing what the chart shows. */
   title: string;
   /** Extra class on the figure wrapper, for layout-specific sizing. */
@@ -43,8 +45,16 @@ export function Chart({ spec, title, className }: ChartProps) {
       const width = container.clientWidth;
       if (width === lastWidth) return;
       lastWidth = width;
-      const options = spec(readChartPalette());
-      const figure = Plot.plot(width > 0 ? { ...options, width } : options);
+      const options = spec(readChartPalette(), width > 0 ? width : undefined);
+      // A spec's own `width` is the width the chart needs: a legible slot per
+      // category under tilted labels, and the length of the last labels past
+      // the last bar. A container narrower than that gets the chart at that
+      // width and scrolls it sideways.
+      const least = typeof options.width === "number" ? options.width : 0;
+      const figure = Plot.plot(
+        width > 0 ? { ...options, width: Math.max(width, least) } : options,
+      );
+      if (width > 0 && least > width) keepLegendInView(figure, width);
       // Swap the old figure for the new one in a single mutation, never leaving
       // the container empty: emptying it first would collapse its height, and on
       // a live page whose charts all re-plot together (the gg monitor re-derives
@@ -97,10 +107,33 @@ export function Chart({ spec, title, className }: ChartProps) {
     return () => container?.replaceChildren();
   }, []);
 
-  const cls = className ? `${styles.chart} ${className}` : styles.chart;
+  const cls = className ? `${String(styles.chart)} ${className}` : styles.chart;
   return (
     <div ref={containerRef} className={cls} role="img" aria-label={title} />
   );
+}
+
+/**
+ * Keeps a chart's legend where the reader can see it while the chart scrolls
+ * sideways under it.
+ *
+ * Plot returns a chart with a legend as a `<figure>` holding the legend and then
+ * the `<svg>`. The figure is widened to the chart so the legend has the whole
+ * scrolled width to stick within, and the legend is held at the container's left
+ * edge, no wider than the container.
+ */
+function keepLegendInView(
+  figure: HTMLElement | SVGSVGElement,
+  width: number,
+): void {
+  if (!(figure instanceof HTMLElement)) return;
+  figure.style.width = "max-content";
+  for (const child of figure.children) {
+    if (!(child instanceof HTMLElement)) continue;
+    child.style.position = "sticky";
+    child.style.left = "0";
+    child.style.maxWidth = `${String(width)}px`;
+  }
 }
 
 /** The room kept between the page-level tip and the viewport's edges, in px. */
@@ -166,12 +199,11 @@ function createPageTip(container: HTMLElement): {
     );
     const above = target.top - TIP_GAP - height >= VIEWPORT_MARGIN;
     const top = above ? target.top - TIP_GAP - height : target.bottom + TIP_GAP;
-    tip.style.left = `${left}px`;
-    tip.style.top = `${top}px`;
+    tip.style.left = `${String(left)}px`;
+    tip.style.top = `${String(top)}px`;
     tip.dataset.side = above ? "above" : "below";
-    arrow.style.left = `${Math.max(
-      ARROW_INSET,
-      Math.min(pointX - left, width - ARROW_INSET),
+    arrow.style.left = `${String(
+      Math.max(ARROW_INSET, Math.min(pointX - left, width - ARROW_INSET)),
     )}px`;
   };
 

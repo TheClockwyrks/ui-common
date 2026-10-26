@@ -480,15 +480,12 @@
       "count": 11
     },
     "import-x/order": {
-      "count": 5
+      "count": 4
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
     },
     "unicorn/filename-case": {
-      "count": 1
-    },
-    "unicorn/prefer-ternary": {
       "count": 1
     }
   },
@@ -508,7 +505,7 @@
       "count": 6
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -528,13 +525,13 @@
   },
   "packages/ui/src/app/components/PromptHeader.test.tsx": {
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 11
+      "count": 8
     },
     "import-x/order": {
       "count": 1
     },
     "testing-library/no-node-access": {
-      "count": 26
+      "count": 23
     },
     "testing-library/render-result-naming-convention": {
       "count": 4
@@ -581,7 +578,7 @@
       "count": 2
     },
     "import-x/order": {
-      "count": 11
+      "count": 7
     },
     "react-hooks/refs": {
       "count": 1
@@ -686,9 +683,6 @@
     }
   },
   "packages/ui/src/app/components/RunLog.test.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 3
-    },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 7
     },
@@ -713,9 +707,6 @@
     "jest-dom/prefer-enabled-disabled": {
       "count": 1
     },
-    "jest-dom/prefer-in-document": {
-      "count": 7
-    },
     "jest-dom/prefer-to-have-attribute": {
       "count": 4
     },
@@ -726,16 +717,13 @@
       "count": 9
     },
     "testing-library/no-node-access": {
-      "count": 14
+      "count": 15
     },
     "testing-library/render-result-naming-convention": {
       "count": 1
     },
     "unicorn/consistent-conditional-object-spread": {
       "count": 1
-    },
-    "unicorn/consistent-function-scoping": {
-      "count": 6
     },
     "unicorn/dom-node-dataset": {
       "count": 1
@@ -755,7 +743,7 @@
       "count": 2
     },
     "import-x/order": {
-      "count": 18
+      "count": 13
     },
     "react-hooks/refs": {
       "count": 1
@@ -775,9 +763,6 @@
       "count": 3
     },
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 1
-    },
-    "import-x/order": {
       "count": 1
     },
     "react-hooks/set-state-in-effect": {
@@ -972,7 +957,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 4
+      "count": 2
     },
     "react-refresh/only-export-components": {
       "count": 2
@@ -999,17 +984,8 @@
     }
   },
   "packages/ui/src/app/components/anchoredScope.test.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 11
-    },
     "import-x/order": {
       "count": 1
-    },
-    "jest-dom/prefer-checked": {
-      "count": 2
-    },
-    "jest-dom/prefer-in-document": {
-      "count": 3
     },
     "unicorn/filename-case": {
       "count": 1
@@ -1018,9 +994,6 @@
   "packages/ui/src/app/components/anchoredScope.tsx": {
     "@typescript-eslint/array-type": {
       "count": 1
-    },
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 2
     },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 3
@@ -1039,17 +1012,6 @@
     },
     "unicorn/prefer-ternary": {
       "count": 3
-    }
-  },
-  "packages/ui/src/app/components/backReturn.ts": {
-    "unicorn/filename-case": {
-      "count": 1
-    },
-    "unicorn/no-top-level-assignment-in-function": {
-      "count": 2
-    },
-    "unicorn/prefer-ternary": {
-      "count": 2
     }
   },
   "packages/ui/src/app/components/backdrop/BandedSun.tsx": {
@@ -1146,6 +1108,9 @@
     "jest-dom/prefer-to-have-text-content": {
       "count": 15
     },
+    "testing-library/no-node-access": {
+      "count": 2
+    },
     "unicorn/consistent-function-scoping": {
       "count": 1
     },
@@ -1168,11 +1133,8 @@
     }
   },
   "packages/ui/src/app/components/runColumns.tsx": {
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 7
-    },
     "import-x/order": {
-      "count": 15
+      "count": 10
     },
     "unicorn/filename-case": {
       "count": 1
@@ -1417,7 +1379,7 @@
       "count": 2
     },
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "unicorn/consistent-function-scoping": {
       "count": 1
@@ -1439,9 +1401,6 @@
     }
   },
   "packages/ui/src/app/data/cabinetStats.ts": {
-    "import-x/order": {
-      "count": 2
-    },
     "unicorn/filename-case": {
       "count": 1
     },
@@ -1523,9 +1482,6 @@
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
     },
-    "import-x/order": {
-      "count": 1
-    },
     "unicorn/filename-case": {
       "count": 1
     },
@@ -1553,7 +1509,7 @@
       "count": 8
     },
     "import-x/order": {
-      "count": 13
+      "count": 11
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -1613,10 +1569,10 @@
   },
   "packages/ui/src/app/data/leaderboardFold.test.ts": {
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 15
+      "count": 3
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "unicorn/consistent-conditional-object-spread": {
       "count": 1
@@ -1639,7 +1595,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "unicorn/filename-case": {
       "count": 1
@@ -1702,7 +1658,7 @@
       "count": 1
     },
     "unicorn/prefer-export-from": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/ui/src/app/data/producedAssets.ts": {
@@ -1774,7 +1730,7 @@
   },
   "packages/ui/src/app/data/runQuery.test.ts": {
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "unicorn/filename-case": {
       "count": 1
@@ -1788,9 +1744,6 @@
   },
   "packages/ui/src/app/data/runQuery.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    },
-    "import-x/order": {
       "count": 1
     },
     "unicorn/consistent-existence-index-check": {
@@ -1896,9 +1849,6 @@
     }
   },
   "packages/ui/src/app/data/testCases.ts": {
-    "import-x/order": {
-      "count": 1
-    },
     "unicorn/filename-case": {
       "count": 1
     }
@@ -1922,7 +1872,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -1935,9 +1885,6 @@
     },
     "unicorn/prefer-await": {
       "count": 2
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 1
     },
     "unicorn/prefer-ternary": {
       "count": 1
@@ -2095,7 +2042,7 @@
   },
   "packages/ui/src/app/data/useModelRunSummaries.ts": {
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -2151,9 +2098,6 @@
     "@typescript-eslint/no-empty-function": {
       "count": 4
     },
-    "@typescript-eslint/no-unsafe-assignment": {
-      "count": 1
-    },
     "@typescript-eslint/require-await": {
       "count": 1
     },
@@ -2169,18 +2113,12 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 4
+      "count": 3
     },
     "unicorn/filename-case": {
       "count": 1
     },
     "unicorn/no-declarations-before-early-exit": {
-      "count": 1
-    },
-    "unicorn/no-negated-condition": {
-      "count": 1
-    },
-    "unicorn/no-nested-ternary": {
       "count": 1
     }
   },
@@ -2232,21 +2170,15 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 5
+      "count": 4
     },
     "unicorn/filename-case": {
-      "count": 1
-    },
-    "unicorn/no-negated-condition": {
-      "count": 1
-    },
-    "unicorn/no-nested-ternary": {
       "count": 1
     }
   },
   "packages/ui/src/app/data/useRunPublish.test.ts": {
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -2260,12 +2192,9 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 5
+      "count": 3
     },
     "unicorn/filename-case": {
-      "count": 1
-    },
-    "unicorn/prefer-simple-condition-first": {
       "count": 1
     },
     "unicorn/prefer-ternary": {
@@ -2332,7 +2261,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "unicorn/filename-case": {
       "count": 1
@@ -2340,7 +2269,7 @@
   },
   "packages/ui/src/app/data/useRuns.ts": {
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -2552,7 +2481,7 @@
       "count": 3
     },
     "import-x/order": {
-      "count": 8
+      "count": 7
     },
     "unicorn/filename-case": {
       "count": 1
@@ -2653,7 +2582,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 19
+      "count": 15
     },
     "react-hooks/refs": {
       "count": 1
@@ -2731,7 +2660,7 @@
       "count": 5
     },
     "import-x/order": {
-      "count": 16
+      "count": 11
     },
     "unicorn/filename-case": {
       "count": 1
@@ -2748,7 +2677,7 @@
   },
   "packages/ui/src/app/pages/about/AboutMetricsPage.tsx": {
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -2756,7 +2685,7 @@
   },
   "packages/ui/src/app/pages/about/AboutPage.tsx": {
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -2781,7 +2710,7 @@
   },
   "packages/ui/src/app/pages/about/AboutRatingsPage.tsx": {
     "import-x/order": {
-      "count": 3
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -2789,7 +2718,7 @@
   },
   "packages/ui/src/app/pages/about/AboutTestingPage.tsx": {
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -2801,12 +2730,6 @@
     }
   },
   "packages/ui/src/app/pages/account/AccountPage.tsx": {
-    "@typescript-eslint/no-floating-promises": {
-      "count": 1
-    },
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 2
     },
@@ -2814,28 +2737,22 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 15
+      "count": 6
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
     },
     "unicorn/catch-error-name": {
-      "count": 3
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
     },
     "unicorn/prefer-await": {
       "count": 2
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/AccountTabs.tsx": {
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 2
-    },
     "import-x/order": {
       "count": 2
     },
@@ -2862,7 +2779,7 @@
       "count": 20
     },
     "import-x/order": {
-      "count": 6
+      "count": 5
     },
     "unicorn/filename-case": {
       "count": 1
@@ -2876,16 +2793,13 @@
       "count": 1
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 4
+      "count": 3
     },
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
     },
     "@typescript-eslint/require-await": {
       "count": 11
-    },
-    "import-x/order": {
-      "count": 3
     },
     "jest-dom/prefer-checked": {
       "count": 1
@@ -2920,13 +2834,10 @@
       "count": 2
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 8
+      "count": 6
     },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
-    },
-    "import-x/order": {
-      "count": 12
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -2954,9 +2865,6 @@
     },
     "unicorn/prefer-await": {
       "count": 6
-    },
-    "unicorn/prefer-ternary": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/CoveragePlanLayout.tsx": {
@@ -2967,7 +2875,7 @@
       "count": 2
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 11
+      "count": 9
     },
     "@typescript-eslint/unbound-method": {
       "count": 5
@@ -2976,7 +2884,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 22
+      "count": 10
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3003,10 +2911,10 @@
       "count": 1
     },
     "unicorn/prefer-simple-condition-first": {
-      "count": 3
+      "count": 1
     },
     "unicorn/prefer-ternary": {
-      "count": 2
+      "count": 1
     },
     "unicorn/require-array-sort-compare": {
       "count": 1
@@ -3017,7 +2925,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 5
+      "count": 3
     },
     "unicorn/filename-case": {
       "count": 1
@@ -3031,13 +2939,13 @@
       "count": 10
     },
     "import-x/order": {
-      "count": 10
+      "count": 8
     },
     "unicorn/filename-case": {
       "count": 1
     },
     "unicorn/no-nested-ternary": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/CoveragePlanReviewsPage.tsx": {
@@ -3061,13 +2969,10 @@
       "count": 2
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 3
+      "count": 1
     },
     "@typescript-eslint/require-await": {
       "count": 1
-    },
-    "import-x/order": {
-      "count": 3
     },
     "jest-dom/prefer-in-document": {
       "count": 5
@@ -3093,13 +2998,10 @@
       "count": 1
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 9
+      "count": 7
     },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
-    },
-    "import-x/order": {
-      "count": 6
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3121,12 +3023,6 @@
     },
     "unicorn/prefer-combined-guards": {
       "count": 1
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 2
-    },
-    "unicorn/prefer-ternary": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/CoverageReviewQueue.tsx": {
@@ -3134,7 +3030,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 10
+      "count": 6
     },
     "unicorn/filename-case": {
       "count": 1
@@ -3144,12 +3040,6 @@
     }
   },
   "packages/ui/src/app/pages/account/GgAgentEditPage.test.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 3
-    },
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 5
     },
@@ -3169,7 +3059,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 4
+      "count": 3
     },
     "jest-dom/prefer-in-document": {
       "count": 6
@@ -3186,25 +3076,25 @@
   },
   "packages/ui/src/app/pages/account/GgAgentEditPage.tsx": {
     "@typescript-eslint/no-confusing-void-expression": {
-      "count": 6
+      "count": 3
     },
     "@typescript-eslint/no-floating-promises": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-misused-promises": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/prefer-nullish-coalescing": {
       "count": 1
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 3
+      "count": 1
     },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
     },
     "import-x/order": {
-      "count": 5
+      "count": 4
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3226,9 +3116,6 @@
     },
     "unicorn/prefer-await": {
       "count": 4
-    },
-    "unicorn/prefer-ternary": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/GgAgentsPage.tsx": {
@@ -3238,11 +3125,8 @@
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
     },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 2
-    },
     "import-x/order": {
-      "count": 6
+      "count": 5
     },
     "unicorn/catch-error-name": {
       "count": 1
@@ -3253,34 +3137,22 @@
     "unicorn/no-array-callback-reference": {
       "count": 1
     },
-    "unicorn/no-negated-condition": {
-      "count": 1
-    },
     "unicorn/no-nested-ternary": {
       "count": 1
     },
     "unicorn/prefer-combined-guards": {
       "count": 1
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/GgConfigEditPage.test.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 28
-    },
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 42
+      "count": 43
     },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
     },
     "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 8
+      "count": 7
     },
     "@typescript-eslint/no-unsafe-assignment": {
       "count": 41
@@ -3301,10 +3173,7 @@
       "count": 1
     },
     "testing-library/no-node-access": {
-      "count": 3
-    },
-    "unicorn/consistent-function-scoping": {
-      "count": 9
+      "count": 2
     },
     "unicorn/filename-case": {
       "count": 1
@@ -3318,22 +3187,19 @@
   },
   "packages/ui/src/app/pages/account/GgConfigEditPage.tsx": {
     "@typescript-eslint/no-confusing-void-expression": {
-      "count": 5
+      "count": 2
     },
     "@typescript-eslint/no-floating-promises": {
       "count": 2
     },
     "@typescript-eslint/no-misused-promises": {
-      "count": 3
-    },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
     },
     "import-x/order": {
-      "count": 7
+      "count": 6
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3355,9 +3221,6 @@
     },
     "unicorn/prefer-await": {
       "count": 4
-    },
-    "unicorn/prefer-ternary": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/GgConfigsPage.tsx": {
@@ -3368,10 +3231,10 @@
       "count": 1
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 3
+      "count": 1
     },
     "import-x/order": {
-      "count": 5
+      "count": 4
     },
     "unicorn/catch-error-name": {
       "count": 1
@@ -3382,16 +3245,10 @@
     "unicorn/no-array-callback-reference": {
       "count": 1
     },
-    "unicorn/no-negated-condition": {
-      "count": 1
-    },
     "unicorn/no-nested-ternary": {
       "count": 1
     },
     "unicorn/prefer-combined-guards": {
-      "count": 1
-    },
-    "unicorn/prefer-simple-condition-first": {
       "count": 1
     }
   },
@@ -3400,13 +3257,13 @@
       "count": 1
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 4
+      "count": 3
     },
     "@typescript-eslint/require-await": {
       "count": 6
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "jest-dom/prefer-in-document": {
       "count": 2
@@ -3434,14 +3291,11 @@
     "@typescript-eslint/no-misused-promises": {
       "count": 2
     },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 2
-    },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
     },
     "import-x/order": {
-      "count": 15
+      "count": 7
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3463,9 +3317,6 @@
     },
     "unicorn/prefer-minimal-ternary": {
       "count": 1
-    },
-    "unicorn/prefer-ternary": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/GroupsPage.test.tsx": {
@@ -3473,13 +3324,13 @@
       "count": 1
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/require-await": {
       "count": 1
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "jest-dom/prefer-in-document": {
       "count": 6
@@ -3495,14 +3346,11 @@
     "@typescript-eslint/no-misused-promises": {
       "count": 1
     },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 2
-    },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
     },
     "import-x/order": {
-      "count": 6
+      "count": 5
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3524,9 +3372,6 @@
     },
     "unicorn/prefer-combined-guards": {
       "count": 1
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 2
     }
   },
   "packages/ui/src/app/pages/account/LadderEditPage.test.tsx": {
@@ -3534,16 +3379,13 @@
       "count": 1
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 5
+      "count": 4
     },
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 2
     },
     "@typescript-eslint/require-await": {
       "count": 9
-    },
-    "import-x/order": {
-      "count": 3
     },
     "jest-dom/prefer-in-document": {
       "count": 14
@@ -3569,13 +3411,10 @@
       "count": 2
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 17
+      "count": 15
     },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
-    },
-    "import-x/order": {
-      "count": 10
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -3600,20 +3439,14 @@
     },
     "unicorn/prefer-await": {
       "count": 8
-    },
-    "unicorn/prefer-ternary": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/LadderPage.test.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 3
-    },
     "@typescript-eslint/no-empty-function": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 6
+      "count": 8
     },
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
@@ -3624,29 +3457,14 @@
     "@typescript-eslint/require-await": {
       "count": 11
     },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 4
-    },
     "import-x/order": {
-      "count": 4
+      "count": 1
     },
     "jest-dom/prefer-enabled-disabled": {
       "count": 2
     },
-    "jest-dom/prefer-in-document": {
-      "count": 29
-    },
-    "jest-dom/prefer-to-have-attribute": {
-      "count": 1
-    },
-    "jest-dom/prefer-to-have-text-content": {
-      "count": 2
-    },
     "testing-library/no-node-access": {
-      "count": 6
-    },
-    "unicorn/consistent-function-scoping": {
-      "count": 2
+      "count": 11
     },
     "unicorn/filename-case": {
       "count": 1
@@ -3666,13 +3484,13 @@
       "count": 2
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 41
+      "count": 40
     },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
     },
     "import-x/order": {
-      "count": 16
+      "count": 8
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3699,7 +3517,7 @@
       "count": 2
     },
     "unicorn/no-nested-ternary": {
-      "count": 2
+      "count": 1
     },
     "unicorn/prefer-await": {
       "count": 2
@@ -3708,13 +3526,10 @@
       "count": 2
     },
     "unicorn/prefer-simple-condition-first": {
-      "count": 3
+      "count": 1
     },
     "unicorn/require-array-sort-compare": {
       "count": 1
-    },
-    "unicorn/switch-case-braces": {
-      "count": 28
     }
   },
   "packages/ui/src/app/pages/account/LadderRungRuns.tsx": {
@@ -3722,7 +3537,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 12
+      "count": 7
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3738,23 +3553,14 @@
     }
   },
   "packages/ui/src/app/pages/account/LaddersPage.test.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 3
-    },
     "@typescript-eslint/no-empty-function": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 1
     },
     "@typescript-eslint/require-await": {
       "count": 1
-    },
-    "import-x/order": {
-      "count": 3
-    },
-    "jest-dom/prefer-in-document": {
-      "count": 6
     },
     "jest-dom/prefer-to-have-attribute": {
       "count": 3
@@ -3765,9 +3571,6 @@
     "testing-library/no-node-access": {
       "count": 2
     },
-    "testing-library/prefer-find-by": {
-      "count": 3
-    },
     "unicorn/filename-case": {
       "count": 1
     }
@@ -3777,13 +3580,13 @@
       "count": 1
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 20
+      "count": 19
     },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
     },
     "import-x/order": {
-      "count": 7
+      "count": 4
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3791,26 +3594,14 @@
     "react-refresh/only-export-components": {
       "count": 1
     },
-    "unicorn/catch-error-name": {
-      "count": 2
-    },
     "unicorn/filename-case": {
       "count": 1
     },
     "unicorn/no-nested-ternary": {
-      "count": 2
+      "count": 1
     },
     "unicorn/prefer-await": {
       "count": 2
-    },
-    "unicorn/prefer-combined-guards": {
-      "count": 1
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 3
-    },
-    "unicorn/prefer-ternary": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/ReviewsPage.tsx": {
@@ -3818,7 +3609,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 9
+      "count": 5
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3833,7 +3624,7 @@
       "count": 2
     },
     "unicorn/prefer-simple-condition-first": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/UnsavedChangesDialog.tsx": {
@@ -3902,7 +3693,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -3910,7 +3701,7 @@
   },
   "packages/ui/src/app/pages/account/coverageMetrics.ts": {
     "import-x/order": {
-      "count": 7
+      "count": 3
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3938,9 +3729,6 @@
     },
     "unicorn/prefer-iterator-to-array": {
       "count": 2
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/account/coveragePickers.test.tsx": {
@@ -3948,7 +3736,7 @@
       "count": 1
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 4
+      "count": 3
     },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 10
@@ -3969,13 +3757,13 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 7
+      "count": 6
     },
     "jest-dom/prefer-enabled-disabled": {
       "count": 1
     },
     "jest-dom/prefer-in-document": {
-      "count": 37
+      "count": 35
     },
     "jest-dom/prefer-to-have-attribute": {
       "count": 2
@@ -3999,7 +3787,7 @@
       "count": 1
     },
     "unicorn/no-top-level-assignment-in-function": {
-      "count": 12
+      "count": 8
     },
     "unicorn/prefer-array-from-map": {
       "count": 1
@@ -4022,7 +3810,7 @@
       "count": 32
     },
     "import-x/order": {
-      "count": 15
+      "count": 14
     },
     "react-hooks/set-state-in-effect": {
       "count": 2
@@ -4044,9 +3832,6 @@
     },
     "unicorn/no-array-sort": {
       "count": 5
-    },
-    "unicorn/no-negated-condition": {
-      "count": 1
     },
     "unicorn/no-nested-ternary": {
       "count": 3
@@ -4095,14 +3880,8 @@
     "@typescript-eslint/require-await": {
       "count": 9
     },
-    "import-x/order": {
-      "count": 12
-    },
     "jest-dom/prefer-enabled-disabled": {
       "count": 7
-    },
-    "jest-dom/prefer-in-document": {
-      "count": 37
     },
     "jest-dom/prefer-to-have-attribute": {
       "count": 7
@@ -4114,7 +3893,7 @@
       "count": 4
     },
     "unicorn/consistent-function-scoping": {
-      "count": 6
+      "count": 2
     },
     "unicorn/filename-case": {
       "count": 1
@@ -4183,7 +3962,7 @@
   },
   "packages/ui/src/app/pages/account/ladderPickers.test.tsx": {
     "@typescript-eslint/no-empty-function": {
-      "count": 12
+      "count": 10
     },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 1
@@ -4195,7 +3974,7 @@
       "count": 5
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "jest-dom/prefer-in-document": {
       "count": 14
@@ -4236,7 +4015,7 @@
       "count": 27
     },
     "import-x/order": {
-      "count": 17
+      "count": 16
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -4280,7 +4059,7 @@
   },
   "packages/ui/src/app/pages/account/router.tsx": {
     "import-x/order": {
-      "count": 18
+      "count": 16
     }
   },
   "packages/ui/src/app/pages/account/rungEligibility.test.ts": {
@@ -4319,22 +4098,16 @@
   },
   "packages/ui/src/app/pages/comparisons/ComparisonDetailPage.test.tsx": {
     "@typescript-eslint/no-confusing-void-expression": {
-      "count": 10
+      "count": 6
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 4
-    },
-    "@typescript-eslint/no-non-null-assertion": {
-      "count": 11
-    },
-    "@typescript-eslint/no-unsafe-member-access": {
       "count": 3
     },
-    "import-x/order": {
-      "count": 4
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
     },
-    "jest-dom/prefer-in-document": {
-      "count": 1
+    "import-x/order": {
+      "count": 3
     },
     "unicorn/consistent-function-scoping": {
       "count": 1
@@ -4351,16 +4124,16 @@
       "count": 1
     },
     "@typescript-eslint/no-misused-promises": {
-      "count": 4
+      "count": 3
     },
     "@typescript-eslint/no-unnecessary-condition": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/prefer-nullish-coalescing": {
       "count": 1
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 20
+      "count": 16
     },
     "@typescript-eslint/unbound-method": {
       "count": 2
@@ -4369,7 +4142,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 25
+      "count": 16
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -4380,9 +4153,6 @@
     "unicorn/filename-case": {
       "count": 1
     },
-    "unicorn/no-negated-array-predicate": {
-      "count": 1
-    },
     "unicorn/no-negated-condition": {
       "count": 1
     },
@@ -4391,9 +4161,6 @@
     },
     "unicorn/prefer-await": {
       "count": 2
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 4
     }
   },
   "packages/ui/src/app/pages/comparisons/ComparisonEditPage.test.tsx": {
@@ -4401,7 +4168,7 @@
       "count": 5
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 5
+      "count": 4
     },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 6
@@ -4454,13 +4221,13 @@
       "count": 2
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 15
+      "count": 13
     },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
     },
     "import-x/order": {
-      "count": 18
+      "count": 16
     },
     "react-hooks/set-state-in-effect": {
       "count": 2
@@ -4469,7 +4236,7 @@
       "count": 2
     },
     "unicorn/consistent-conditional-object-spread": {
-      "count": 3
+      "count": 2
     },
     "unicorn/filename-case": {
       "count": 1
@@ -4495,16 +4262,13 @@
     "unicorn/prefer-await": {
       "count": 4
     },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 1
-    },
     "unicorn/prefer-ternary": {
       "count": 2
     }
   },
   "packages/ui/src/app/pages/comparisons/ComparisonsIndexPage.tsx": {
     "import-x/order": {
-      "count": 6
+      "count": 5
     },
     "unicorn/filename-case": {
       "count": 1
@@ -4514,11 +4278,8 @@
     "@typescript-eslint/no-confusing-void-expression": {
       "count": 3
     },
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "jest-dom/prefer-in-document": {
       "count": 2
@@ -4544,15 +4305,12 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 15
+      "count": 5
     },
     "unicorn/catch-error-name": {
       "count": 1
     },
     "unicorn/filename-case": {
-      "count": 1
-    },
-    "unicorn/prefer-simple-condition-first": {
       "count": 1
     },
     "unicorn/prefer-ternary": {
@@ -4578,6 +4336,17 @@
       "count": 1
     }
   },
+  "packages/ui/src/app/pages/comparisons/arm-score-widget.test.tsx": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "testing-library/no-node-access": {
+      "count": 2
+    },
+    "unicorn/prefer-query-selector": {
+      "count": 1
+    }
+  },
   "packages/ui/src/app/pages/comparisons/armDraft.test.ts": {
     "import-x/order": {
       "count": 1
@@ -4593,50 +4362,26 @@
   },
   "packages/ui/src/app/pages/comparisons/comparisonMath.test.ts": {
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 14
+      "count": 10
     },
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
     },
     "import-x/order": {
-      "count": 2
-    },
-    "unicorn/consistent-function-scoping": {
       "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
-    },
-    "unicorn/no-array-sort": {
-      "count": 2
-    },
-    "unicorn/require-array-sort-compare": {
-      "count": 2
     }
   },
   "packages/ui/src/app/pages/comparisons/comparisonMath.ts": {
     "@typescript-eslint/no-non-null-assertion": {
       "count": 2
     },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 1
-    },
     "import-x/order": {
       "count": 5
     },
     "unicorn/filename-case": {
-      "count": 1
-    },
-    "unicorn/no-array-sort": {
-      "count": 1
-    },
-    "unicorn/prefer-direct-iteration": {
-      "count": 1
-    },
-    "unicorn/prefer-iterator-to-array": {
-      "count": 1
-    },
-    "unicorn/prefer-ternary": {
       "count": 1
     }
   },
@@ -4656,9 +4401,6 @@
     }
   },
   "packages/ui/src/app/pages/gamejams/[slug]/JamOverviewPage.tsx": {
-    "import-x/order": {
-      "count": 1
-    },
     "unicorn/consistent-function-scoping": {
       "count": 1
     },
@@ -4674,9 +4416,6 @@
   "packages/ui/src/app/pages/gg/GgDashboardViewPage.test.tsx": {
     "@typescript-eslint/no-confusing-void-expression": {
       "count": 6
-    },
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
     },
     "import-x/order": {
       "count": 4
@@ -4724,9 +4463,6 @@
     "@typescript-eslint/no-confusing-void-expression": {
       "count": 9
     },
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 3
     },
@@ -4740,7 +4476,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 4
+      "count": 3
     },
     "testing-library/prefer-find-by": {
       "count": 3
@@ -4757,13 +4493,13 @@
       "count": 12
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 7
+      "count": 5
     },
     "@typescript-eslint/unbound-method": {
       "count": 1
     },
     "import-x/order": {
-      "count": 5
+      "count": 4
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -4782,17 +4518,11 @@
     },
     "unicorn/prefer-combined-guards": {
       "count": 1
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/gg/GgDiscoverPage.test.tsx": {
     "@typescript-eslint/no-confusing-void-expression": {
       "count": 5
-    },
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
     },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 4
@@ -4846,14 +4576,11 @@
     "@typescript-eslint/no-confusing-void-expression": {
       "count": 4
     },
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "@typescript-eslint/no-unsafe-return": {
       "count": 1
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "jest-dom/prefer-to-have-text-content": {
       "count": 1
@@ -4872,14 +4599,11 @@
     "@typescript-eslint/no-confusing-void-expression": {
       "count": 4
     },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 2
-    },
     "@typescript-eslint/unbound-method": {
       "count": 1
     },
     "import-x/order": {
-      "count": 6
+      "count": 5
     },
     "react-hooks/set-state-in-effect": {
       "count": 2
@@ -4898,9 +4622,6 @@
     },
     "unicorn/prefer-combined-guards": {
       "count": 1
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/gg/GgSessionsPage.tsx": {
@@ -4911,7 +4632,7 @@
       "count": 2
     },
     "import-x/order": {
-      "count": 13
+      "count": 4
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -4928,7 +4649,7 @@
       "count": 3
     },
     "import-x/order": {
-      "count": 9
+      "count": 7
     },
     "unicorn/filename-case": {
       "count": 1
@@ -5080,7 +4801,7 @@
       "count": 4
     },
     "import-x/order": {
-      "count": 5
+      "count": 4
     },
     "unicorn/filename-case": {
       "count": 1
@@ -5293,7 +5014,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "unicorn/consistent-function-scoping": {
       "count": 2
@@ -5313,7 +5034,7 @@
       "count": 8
     },
     "import-x/order": {
-      "count": 3
+      "count": 1
     },
     "unicorn/explicit-length-check": {
       "count": 3
@@ -5435,9 +5156,6 @@
   "packages/ui/src/app/pages/gg/query/conformance.test.ts": {
     "import-x/order": {
       "count": 2
-    },
-    "unicorn/import-style": {
-      "count": 1
     },
     "vitest/no-conditional-expect": {
       "count": 3
@@ -5831,6 +5549,9 @@
     }
   },
   "packages/ui/src/app/pages/home/HomePage.test.tsx": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
     },
@@ -5840,20 +5561,14 @@
     "@typescript-eslint/restrict-template-expressions": {
       "count": 2
     },
-    "import-x/order": {
-      "count": 3
-    },
     "jest-dom/prefer-in-document": {
       "count": 21
-    },
-    "jest-dom/prefer-to-have-attribute": {
-      "count": 4
     },
     "testing-library/no-container": {
       "count": 1
     },
     "testing-library/no-node-access": {
-      "count": 3
+      "count": 5
     },
     "unicorn/consistent-conditional-object-spread": {
       "count": 2
@@ -5866,17 +5581,17 @@
     },
     "unicorn/numeric-separators-style": {
       "count": 4
+    },
+    "unicorn/prefer-query-selector": {
+      "count": 1
     }
   },
   "packages/ui/src/app/pages/home/HomePage.tsx": {
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 2
-    },
     "@typescript-eslint/unbound-method": {
       "count": 1
     },
     "import-x/order": {
-      "count": 23
+      "count": 6
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -5885,7 +5600,7 @@
       "count": 1
     },
     "unicorn/no-nested-ternary": {
-      "count": 3
+      "count": 2
     },
     "unicorn/prefer-await": {
       "count": 6
@@ -5894,7 +5609,7 @@
       "count": 1
     },
     "unicorn/prefer-ternary": {
-      "count": 3
+      "count": 1
     }
   },
   "packages/ui/src/app/pages/home/router.tsx": {
@@ -5907,7 +5622,7 @@
       "count": 4
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 4
@@ -6035,9 +5750,6 @@
     "@typescript-eslint/restrict-template-expressions": {
       "count": 8
     },
-    "import-x/order": {
-      "count": 7
-    },
     "unicorn/filename-case": {
       "count": 1
     },
@@ -6049,9 +5761,6 @@
     }
   },
   "packages/ui/src/app/pages/models/ProvidersView.test.tsx": {
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 1
     },
@@ -6102,7 +5811,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "jest-dom/prefer-in-document": {
       "count": 8
@@ -6131,7 +5840,7 @@
       "count": 5
     },
     "import-x/order": {
-      "count": 17
+      "count": 7
     },
     "unicorn/filename-case": {
       "count": 1
@@ -6144,20 +5853,14 @@
     }
   },
   "packages/ui/src/app/pages/models/[modelId]/ModelProbesPage.test.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 2
-    },
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
+    "@typescript-eslint/no-non-null-assertion": {
       "count": 1
     },
     "import-x/order": {
       "count": 2
     },
-    "jest-dom/prefer-in-document": {
-      "count": 1
+    "testing-library/no-node-access": {
+      "count": 4
     },
     "unicorn/consistent-conditional-object-spread": {
       "count": 2
@@ -6179,14 +5882,11 @@
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
     },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 6
-    },
     "@typescript-eslint/use-unknown-in-catch-callback-variable": {
       "count": 1
     },
     "import-x/order": {
-      "count": 11
+      "count": 4
     },
     "unicorn/catch-error-name": {
       "count": 1
@@ -6218,7 +5918,7 @@
   },
   "packages/ui/src/app/pages/models/[modelId]/ModelRunsPage.tsx": {
     "import-x/order": {
-      "count": 12
+      "count": 5
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -6237,11 +5937,8 @@
     }
   },
   "packages/ui/src/app/pages/models/[modelId]/ModelStatsPage.test.tsx": {
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 9
+      "count": 8
     },
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
@@ -6250,13 +5947,13 @@
       "count": 2
     },
     "jest-dom/prefer-in-document": {
-      "count": 45
+      "count": 36
     },
     "jest-dom/prefer-to-have-text-content": {
       "count": 7
     },
     "testing-library/no-node-access": {
-      "count": 6
+      "count": 4
     },
     "unicorn/consistent-function-scoping": {
       "count": 1
@@ -6276,10 +5973,10 @@
       "count": 1
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 6
+      "count": 4
     },
     "import-x/order": {
-      "count": 12
+      "count": 6
     },
     "unicorn/filename-case": {
       "count": 1
@@ -6318,7 +6015,7 @@
   },
   "packages/ui/src/app/pages/notfound/NotFoundPage.tsx": {
     "import-x/order": {
-      "count": 6
+      "count": 4
     },
     "unicorn/filename-case": {
       "count": 1
@@ -6411,16 +6108,13 @@
   },
   "packages/ui/src/app/pages/routeSmokeFixtures.tsx": {
     "@typescript-eslint/no-empty-function": {
-      "count": 6
+      "count": 5
     },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
     },
     "@typescript-eslint/no-unused-vars": {
       "count": 1
-    },
-    "import-x/order": {
-      "count": 4
     },
     "react-refresh/only-export-components": {
       "count": 4
@@ -6451,7 +6145,7 @@
       "count": 10
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 7
+      "count": 6
     },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 11
@@ -6516,7 +6210,7 @@
       "count": 1
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 39
+      "count": 37
     },
     "@typescript-eslint/unbound-method": {
       "count": 1
@@ -6596,14 +6290,11 @@
     "@typescript-eslint/no-misused-promises": {
       "count": 1
     },
-    "@typescript-eslint/no-non-null-assertion": {
-      "count": 1
-    },
     "@typescript-eslint/unbound-method": {
       "count": 1
     },
     "import-x/order": {
-      "count": 21
+      "count": 15
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -6615,9 +6306,6 @@
       "count": 1
     },
     "unicorn/no-array-sort": {
-      "count": 1
-    },
-    "unicorn/no-nested-ternary": {
       "count": 1
     },
     "unicorn/prefer-await": {
@@ -6679,7 +6367,7 @@
   },
   "packages/ui/src/app/pages/runs/RunsPage.tsx": {
     "import-x/order": {
-      "count": 17
+      "count": 13
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -6774,7 +6462,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 4
+      "count": 3
     },
     "react-refresh/only-export-components": {
       "count": 1
@@ -6823,7 +6511,7 @@
   },
   "packages/ui/src/app/pages/runs/UnpublishedPage.tsx": {
     "import-x/order": {
-      "count": 12
+      "count": 7
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -6875,7 +6563,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 17
+      "count": 11
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -6898,7 +6586,7 @@
   },
   "packages/ui/src/app/pages/runs/UnreviewedPage.tsx": {
     "import-x/order": {
-      "count": 10
+      "count": 5
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -6930,7 +6618,7 @@
       "count": 4
     },
     "import-x/order": {
-      "count": 12
+      "count": 11
     },
     "react-hooks/refs": {
       "count": 23
@@ -7213,7 +6901,7 @@
       "count": 5
     },
     "import-x/order": {
-      "count": 12
+      "count": 10
     },
     "react-hooks/refs": {
       "count": 5
@@ -7482,7 +7170,7 @@
       "count": 9
     },
     "import-x/order": {
-      "count": 5
+      "count": 3
     },
     "unicorn/filename-case": {
       "count": 1
@@ -7569,7 +7257,7 @@
   },
   "packages/ui/src/app/pages/runs/[runId]/ReviewItemCap.tsx": {
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "react-refresh/only-export-components": {
       "count": 1
@@ -7586,7 +7274,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 5
+      "count": 3
     },
     "react-refresh/only-export-components": {
       "count": 1
@@ -7652,7 +7340,7 @@
       "count": 8
     },
     "import-x/order": {
-      "count": 3
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -7678,7 +7366,7 @@
       "count": 6
     },
     "import-x/order": {
-      "count": 7
+      "count": 3
     },
     "unicorn/filename-case": {
       "count": 1
@@ -7692,7 +7380,7 @@
       "count": 4
     },
     "import-x/order": {
-      "count": 12
+      "count": 7
     },
     "unicorn/filename-case": {
       "count": 1
@@ -7717,7 +7405,7 @@
   },
   "packages/ui/src/app/pages/runs/[runId]/RunInputsPage.tsx": {
     "import-x/order": {
-      "count": 8
+      "count": 4
     },
     "unicorn/filename-case": {
       "count": 1
@@ -7728,7 +7416,7 @@
   },
   "packages/ui/src/app/pages/runs/[runId]/RunMetadataPage.tsx": {
     "import-x/order": {
-      "count": 5
+      "count": 4
     },
     "unicorn/filename-case": {
       "count": 1
@@ -7759,7 +7447,7 @@
       "count": 8
     },
     "import-x/order": {
-      "count": 3
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -7791,9 +7479,6 @@
     },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 14
-    },
-    "import-x/order": {
-      "count": 3
     },
     "react-hooks/refs": {
       "count": 1
@@ -7838,7 +7523,7 @@
   },
   "packages/ui/src/app/pages/runs/[runId]/RunProofPage.tsx": {
     "import-x/order": {
-      "count": 6
+      "count": 4
     },
     "unicorn/filename-case": {
       "count": 1
@@ -7855,7 +7540,7 @@
       "count": 1
     },
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 8
+      "count": 6
     },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
@@ -7864,9 +7549,6 @@
       "count": 1
     },
     "@typescript-eslint/prefer-nullish-coalescing": {
-      "count": 1
-    },
-    "@typescript-eslint/prefer-optional-chain": {
       "count": 1
     },
     "@typescript-eslint/restrict-template-expressions": {
@@ -7879,7 +7561,7 @@
       "count": 2
     },
     "import-x/order": {
-      "count": 23
+      "count": 21
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -7979,7 +7661,7 @@
   },
   "packages/ui/src/app/pages/runs/[runId]/RunReviewPage.tsx": {
     "import-x/order": {
-      "count": 12
+      "count": 8
     },
     "unicorn/filename-case": {
       "count": 1
@@ -8104,22 +7786,10 @@
     }
   },
   "packages/ui/src/app/pages/runs/[runId]/ShowcaseSection.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 3
-    },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 3
-    },
     "import-x/order": {
-      "count": 4
+      "count": 1
     },
     "unicorn/filename-case": {
-      "count": 1
-    },
-    "unicorn/no-negated-condition": {
-      "count": 1
-    },
-    "unicorn/no-nested-ternary": {
       "count": 1
     }
   },
@@ -8294,7 +7964,7 @@
       "count": 2
     },
     "import-x/order": {
-      "count": 7
+      "count": 5
     },
     "unicorn/filename-case": {
       "count": 1
@@ -8310,9 +7980,6 @@
     "import-x/order": {
       "count": 3
     },
-    "jest-dom/prefer-in-document": {
-      "count": 16
-    },
     "jest-dom/prefer-to-have-text-content": {
       "count": 1
     },
@@ -8325,7 +7992,7 @@
   },
   "packages/ui/src/app/pages/runs/[runId]/ValidatorVerdict.tsx": {
     "import-x/order": {
-      "count": 5
+      "count": 4
     },
     "react-refresh/only-export-components": {
       "count": 1
@@ -9026,14 +8693,6 @@
       "count": 3
     }
   },
-  "packages/ui/src/app/pages/runs/foray/renderer.vendor.test.ts": {
-    "unicorn/import-style": {
-      "count": 1
-    },
-    "vitest/valid-expect": {
-      "count": 1
-    }
-  },
   "packages/ui/src/app/pages/runs/gg/AgentTreeView.tsx": {
     "@typescript-eslint/no-non-null-assertion": {
       "count": 1
@@ -9157,7 +8816,7 @@
       "count": 51
     },
     "import-x/order": {
-      "count": 14
+      "count": 11
     },
     "unicorn/consistent-conditional-object-spread": {
       "count": 1
@@ -9403,7 +9062,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 5
+      "count": 3
     },
     "jest-dom/prefer-enabled-disabled": {
       "count": 5
@@ -9453,7 +9112,7 @@
       "count": 17
     },
     "import-x/order": {
-      "count": 11
+      "count": 10
     },
     "unicorn/explicit-length-check": {
       "count": 3
@@ -9579,9 +9238,6 @@
     }
   },
   "packages/ui/src/app/pages/runs/gg/GgFsExplorer.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 1
-    },
     "import-x/order": {
       "count": 2
     },
@@ -9831,9 +9487,6 @@
   "packages/ui/src/app/pages/runs/gg/GgRunMonitorPage.tsx": {
     "@typescript-eslint/restrict-template-expressions": {
       "count": 10
-    },
-    "import-x/order": {
-      "count": 6
     },
     "unicorn/filename-case": {
       "count": 1
@@ -10327,6 +9980,11 @@
     },
     "unicorn/filename-case": {
       "count": 1
+    }
+  },
+  "packages/ui/src/app/pages/runs/gg/gg-fs-explorer.test.tsx": {
+    "testing-library/no-node-access": {
+      "count": 2
     }
   },
   "packages/ui/src/app/pages/runs/gg/ggAgentAggregate.test.ts": {
@@ -11037,7 +10695,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -11050,9 +10708,6 @@
     },
     "unicorn/prefer-await": {
       "count": 2
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 1
     },
     "unicorn/prefer-ternary": {
       "count": 1
@@ -11071,7 +10726,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 4
+      "count": 3
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -11084,9 +10739,6 @@
     },
     "unicorn/prefer-await": {
       "count": 2
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 1
     },
     "unicorn/prefer-ternary": {
       "count": 1
@@ -11178,14 +10830,6 @@
     },
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
-    },
-    "import-x/order": {
-      "count": 2
-    }
-  },
-  "packages/ui/src/app/pages/runs/lattice/drift.ts": {
-    "import-x/order": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/runs/lattice/playbackWorker.ts": {
@@ -11211,32 +10855,6 @@
   "packages/ui/src/app/pages/runs/lattice/reference.ts": {
     "@typescript-eslint/restrict-template-expressions": {
       "count": 2
-    },
-    "import-x/order": {
-      "count": 2
-    }
-  },
-  "packages/ui/src/app/pages/runs/lattice/renderer.vendor.test.ts": {
-    "@typescript-eslint/no-non-null-assertion": {
-      "count": 3
-    },
-    "unicorn/consistent-function-scoping": {
-      "count": 1
-    },
-    "unicorn/import-style": {
-      "count": 1
-    },
-    "unicorn/no-array-sort": {
-      "count": 2
-    },
-    "unicorn/require-array-sort-compare": {
-      "count": 1
-    },
-    "vitest/valid-expect": {
-      "count": 1
-    },
-    "vitest/valid-title": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/runs/lattice/zoom.test.ts": {
@@ -11660,21 +11278,18 @@
       "count": 4
     },
     "import-x/order": {
-      "count": 5
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
     }
   },
   "packages/ui/src/app/pages/settings/ConnectionsPage.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 1
-    },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 4
     },
     "import-x/order": {
-      "count": 3
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -11691,7 +11306,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 8
+      "count": 5
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -11714,7 +11329,7 @@
   },
   "packages/ui/src/app/pages/settings/RunsPage.test.tsx": {
     "@typescript-eslint/no-empty-function": {
-      "count": 6
+      "count": 5
     },
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 6
@@ -11723,7 +11338,7 @@
       "count": 5
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "jest-dom/prefer-checked": {
       "count": 2
@@ -11755,7 +11370,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 13
+      "count": 7
     },
     "react-hooks/set-state-in-effect": {
       "count": 2
@@ -11774,12 +11389,6 @@
     },
     "unicorn/prefer-await": {
       "count": 2
-    },
-    "unicorn/prefer-simple-condition-first": {
-      "count": 2
-    },
-    "unicorn/prefer-ternary": {
-      "count": 1
     }
   },
   "packages/ui/src/app/pages/settings/router.tsx": {
@@ -11827,10 +11436,7 @@
       "count": 3
     },
     "@typescript-eslint/restrict-template-expressions": {
-      "count": 9
-    },
-    "import-x/order": {
-      "count": 10
+      "count": 7
     },
     "unicorn/filename-case": {
       "count": 1
@@ -11850,7 +11456,7 @@
       "count": 2
     },
     "import-x/order": {
-      "count": 4
+      "count": 2
     },
     "unicorn/filename-case": {
       "count": 1
@@ -11861,7 +11467,7 @@
       "count": 6
     },
     "import-x/order": {
-      "count": 4
+      "count": 2
     },
     "unicorn/filename-case": {
       "count": 1
@@ -11890,7 +11496,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 13
+      "count": 4
     },
     "react-hooks/set-state-in-effect": {
       "count": 3
@@ -11935,9 +11541,6 @@
     }
   },
   "packages/ui/src/app/pages/testcases/[slug]/TestCaseChangelogPage.tsx": {
-    "import-x/order": {
-      "count": 1
-    },
     "unicorn/consistent-function-scoping": {
       "count": 1
     },
@@ -11961,7 +11564,7 @@
       "count": 10
     },
     "import-x/order": {
-      "count": 3
+      "count": 1
     },
     "unicorn/consistent-function-scoping": {
       "count": 1
@@ -12032,7 +11635,7 @@
       "count": 2
     },
     "import-x/order": {
-      "count": 15
+      "count": 10
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -12099,7 +11702,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 16
+      "count": 9
     },
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -12151,7 +11754,7 @@
       "count": 3
     },
     "import-x/order": {
-      "count": 10
+      "count": 3
     },
     "unicorn/filename-case": {
       "count": 1
@@ -12167,9 +11770,6 @@
     }
   },
   "packages/ui/src/app/pages/testcases/[slug]/TestCaseReferencePage.test.tsx": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 1
-    },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 2
     },
@@ -12183,7 +11783,7 @@
       "count": 2
     },
     "jest-dom/prefer-in-document": {
-      "count": 19
+      "count": 5
     },
     "jest-dom/prefer-to-have-attribute": {
       "count": 1
@@ -12219,7 +11819,7 @@
   },
   "packages/ui/src/app/pages/testcases/[slug]/TestCaseReviewingPage.tsx": {
     "import-x/order": {
-      "count": 6
+      "count": 4
     },
     "unicorn/filename-case": {
       "count": 1
@@ -12250,7 +11850,7 @@
   },
   "packages/ui/src/app/pages/testcases/[slug]/TestCaseRunsPage.tsx": {
     "import-x/order": {
-      "count": 14
+      "count": 6
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -12296,11 +11896,6 @@
       "count": 1
     }
   },
-  "packages/ui/src/app/pages/testcases/router.tsx": {
-    "import-x/order": {
-      "count": 8
-    }
-  },
   "packages/ui/src/app/pages/tournaments/TournamentDetailPage.test.tsx": {
     "import-x/order": {
       "count": 1
@@ -12329,7 +11924,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 14
+      "count": 4
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -12355,7 +11950,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 10
+      "count": 2
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -12547,7 +12142,7 @@
       "count": 28
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 5
+      "count": 4
     },
     "@typescript-eslint/require-await": {
       "count": 5
@@ -12569,11 +12164,8 @@
     }
   },
   "packages/ui/src/app/runtime/useLiveGallery.ts": {
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 2
-    },
     "@typescript-eslint/no-empty-function": {
-      "count": 3
+      "count": 1
     },
     "@typescript-eslint/no-floating-promises": {
       "count": 1
@@ -12585,13 +12177,13 @@
       "count": 5
     },
     "import-x/order": {
-      "count": 11
+      "count": 10
     },
     "react-hooks/refs": {
       "count": 1
     },
     "react-hooks/set-state-in-effect": {
-      "count": 6
+      "count": 4
     },
     "unicorn/catch-error-name": {
       "count": 4
@@ -12609,7 +12201,7 @@
       "count": 1
     },
     "unicorn/prefer-await": {
-      "count": 11
+      "count": 7
     },
     "unicorn/prefer-combined-guards": {
       "count": 1
@@ -12687,7 +12279,7 @@
   },
   "packages/ui/src/client/clients.ts": {
     "import-x/order": {
-      "count": 8
+      "count": 4
     }
   },
   "packages/ui/src/client/context.tsx": {
@@ -12728,14 +12320,11 @@
   "packages/ui/src/client/runPhase.ts": {
     "unicorn/filename-case": {
       "count": 1
-    },
-    "unicorn/switch-case-braces": {
-      "count": 5
     }
   },
   "packages/ui/src/client/types.ts": {
     "import-x/order": {
-      "count": 3
+      "count": 1
     },
     "unicorn/prefer-export-from": {
       "count": 13
@@ -12835,7 +12424,7 @@
       "count": 1
     },
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 9
+      "count": 8
     },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
@@ -12843,17 +12432,14 @@
     "import-x/order": {
       "count": 1
     },
-    "jest-dom/prefer-to-have-style": {
-      "count": 2
-    },
     "testing-library/no-container": {
-      "count": 6
+      "count": 5
     },
     "testing-library/no-node-access": {
-      "count": 15
+      "count": 19
     },
     "unicorn/consistent-function-scoping": {
-      "count": 3
+      "count": 1
     },
     "unicorn/filename-case": {
       "count": 1
@@ -12862,9 +12448,6 @@
   "packages/ui/src/primitives/Chart.tsx": {
     "@typescript-eslint/no-confusing-void-expression": {
       "count": 2
-    },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 4
     },
     "import-x/order": {
       "count": 4
@@ -13038,7 +12621,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 3
+      "count": 2
     },
     "react-refresh/only-export-components": {
       "count": 2
@@ -13170,9 +12753,6 @@
     "@typescript-eslint/array-type": {
       "count": 1
     },
-    "@typescript-eslint/no-confusing-void-expression": {
-      "count": 1
-    },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 2
     },
@@ -13254,7 +12834,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "testing-library/no-node-access": {
       "count": 13
@@ -13292,7 +12872,7 @@
       "count": 1
     },
     "import-x/order": {
-      "count": 2
+      "count": 1
     },
     "jest-dom/prefer-in-document": {
       "count": 2
@@ -13414,7 +12994,7 @@
   },
   "packages/ui/src/primitives/plot/charts.test.ts": {
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 19
+      "count": 13
     },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 3
@@ -13425,23 +13005,14 @@
     "@typescript-eslint/no-unused-vars": {
       "count": 4
     },
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 3
-    },
     "import-x/order": {
       "count": 1
-    },
-    "jest-dom/prefer-to-have-attribute": {
-      "count": 6
     },
     "jest-dom/prefer-to-have-text-content": {
       "count": 5
     },
     "testing-library/render-result-naming-convention": {
-      "count": 28
-    },
-    "unicorn/consistent-function-scoping": {
-      "count": 7
+      "count": 29
     },
     "unicorn/max-nested-calls": {
       "count": 3
@@ -13466,9 +13037,6 @@
     "import-x/order": {
       "count": 2
     },
-    "unicorn/consistent-conditional-object-spread": {
-      "count": 18
-    },
     "unicorn/explicit-length-check": {
       "count": 2
     },
@@ -13479,7 +13047,7 @@
       "count": 1
     },
     "unicorn/no-negated-condition": {
-      "count": 7
+      "count": 2
     },
     "unicorn/no-nested-ternary": {
       "count": 2
@@ -13515,6 +13083,11 @@
       "count": 1
     },
     "unicorn/prefer-at": {
+      "count": 1
+    }
+  },
+  "packages/ui/src/primitives/segmented-control.test.tsx": {
+    "testing-library/no-node-access": {
       "count": 1
     }
   },
@@ -13607,7 +13180,7 @@
       "count": 2
     },
     "@typescript-eslint/no-empty-function": {
-      "count": 8
+      "count": 7
     },
     "@typescript-eslint/no-non-null-assertion": {
       "count": 43
@@ -13640,7 +13213,7 @@
       "count": 1
     },
     "unicorn/consistent-function-scoping": {
-      "count": 6
+      "count": 5
     },
     "unicorn/filename-case": {
       "count": 1
@@ -13653,9 +13226,6 @@
     },
     "unicorn/numeric-separators-style": {
       "count": 3
-    },
-    "unicorn/prefer-promise-with-resolvers": {
-      "count": 1
     }
   },
   "packages/ui/src/transport/httpBackend.ts": {
@@ -13687,7 +13257,7 @@
       "count": 2
     },
     "import-x/order": {
-      "count": 12
+      "count": 8
     },
     "unicorn/catch-error-name": {
       "count": 2
@@ -13703,9 +13273,6 @@
     },
     "unicorn/no-array-callback-reference": {
       "count": 5
-    },
-    "unicorn/no-await-expression-member": {
-      "count": 3
     },
     "unicorn/no-negated-condition": {
       "count": 2

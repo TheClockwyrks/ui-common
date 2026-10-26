@@ -1,4 +1,4 @@
-import type { RunSummary } from "@clockwyrks/backend-api/snapshot";
+import type { RunSummary, GgAgentOut } from "@clockwyrks/backend-api/snapshot";
 import { useMemo, type ReactNode } from "react";
 import type { TestType } from "@clockwyrks/run-record";
 import {
@@ -32,6 +32,7 @@ import {
   formatUsd,
   totalTokens,
 } from "../format";
+import { RunActiveMarker } from "./run-active-marker";
 import { RunSelectBox, type RunSelectionContext } from "./RunSelect";
 import { sortRows, type SortState } from "./useTableSort";
 import { UnpublishedTag } from "./UnpublishedTag";
@@ -73,6 +74,10 @@ export interface EnrichedRun {
    * records no configuration name (one assembled by hand, or produced before the
    * name was carried on the card) — which shows its model instead. */
   configName: string | null;
+  /** A gg run's per-agent figures, primary first, each with its model's display
+   * name resolved. Null for every non-gg run and for a gg run whose summary
+   * carries none, which then has nothing to disclose. */
+  agents: EnrichedAgent[] | null;
   rating: Rating | null;
   /** The run's aggregate aesthetic rating, shown in its own column. Null
    * until a reviewer rates the channel — always, for a legacy run. */
@@ -80,6 +85,13 @@ export interface EnrichedRun {
   /** A game-jam run's whole-game overall grade, shown as its badge in place of a
    * domain rating (a jam has none). Null for every non-jam run. */
   grade: GradeStatus | null;
+}
+
+/** One agent of a gg run, resolved for its line beneath the run's row. */
+export interface EnrichedAgent extends GgAgentOut {
+  /** The display names of the models the agent ran on, joined: the catalog's
+   * name for each, or its canonical model id. */
+  modelName: string;
 }
 
 /** Cross-cell context a column's renderer needs beyond its own row. */
@@ -105,6 +117,21 @@ export interface RunRenderContext {
    * second apart on their own timers. Finished cells ignore it — their figures
    * come off the record. */
   now: number;
+  /** Whether a run's agent lines are shown beneath it. */
+  isExpanded: (runId: string) => boolean;
+  /** Show or hide a run's agent lines. */
+  toggleExpanded: (runId: string) => void;
+  /** The column whose cell carries a gg run's disclosure toggle: the MODEL /
+   * CONFIG column the configuration name sits in, or the nearest shown column
+   * to it when that one is hidden. */
+  disclosureColumn: string | null;
+  /** The column an agent line names its agent in: the TEST column the run's
+   * title sits in, or the HARNESS or MODEL / CONFIG column when it is hidden. */
+  agentColumn: string | null;
+  /** How many grid tracks an agent's name spans from {@link agentColumn}: every
+   * column up to the MODEL / CONFIG column, whose cells are empty on an agent
+   * line, so the name has the room of all of them. */
+  agentSpan: number;
 }
 
 /**
@@ -129,6 +156,13 @@ export interface RunColumn {
   sortKey?: (row: EnrichedRun) => string | number | null;
   render: (row: EnrichedRun, ctx: RunRenderContext) => ReactNode;
   renderActive: (run: InProgressRun, ctx: RunRenderContext) => ReactNode;
+  /** The cell of one agent line beneath a gg run's row. A column without one
+   * leaves its cell empty on agent lines. */
+  renderAgent?: (
+    agent: EnrichedAgent,
+    row: EnrichedRun,
+    ctx: RunRenderContext,
+  ) => ReactNode;
 }
 
 const CATEGORY_LABELS: Readonly<Record<string, string>> = {
@@ -144,8 +178,9 @@ function categoryLabel(testType: string): string {
 }
 
 // The status label for an in-progress run's live phase. "queued"/"starting" carry
-// an ellipsis (work is pending and will proceed on its own), as does "storing" (the
-// run has finished and its driver is waiting to store its files); "pending" is a
+// an ellipsis (work is pending and will proceed on its own), as do "validating" (the
+// model has finished and its build is being validated, work that ends on its own)
+// and "storing" (the run has finished and its driver is waiting to store its files); "pending" is a
 // deliberate hold — the harness is at its parallelism cap, or the run is a game-jam
 // entry waiting for the same model's earlier entry of that jam to finish — shown
 // without one so it reads as a settled state rather than imminent progress.
@@ -154,9 +189,14 @@ const ACTIVE_STATE_LABEL: Readonly<Record<InProgressRun["state"], string>> = {
   pending: "pending",
   starting: "starting…",
   running: "running…",
+  validating: "validating…",
   storing: "storing files…",
   failed: "failed",
 };
+
+// What a "validating" run's tooltip says: the label alone does not say that the
+// model is done, which is the whole difference from "running…".
+const VALIDATING_TITLE = "The model has finished; validating the build";
 
 // A muted em-dash placeholder for a cell an in-progress run can't fill yet —
 // either a figure that only the finished run carries (its metrics, its rating) or
@@ -165,7 +205,7 @@ const ACTIVE_STATE_LABEL: Readonly<Record<InProgressRun["state"], string>> = {
 function activeDash(label: string, numeric: boolean): ReactNode {
   return (
     <span
-      className={`${numeric ? styles.num : styles.when} ${styles.noRating}`}
+      className={`${String(numeric ? styles.num : styles.when)} ${String(styles.noRating)}`}
       data-label={label}
     >
       &mdash;
@@ -178,14 +218,117 @@ function activeDash(label: string, numeric: boolean): ReactNode {
 // one; otherwise the model stands in. The `data-label` follows the value it labels
 // because the phone card renders it as the line's own caption — labelling a
 // configuration "Model" there would be a plain lie.
-function modelCell(configName: string | null, modelName: string): ReactNode {
+function modelCell(
+  configName: string | null,
+  modelName: string,
+  disclosure?: ReactNode,
+): ReactNode {
   return (
     <span
       className={styles.model}
       data-label={configName == null ? "Model" : "Config"}
     >
-      {configName ?? modelName}
+      {disclosure}
+      <span
+        className={styles.modelName}
+        title={configName == null ? modelName : `${configName} (${modelName})`}
+      >
+        {configName ?? modelName}
+      </span>
     </span>
+  );
+}
+
+// The toggle that shows a gg run's agent lines beneath its row: a bare arrow that
+// points down while closed and up while open. It sits inside the row's link, so it swallows its own click
+// and key presses: toggling never opens the run.
+function disclosureToggle(row: EnrichedRun, ctx: RunRenderContext): ReactNode {
+  const agents = row.agents ?? [];
+  const expanded = ctx.isExpanded(row.summary.id);
+  const toggle = (event: {
+    preventDefault(): void;
+    stopPropagation(): void;
+  }) => {
+    event.preventDefault();
+    event.stopPropagation();
+    ctx.toggleExpanded(row.summary.id);
+  };
+  const count = `${String(agents.length)} agent${agents.length === 1 ? "" : "s"}`;
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      className={styles.disclosure}
+      aria-expanded={expanded}
+      aria-controls={agentLinesId(row.summary.id)}
+      aria-label={`${expanded ? "Hide" : "Show"} ${count}`}
+      title={`${expanded ? "Hide" : "Show"} ${count}`}
+      data-expanded={expanded ? "" : undefined}
+      onClick={toggle}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") toggle(event);
+      }}
+    >
+      <span className={styles.disclosureArrow} aria-hidden>
+        &#x25BE;
+      </span>
+    </span>
+  );
+}
+
+/** The id of the element holding a run's agent lines. */
+export function agentLinesId(runId: string): string {
+  return `run-agents-${runId}`;
+}
+
+// A gg run's disclosure toggle, when this column carries it and the run has agents.
+function disclosureFor(
+  columnId: string,
+  row: EnrichedRun,
+  ctx: RunRenderContext,
+): ReactNode {
+  return ctx.disclosureColumn === columnId && row.agents
+    ? disclosureToggle(row, ctx)
+    : null;
+}
+
+// The name of an agent on its line, with a PRIMARY tag on the configuration's
+// primary agent, and a "not run" note on one the run never started. How many
+// instances of a profile a run makes is decided at run time and differs from run
+// to run of one configuration, so the count itself is left off.
+function agentLabel(
+  agent: EnrichedAgent,
+  withModel: boolean,
+  span: number,
+): ReactNode {
+  return (
+    <span
+      className={styles.agentLabel}
+      data-label="Agent"
+      style={span > 1 ? { gridColumn: `span ${String(span)}` } : undefined}
+    >
+      <span className={styles.agentName} title={agent.name}>
+        {agent.name}
+        {withModel && (
+          <span className={styles.agentModelInline}> · {agent.modelName}</span>
+        )}
+      </span>
+      {agent.primary && <span className={styles.primaryTag}>primary</span>}
+      {!agent.ran && <span className={styles.agentNotRun}>not run</span>}
+    </span>
+  );
+}
+
+// An agent line's cell in a column that names the agent when it is the agent column.
+function agentLabelFor(
+  columnId: string,
+  agent: EnrichedAgent,
+  ctx: RunRenderContext,
+): ReactNode {
+  return ctx.agentColumn === columnId ? (
+    agentLabel(agent, false, ctx.agentSpan)
+  ) : (
+    <span />
   );
 }
 
@@ -209,7 +352,7 @@ function codeCell(code: RunSummary["code"]): ReactNode {
   if (!code) {
     return (
       <span
-        className={`${styles.num} ${styles.noRating}`}
+        className={`${String(styles.num)} ${String(styles.noRating)}`}
         data-label="Code"
         title="Not measured. Code analysis is not backfilled, so runs from before it shipped carry no figures. This is not a claim that the run wrote no code."
       >
@@ -227,7 +370,7 @@ function codeCell(code: RunSummary["code"]): ReactNode {
     code.truncated ? "truncated: a cap stopped the analysis short" : null,
   ].filter((caveat): caveat is string => caveat !== null);
   const title = [
-    `${code.codeLines.toLocaleString("en-US")} lines of code (analyzer v${code.analyzerVersion})`,
+    `${code.codeLines.toLocaleString("en-US")} lines of code (analyzer v${String(code.analyzerVersion)})`,
     ...caveats,
   ].join(" · ");
   return (
@@ -257,8 +400,9 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
     min: 20,
     resizable: false,
     // Selectable logs swap the hover caret for a checkbox; an in-progress row's
-    // box overlays the live spinner (passed through `active`) so the gutter still
-    // signals the run is running until the row is hovered or picked.
+    // box overlays the live marker (its phase passed through `active`) so the
+    // gutter still signals the run is in flight — and whether its model is still
+    // working or its build is being validated — until the row is hovered or picked.
     render: (row, ctx) =>
       ctx.selection ? (
         <RunSelectBox id={row.summary.id} selection={ctx.selection} />
@@ -267,9 +411,13 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
       ),
     renderActive: (run, ctx) =>
       ctx.selection ? (
-        <RunSelectBox id={run.runId} active selection={ctx.selection} />
+        <RunSelectBox
+          id={run.runId}
+          active={run.state}
+          selection={ctx.selection}
+        />
       ) : (
-        <span className={styles.spinner} aria-hidden="true" />
+        <RunActiveMarker state={run.state} />
       ),
   },
   {
@@ -292,6 +440,7 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
         </span>
       </span>
     ),
+    renderAgent: (agent, _row, ctx) => agentLabelFor("test", agent, ctx),
   },
   {
     id: "version",
@@ -350,6 +499,7 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
     sortKey: (row) => row.summary.subject.harnessSlug.toLowerCase(),
     render: (row, ctx) => (
       <span className={styles.harness} data-label="Harness">
+        {disclosureFor("harness", row, ctx)}
         {row.summary.subject.harnessSlug}
         {/* Without a TEST column to host it, flag unpublished runs here. */}
         {!ctx.visible.has("test") && row.local && (
@@ -362,6 +512,7 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
         {run.harnessSlug}
       </span>
     ),
+    renderAgent: (agent, _row, ctx) => agentLabelFor("harness", agent, ctx),
   },
   {
     id: "variant",
@@ -433,11 +584,30 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
     min: 112,
     optional: true,
     sortKey: (row) => (row.configName ?? row.modelName).toLowerCase(),
-    render: (row) => modelCell(row.configName, row.modelName),
+    render: (row, ctx) =>
+      modelCell(
+        row.configName,
+        row.modelName,
+        disclosureFor("model", row, ctx),
+      ),
     renderActive: (run, ctx) =>
       modelCell(
         isGgRun(run.harnessSlug) ? (run.ggPreset ?? null) : null,
         ctx.modelName(run.modelId, run.harnessSlug),
+      ),
+    // An agent line's model, or its name and model together when no other column
+    // is left to name it in.
+    renderAgent: (agent, _row, ctx) =>
+      ctx.agentColumn === "model" ? (
+        agentLabel(agent, true, ctx.agentSpan)
+      ) : (
+        <span
+          className={styles.agentModel}
+          data-label="Model"
+          title={agent.modelName}
+        >
+          {agent.modelName}
+        </span>
       ),
   },
   {
@@ -525,6 +695,13 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
       </span>
     ),
     renderActive: () => activeDash("Tokens", true),
+    renderAgent: (agent) => (
+      <span className={styles.num} data-label="Tokens">
+        {agent.ran
+          ? formatTokenTotal({ tokens: agent.tokens } as RunSummary["metrics"])
+          : "—"}
+      </span>
+    ),
   },
   {
     id: "cost",
@@ -540,6 +717,14 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
       </span>
     ),
     renderActive: () => activeDash("Cost", true),
+    renderAgent: (agent) => (
+      <span className={styles.num} data-label="Cost">
+        {/* The agent's own priced figure; gg prices some requests only as billed. */}
+        {agent.ran
+          ? formatUsd(agent.cost.comparable ?? agent.cost.actual)
+          : "—"}
+      </span>
+    ),
   },
   {
     id: "code",
@@ -577,7 +762,7 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
     defaultVisible: false,
     render: (row) => (
       <span
-        className={`${styles.num} ${row.summary.score ? "" : styles.noRating}`}
+        className={`${String(styles.num)} ${String(row.summary.score ? "" : styles.noRating)}`}
         data-label="Points"
       >
         {formatPoints(row.summary.score)}
@@ -623,7 +808,11 @@ export const RUN_COLUMNS: readonly RunColumn[] = [
     },
     renderActive: (run) => (
       <span className={styles.rating} data-label="Status">
-        <span className={styles.activeStatus} data-state={run.state}>
+        <span
+          className={styles.activeStatus}
+          data-state={run.state}
+          title={run.state === "validating" ? VALIDATING_TITLE : undefined}
+        >
           {ACTIVE_STATE_LABEL[run.state]}
         </span>
       </span>
@@ -730,6 +919,22 @@ export function useEnrichedRuns(
           configName: isGgRun(summary.subject.harnessSlug)
             ? (summary.subject.ggPreset ?? null)
             : null,
+          // A gg run whose session wrote no summary carries no agents and so has
+          // nothing to disclose; neither does one that lists none.
+          agents:
+            isGgRun(summary.subject.harnessSlug) &&
+            summary.subject.ggAgents?.length
+              ? summary.subject.ggAgents.map((agent) => ({
+                  ...agent,
+                  modelName: agent.modelIds
+                    .map(
+                      (modelId) =>
+                        findModel(modelId, summary.subject.harnessSlug)?.name ??
+                        canonicalModelId(modelId),
+                    )
+                    .join(" / "),
+                }))
+              : null,
           rating: summary.validatorRated
             ? summary.rating
             : (worstRating(review?.ratings.map((r) => r.rating) ?? []) ??

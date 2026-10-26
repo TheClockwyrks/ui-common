@@ -1,4 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
+import { useLayoutEffect } from "react";
 import { describe, expect, it } from "vitest";
 import { RECORDING_FORMAT, type RecordedFrame, type Recording } from "./format";
 import { timelineFor, useReplayClock } from "./useReplayClock";
@@ -40,6 +41,21 @@ function recordingOf(count: number, deltaMs: number): Recording {
     ],
     frames,
   };
+}
+
+/**
+ * The clock, with every position it commits written to `committed` as
+ * `[frame, frames]` — what a pane drawing from it would have put on screen.
+ */
+function useCommittedClock(
+  timeline: readonly number[],
+  committed: [number, number][],
+) {
+  const clock = useReplayClock(timeline);
+  useLayoutEffect(() => {
+    committed.push([clock.frame, clock.frames]);
+  });
+  return clock;
 }
 
 describe("the timeline a pair is paced by", () => {
@@ -118,6 +134,31 @@ describe("the clock", () => {
     rerender({ timeline: second });
     expect(result.current.frame).toBe(0);
     expect(result.current.frames).toBe(4);
+  });
+
+  it("never shows a new recording at the old one's position, so a scrub made as it lands holds", () => {
+    // The pair's second recording landing is exactly this: the length changes under
+    // a reviewer who may already be scrubbing. If the reset waited for an effect, the
+    // commit showing the new length would still carry the old position, and a scrub
+    // made before that effect ran would be undone by it.
+    const first = timelineFor([recordingOf(6, 16)]);
+    const second = timelineFor([recordingOf(2, 16)]);
+    const committed: [number, number][] = [];
+    const { result, rerender } = renderHook(
+      ({ timeline }: { timeline: readonly number[] }) =>
+        useCommittedClock(timeline, committed),
+      { initialProps: { timeline: first } },
+    );
+    act(() => {
+      result.current.seek(4);
+    });
+    committed.length = 0;
+    rerender({ timeline: second });
+    expect(committed).toEqual([[0, 2]]);
+    act(() => {
+      result.current.seek(1);
+    });
+    expect(result.current.frame).toBe(1);
   });
 
   it("offers a rate without touching the position", () => {

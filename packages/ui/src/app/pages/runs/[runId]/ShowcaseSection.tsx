@@ -17,8 +17,8 @@ import styles from "./ShowcaseSection.module.scss";
 // landing page stages too, so every showcase there is reads identically.
 //
 // Media bytes never ride the record — every file resolves through the gallery's
-// run-scoped `showcaseMediaUrl`, which the consoles point at the backend/worker
-// showcase endpoint and the static site at the snapshot's published assets. A
+// run-scoped `showcaseMediaUrl`, which the console points at the artifacts
+// service's showcase route and the static site at the snapshot's published assets. A
 // run without a showcase never reaches this component: the Play tab renders the
 // plain {@link PlayableSection} alone, exactly as it did before showcases
 // existed.

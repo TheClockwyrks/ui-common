@@ -3,13 +3,13 @@ import type {
   LadderSummary,
   SlotCounts,
 } from "@clockwyrks/backend-api/ladders";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import ladderStyles from "./Ladder.module.scss";
-import { LaddersPage, ladderCardView } from "./LaddersPage";
+import { ladderCardView, LADDERS_PER_PAGE, LaddersPage } from "./LaddersPage";
 import {
   BackendProvider,
   type BackendContextValue,
@@ -177,29 +177,58 @@ describe("ladderCardView", () => {
   });
 });
 
-function renderList(list: LadderSummary[]) {
+// The address the page is at, so a test reads the page and the search off the URL.
+function Search() {
+  return <output data-testid="search">{useLocation().search}</output>;
+}
+
+function renderList(list: LadderSummary[], search = "") {
+  // A delete removes the ladder from what the next read of the list answers.
+  let current = list;
   const value = {
-    client: { getLaddersSummary: vi.fn().mockResolvedValue(list) },
+    client: {
+      getLaddersSummary: vi.fn(() => Promise.resolve(current)),
+      deleteLadder: vi.fn((id: string) => {
+        current = current.filter((entry) => entry.id !== id);
+        return Promise.resolve();
+      }),
+    },
     identity: null,
     status: "ready",
     error: null,
     url: null,
   } as unknown as BackendContextValue;
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[`/account/ladders${search}`]}>
       <BackendProvider value={value}>
         <LaddersPage />
+        <Search />
       </BackendProvider>
     </MemoryRouter>,
   );
 }
 
+// An account's ladders, named by number so a page's cards are told apart.
+function many(count: number): LadderSummary[] {
+  return Array.from({ length: count }, (_, index) => {
+    const n = String(index).padStart(2, "0");
+    return summary(null, { id: `l${n}`, name: `Ladder ${n}` });
+  });
+}
+const shownNames = () =>
+  screen.getAllByText(/^Ladder \d+$/).map((node) => node.textContent);
+const search = () => screen.getByTestId("search").textContent;
+
 describe("LaddersPage", () => {
   it("shows the configuration, the status, the bar and the slot totals", async () => {
     const { container } = renderList([A]);
-    await waitFor(() => expect(screen.getByText("Easy to hard")).toBeTruthy());
-    expect(screen.getByText("4 rungs · 2 runs/rung · 3 climbers")).toBeTruthy();
-    expect(screen.getByText("Running")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("Easy to hard")).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText("4 rungs · 2 runs/rung · 3 climbers"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
     const bar = screen.getByRole("progressbar");
     expect(bar.getAttribute("aria-valuenow")).toBe("52");
     expect(bar.getAttribute("title")).toBe(
@@ -225,7 +254,9 @@ describe("LaddersPage", () => {
 
   it("keeps the same slots for a ladder never run", async () => {
     const { container } = renderList([summary(null)]);
-    await waitFor(() => expect(screen.getByText("Not run yet")).toBeTruthy());
+    await waitFor(() => {
+      expect(screen.getByText("Not run yet")).toBeInTheDocument();
+    });
     expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe(
       "0",
     );
@@ -236,9 +267,85 @@ describe("LaddersPage", () => {
 
   it("says what a ladder is and how to start one when there are none", async () => {
     renderList([]);
-    await waitFor(() =>
-      expect(screen.getByText(/You have no ladders yet/)).toBeTruthy(),
-    );
-    expect(screen.getByText(/Press Run ladder/)).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(/You have no ladders yet/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Press Run ladder/)).toBeInTheDocument();
+  });
+
+  it("draws one page of a long list and pages through it by the URL", async () => {
+    renderList(many(45));
+    await screen.findByText("Ladder 00");
+    expect(shownNames()).toHaveLength(LADDERS_PER_PAGE);
+    expect(screen.getByText("Showing 1–20 of 45 ladders")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Page 3" }));
+    expect(shownNames()).toEqual([
+      "Ladder 40",
+      "Ladder 41",
+      "Ladder 42",
+      "Ladder 43",
+      "Ladder 44",
+    ]);
+    expect(search()).toBe("?page=3");
+  });
+
+  it("offers no pager and no search on a list that fits one page", async () => {
+    renderList(many(LADDERS_PER_PAGE));
+    await screen.findByText("Ladder 00");
+    expect(shownNames()).toHaveLength(LADDERS_PER_PAGE);
+    expect(
+      screen.queryByRole("navigation", { name: "Pagination" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Search ladders")).not.toBeInTheDocument();
+  });
+
+  it("opens on the page a link names, and falls back from one past the end", async () => {
+    const { unmount } = renderList(many(45), "?page=2");
+    await screen.findByText("Ladder 20");
+    expect(screen.queryByText("Ladder 00")).not.toBeInTheDocument();
+    // The link's page survives the load: it is corrected only against a loaded list.
+    expect(search()).toBe("?page=2");
+    unmount();
+    renderList(many(45), "?page=9");
+    await screen.findByText("Ladder 44");
+    await waitFor(() => {
+      expect(search()).toBe("?page=3");
+    });
+  });
+
+  it("searches by name and returns to the first page", async () => {
+    renderList(many(45), "?page=2");
+    await screen.findByText("Ladder 20");
+    fireEvent.change(screen.getByLabelText("Search ladders"), {
+      target: { value: "ladder 4" },
+    });
+    await waitFor(() => {
+      expect(search()).toBe("?q=ladder+4");
+    });
+    expect(shownNames()).toEqual([
+      "Ladder 40",
+      "Ladder 41",
+      "Ladder 42",
+      "Ladder 43",
+      "Ladder 44",
+    ]);
+    expect(
+      screen.getByText("Showing 1–5 of 5 matching (45 ladders)"),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Search ladders"), {
+      target: { value: "no such ladder" },
+    });
+    await screen.findByText("No ladders match that search.");
+  });
+
+  it("falls back a page when a delete empties the last one", async () => {
+    renderList(many(41), "?page=3");
+    await screen.findByText("Ladder 40");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await waitFor(() => {
+      expect(search()).toBe("?page=2");
+    });
+    expect(shownNames()[0]).toBe("Ladder 20");
+    expect(screen.queryByText("Ladder 40")).not.toBeInTheDocument();
   });
 });

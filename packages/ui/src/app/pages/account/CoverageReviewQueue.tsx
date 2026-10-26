@@ -1,13 +1,14 @@
 import type { CoverageQueue } from "@clockwyrks/backend-api/coverage";
-import { Link } from "react-router";
-import { Panel } from "../../../index";
-import { claimSectionReturn } from "../../components/backReturn";
+import { Link, useSearchParams } from "react-router";
+import { Panel, Pagination } from "../../../index";
+import { useClientPage } from "../../components/use-client-page";
 import { useTestCaseName } from "../../data/useTestCaseName";
 import { formatTimeAgo } from "../../format";
 import { routes } from "../../routes";
 import { comboLabel } from "./comboLabels";
 import { caseQualifier } from "./caseLabels";
 import styles from "./Coverage.module.scss";
+import { useCallback } from "react";
 
 // The plan's own review queue: the completed runs of this plan the signed-in account
 // has not reviewed, listed in the plan's emission order rather than newest-first like
@@ -20,11 +21,8 @@ import styles from "./Coverage.module.scss";
 // of identical rows and pressing one. Each
 // row is itself the link, so the press target is the row rather than a word inside it.
 //
-// Each row claims the coverage back-return before it navigates, so reviewing a run
-// and pressing back lands here rather than on the runs index: open, review, back,
-// repeat. `returnLabel` is what the run page's back control then calls this
-// dashboard — the ladder reuses this component verbatim, and the two must not both
-// announce themselves as the plan.
+// A run opened from a row returns here when its back control is pressed, as every
+// back control returns to the page it was reached from: open, review, back, repeat.
 //
 // `emptyMessage` decides what an empty queue renders. A surface that is nothing but
 // this queue (the plan's Reviews tab) passes one and gets the widget with the message
@@ -34,20 +32,54 @@ import styles from "./Coverage.module.scss";
 // `intro` is a line under the heading saying what the queue is *for*: optional
 // labelling after the fact, so a list of runs is never read as something the plan or
 // the climb waits on.
+//
+// The queue is drawn a page at a time: a ladder of many models over many rungs leaves
+// hundreds of runs to label, and the board under it should not sit a screen's length
+// away. The page rides in the URL as its own key, beside the climber board's `page`,
+// so reviewing a run and pressing back lands on the same page.
+
+/** How many runs the queue draws per page. Matches the run listings. */
+export const QUEUE_RUNS_PER_PAGE = 20;
+
+/** The URL key the queue's page rides in, 1-based like `page`. */
+export const QUEUE_PAGE_PARAM = "labelPage";
+
+/** The queue's page as a 0-based index, read from and written to the URL. */
+function useQueuePage() {
+  const [params, setParams] = useSearchParams();
+  const raw = Math.trunc(Number(params.get(QUEUE_PAGE_PARAM) ?? ""));
+  const page = Number.isFinite(raw) && raw >= 1 ? raw - 1 : 0;
+  const setPage = useCallback(
+    (next: number, opts?: { replace?: boolean }) => {
+      setParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          if (next <= 0) p.delete(QUEUE_PAGE_PARAM);
+          else p.set(QUEUE_PAGE_PARAM, String(next + 1));
+          return p;
+        },
+        { replace: opts?.replace ?? false },
+      );
+    },
+    [setParams],
+  );
+  return { page, setPage };
+}
+
 export function CoverageReviewQueue({
   queue,
-  returnLabel = "Back to the coverage plan",
   title = "Label runs (optional)",
   emptyMessage,
   intro,
 }: {
   queue: CoverageQueue;
-  returnLabel?: string;
   title?: string;
   emptyMessage?: string;
   intro?: string;
 }) {
   const testCaseName = useTestCaseName();
+  const { page, setPage } = useQueuePage();
+  const shown = useClientPage(queue.runs, QUEUE_RUNS_PER_PAGE, page, setPage);
   if (queue.runs.length === 0) {
     if (!emptyMessage) return null;
     return (
@@ -70,12 +102,11 @@ export function CoverageReviewQueue({
       </header>
       {intro && <p className={styles.queueIntro}>{intro}</p>}
       <ol className={styles.queueList}>
-        {queue.runs.map((entry) => (
+        {shown.items.map((entry) => (
           <li key={entry.runId}>
             <Link
               className={styles.queueRow}
               to={routes.runVerdict(entry.runId)}
-              onClick={() => claimSectionReturn("coverage", returnLabel)}
             >
               <span className={styles.queueIdentity}>
                 <span className={styles.queueName}>
@@ -101,10 +132,15 @@ export function CoverageReviewQueue({
           </li>
         ))}
       </ol>
+      <Pagination
+        page={shown.current}
+        pageCount={shown.pageCount}
+        onPageChange={setPage}
+      />
       {queue.truncated && (
         <p className={styles.queueMore}>
-          More are waiting behind these. The queue is walked from the front, not
-          paged.
+          More are waiting behind these, and join the list as these are
+          labelled.
         </p>
       )}
     </Panel>
