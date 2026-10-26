@@ -127,9 +127,10 @@
   gap: t.$space-sm;
 }
 
-// The right-hand icon controls: out to the run's traces in Grafana, and down to
-// the run's produced tree as one archive. They sit inside `.controlActions`
-// beside the delete control, which handles their placement.
+// The right-hand icon controls: the run's share links, out to the run's traces
+// in Grafana, and down to the run's produced tree as one archive. They sit inside
+// `.controlActions` beside the delete control, which handles their placement.
+.shareButton,
 .tracesLink,
 .downloadLink {
   display: inline-flex;
@@ -150,8 +151,14 @@
   }
 }
 
-// The line-art mark inside an icon-only control (download, traces). Sized here so
-// all three controls in the strip present the same square icon footprint.
+// The share control is a button where its neighbors are links, so it takes the
+// pointer they get by default.
+.shareButton {
+  cursor: pointer;
+}
+
+// The line-art mark inside an icon-only control (share, download, traces). Sized
+// here so every control in the strip presents the same square icon footprint.
 .controlIcon {
   width: 1.15rem;
   height: 1.15rem;

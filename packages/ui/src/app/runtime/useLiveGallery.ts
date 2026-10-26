@@ -413,10 +413,24 @@ async function fetchTestCase(
   );
 }
 
+/** What the host's build decides of the live gallery, beyond its services. */
+export interface LiveGalleryOptions {
+  /**
+   * The origin a published run's share links are built on, from the build (the
+   * console's `VITE_SHARE_ORIGIN`). Omitted, no run offers a share control. See
+   * {@link GalleryDataInput.shareOrigin}.
+   */
+  shareOrigin?: string | null;
+}
+
 // The host supplies its own arena capability (the web console wires one when a
 // backend is connected; the static site never calls this hook). It is threaded
 // through unchanged so the arena UI resolves it off the shared gallery data.
-export function useLiveGallery(arena?: ArenaApi): GalleryDataInput {
+export function useLiveGallery(
+  arena?: ArenaApi,
+  options: LiveGalleryOptions = {},
+): GalleryDataInput {
+  const shareOrigin = options.shareOrigin ?? null;
   const { client: backend, url: backendUrl } = useBackend();
   const { active: worker } = useWorkers();
   const { refreshToken } = useRunsRuntime();
@@ -1012,6 +1026,7 @@ export function useLiveGallery(arena?: ArenaApi): GalleryDataInput {
       modelsRefreshing,
       canExecute: true,
       grafanaUrl,
+      shareOrigin,
       queryRunSummaries,
       getCabinetStats,
       fetchRunEvents,
@@ -1044,6 +1059,7 @@ export function useLiveGallery(arena?: ArenaApi): GalleryDataInput {
       modelsStatus,
       modelsRefreshing,
       grafanaUrl,
+      shareOrigin,
       queryRunSummaries,
       getCabinetStats,
       fetchRunEvents,

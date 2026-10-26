@@ -190,6 +190,7 @@ function renderPage(
         modelId: "test/model",
       },
       status: { state: "completed", detail: null },
+      links: { sourceRepo: null, playableBuild: null },
       validation: { loaded: true, proofs: [] },
       codeAnalysis,
       toolchain,

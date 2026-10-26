@@ -480,6 +480,14 @@ export interface GalleryDataInput {
    */
   grafanaUrl: string | null;
   /**
+   * The origin a published run's share links are built on (`https://tcab.ai` for
+   * prod, `https://staging.tcab.ai` for staging), which the console's build names.
+   * Set, it gives a run carrying a short code the share control that copies its
+   * `tcab.ai` verdict and play links. Omitted or null — the public gallery, a
+   * development build — and no run offers one.
+   */
+  shareOrigin?: string | null;
+  /**
    * Answer one page of a filtered/sorted summary query — the host-agnostic paged
    * listing the run-log pages drive. The console forwards it to the backend's
    * offset endpoint (`GET /runs?fields=summary&offset=…`), which filters, sorts,

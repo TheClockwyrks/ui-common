@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { RunRecord } from "@clockwyrks/run-record";
 import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -34,6 +34,10 @@ const fixture = vi.hoisted(() => ({
   // HIT still refetched in the background.
   byId: null as ((runId: string) => unknown) | null,
   calls: [] as string[],
+  // The share origin the build names, and the short code the run's record
+  // carries; either unset leaves the run with no share control.
+  shareOrigin: null as string | null,
+  code: undefined as string | undefined,
 }));
 vi.mock("../../data/galleryContext", () => ({
   useGalleryData: () => ({
@@ -46,6 +50,7 @@ vi.mock("../../data/galleryContext", () => ({
     localIds: new Set<string>(),
     writeups: {},
     canExecute: false,
+    shareOrigin: fixture.shareOrigin,
   }),
 }));
 
@@ -77,6 +82,7 @@ function record(
       modelId: "claude-sonnet-4-5",
     },
     status: { state: "completed", detail: null },
+    links: { sourceRepo: null, playableBuild: null, code: fixture.code },
     // `proofs` is read unguarded when the layout decides whether to offer the
     // Proof tab; none of these fixtures declares proof media.
     validation: { loaded: true, proofs: [] },
@@ -391,5 +397,85 @@ describe("RunDetailLayout's session cache of run details", () => {
     expect(screen.queryByText("Loading run…")).toBeNull();
     expect(screen.getByText(`variant-${ids[12]}`)).toBeInTheDocument();
     held.unmount();
+  });
+});
+
+describe("RunDetailLayout share control", () => {
+  const writeText = vi.fn<(text: string) => Promise<void>>();
+
+  beforeEach(() => {
+    writeText.mockReset();
+    writeText.mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+  });
+
+  afterEach(() => {
+    fixture.shareOrigin = null;
+    fixture.code = undefined;
+  });
+
+  it("offers a published run's verdict and play links on the share origin", async () => {
+    fixture.shareOrigin = "https://staging.tcab.ai";
+    fixture.code = "d483a2f9";
+    renderLayout("end-to-end");
+    fireEvent.click(await screen.findByRole("button", { name: "Share run" }));
+    expect(
+      screen.getByRole("link", { name: "https://staging.tcab.ai/r/d483a2f9" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "https://staging.tcab.ai/p/d483a2f9" }),
+    ).toBeInTheDocument();
+  });
+
+  it("copies the chosen link to the clipboard and says so", async () => {
+    fixture.shareOrigin = "https://tcab.ai";
+    fixture.code = "d483a2f9";
+    renderLayout("end-to-end");
+    fireEvent.click(await screen.findByRole("button", { name: "Share run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy play link" }));
+    expect(writeText).toHaveBeenCalledWith("https://tcab.ai/p/d483a2f9");
+    expect(await screen.findByText("Copied")).toBeInTheDocument();
+  });
+
+  it("says so when the clipboard refuses the copy", async () => {
+    writeText.mockRejectedValue(new Error("denied"));
+    fixture.shareOrigin = "https://tcab.ai";
+    fixture.code = "d483a2f9";
+    renderLayout("end-to-end");
+    fireEvent.click(await screen.findByRole("button", { name: "Share run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy verdict link" }));
+    expect(await screen.findByText("Copy failed")).toBeInTheDocument();
+  });
+
+  it("closes on Escape", async () => {
+    fixture.shareOrigin = "https://tcab.ai";
+    fixture.code = "d483a2f9";
+    renderLayout("end-to-end");
+    fireEvent.click(await screen.findByRole("button", { name: "Share run" }));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(
+      screen.queryByRole("dialog", { name: "Share links" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers none for a run with no short code", async () => {
+    fixture.shareOrigin = "https://tcab.ai";
+    renderLayout("end-to-end");
+    await screen.findByText("simple-2d");
+    expect(
+      screen.queryByRole("button", { name: "Share run" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers none in a build with no share origin", async () => {
+    fixture.code = "d483a2f9";
+    renderLayout("end-to-end");
+    await screen.findByText("simple-2d");
+    expect(
+      screen.queryByRole("button", { name: "Share run" }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -1,0 +1,80 @@
+@use "../styles/tokens" as t;
+@use "../styles/surfaces" as s;
+
+// The trigger sits in the run header's control strip; the panel drops from it,
+// aligned to its right edge so it never runs off the page's right side.
+.root {
+  position: relative;
+  display: inline-flex;
+}
+
+// The neon-outlined panel the run menus use, so the three read as one system.
+.panel {
+  position: absolute;
+  top: calc(100% + #{t.$space-xs});
+  right: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: t.$space-xs t.$space-sm;
+  width: max-content;
+  max-width: min(28rem, calc(100vw - 2 * #{t.$space-md}));
+  padding: t.$space-sm;
+  border: t.$border-hairline solid t.$color-accent;
+  border-radius: t.$radius-md;
+  background: s.$panel-bg;
+  backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 1rem color-mix(in srgb, t.$color-accent 40%, transparent),
+    0 0.5rem 1.5rem color-mix(in srgb, #000 55%, transparent);
+}
+
+// One link per row, its cells on the panel's shared columns so the links align.
+.row {
+  display: contents;
+}
+
+.label {
+  color: t.$color-text-muted;
+  font-size: t.$font-sm;
+}
+
+.link {
+  overflow: hidden;
+  color: t.$color-text;
+  font-size: t.$font-sm;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: all;
+}
+
+// A fixed width so "Copy", "Copied" and "Copy failed" never move the link.
+.copy {
+  min-width: 6.5rem;
+  padding: t.$space-xs t.$space-sm;
+  border: t.$border-hairline solid t.$color-border;
+  border-radius: t.$radius-sm;
+  background: transparent;
+  color: t.$color-text;
+  font: inherit;
+  font-size: t.$font-sm;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: t.$color-accent;
+    outline: none;
+  }
+
+  &[data-outcome="copied"] {
+    border-color: t.$color-accent;
+    color: t.$color-accent;
+  }
+
+  &[data-outcome="failed"] {
+    border-color: t.$color-negative;
+    color: t.$color-negative;
+  }
+}

@@ -36,7 +36,10 @@ export { frameReview, frameReviews } from "./data/frameReview";
 
 // The live gallery data source for the web console, built from the
 // BackendClient/WorkerClient contexts it mounts with the HTTP transport.
-export { useLiveGallery } from "./runtime/useLiveGallery";
+export {
+  useLiveGallery,
+  type LiveGalleryOptions,
+} from "./runtime/useLiveGallery";
 
 // Data hooks (read the provider) and their state shapes.
 export {

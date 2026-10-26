@@ -1,36 +1,39 @@
+import type { RunRecord } from "@clockwyrks/run-record";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, useParams } from "react-router";
-import type { RunRecord } from "@clockwyrks/run-record";
+
+import styles from "./RunDetailLayout.module.scss";
 import type { StoredReview } from "../../../client/types";
-import { PageLayout } from "../../components/PageLayout";
-import { LoadingState } from "../../components/LoadingState";
-import { LoadFailureState } from "../../components/LoadFailureState";
-import { BackChevron } from "../../components/BackChevron";
-import { DownloadIcon } from "../../components/DownloadIcon";
-import { ExternalLinkIcon } from "../../components/ExternalLinkIcon";
 import {
   AestheticBadge,
   GradeBadge,
   RatingBadge,
   canonicalModelId,
 } from "../../../index";
-import { UnpublishedTag } from "../../components/UnpublishedTag";
+import { BackChevron } from "../../components/BackChevron";
+import { DownloadIcon } from "../../components/DownloadIcon";
+import { ExternalLinkIcon } from "../../components/ExternalLinkIcon";
+import { LoadFailureState } from "../../components/LoadFailureState";
+import { LoadingState } from "../../components/LoadingState";
+import { PageLayout } from "../../components/PageLayout";
+import { RunShareControl } from "../../components/run-share-control";
 import { RunDeleteControl } from "../../components/RunDeleteControl";
-import { useGalleryData, type RunDetail } from "../../data/galleryContext";
+import { UnpublishedTag } from "../../components/UnpublishedTag";
 import { createAssetCache } from "../../data/assetCache";
+import { frameReviews } from "../../data/frameReview";
+import { useGalleryData, type RunDetail } from "../../data/galleryContext";
 import { grafanaTraceUrl } from "../../data/grafanaTraceUrl";
-import { useTestCaseName } from "../../data/useTestCaseName";
-import { useFindModel } from "../../data/useModels";
 import {
   overallGradeOf,
   type ParsedWriteup,
   parseWriteup,
   worstRating,
 } from "../../data/ratings";
-import { frameReviews } from "../../data/frameReview";
 import { describeRunState, hasPlayableBuild } from "../../data/runState";
+import { runShareLinks } from "../../data/share-links";
+import { useFindModel } from "../../data/useModels";
+import { useTestCaseName } from "../../data/useTestCaseName";
 import { routes } from "../../routes";
-import styles from "./RunDetailLayout.module.scss";
 
 // The run detail page's tabs. Each is a distinct route; this drives which tab
 // link reads as active. The `play` key names the run's landing tab (the bare run
@@ -126,6 +129,7 @@ export function RunDetailLayout({
     canExecute,
     grafanaUrl,
     runArchiveUrl,
+    shareOrigin,
   } = useGalleryData();
   const testCaseName = useTestCaseName();
   const findModel = useFindModel();
@@ -172,11 +176,11 @@ export function RunDetailLayout({
         if (resolved) runDetailCache.put(runId, resolved);
         setDetail(resolved);
       })
-      .catch((cause: unknown) => {
+      .catch((error: unknown) => {
         if (!active) return;
         // The cached record, if there is one, stays on screen: a refresh that
         // failed must not take a page that was rendering fine down with it.
-        setFailure(String(cause));
+        setFailure(String(error));
       })
       .finally(() => {
         if (active) setFetching(false);
@@ -309,6 +313,9 @@ export function RunDetailLayout({
   // the recorded capability set (a gg run always has one), so an old record whose
   // harness slug reads differently still resolves correctly.
   const isGg = subject.harnessSlug === "gg" || Boolean(subject.ggCapabilitySet);
+  // The run's public share links, or null for a run never published (it has no
+  // short code) or in a build that names no share origin.
+  const shareLinks = runShareLinks(shareOrigin, run.links.code);
   const tabs: { key: RunDetailTab; label: string; to: string }[] = [
     // Play first when present — it is the landing tab at the bare run URL —
     // then Verdict/Results, which leads when there is nothing to play.
@@ -426,8 +433,7 @@ export function RunDetailLayout({
 
       {(() => {
         const presentation = describeRunState(run.status.state);
-        if (!presentation.isFailure) return null;
-        return (
+        return presentation.isFailure ? (
           <div
             className={styles.failureBanner}
             data-state={run.status.state}
@@ -438,7 +444,7 @@ export function RunDetailLayout({
               {run.status.detail ?? presentation.description}
             </span>
           </div>
-        );
+        ) : null;
       })()}
 
       <div className={styles.controls}>
@@ -465,6 +471,18 @@ export function RunDetailLayout({
             spread them far apart. Inside the group they sit together at the normal
             control gap. */}
         <div className={styles.controlActions}>
+          {/* Share the published run: its tcab.ai verdict and play links, built
+            from the short code its record carries once it first publishes and
+            the share origin the console's build names. A run never published
+            has no code and a build with no share origin (the public gallery, a
+            development build) names none, so either offers no control. */}
+          {shareLinks && (
+            <RunShareControl
+              links={shareLinks}
+              className={styles.shareButton}
+              iconClassName={styles.controlIcon}
+            />
+          )}
           {/* Deleting is offered only for an unpublished run the active worker
             produced; the control renders nothing otherwise (a published run, the
             public gallery). It is mounted only where the host can execute runs,
@@ -487,8 +505,7 @@ export function RunDetailLayout({
           {(() => {
             if (!canExecute) return null;
             const archiveUrl = runArchiveUrl?.(run.id) ?? null;
-            if (!archiveUrl) return null;
-            return (
+            return archiveUrl ? (
               <a
                 className={styles.downloadLink}
                 href={archiveUrl}
@@ -497,7 +514,7 @@ export function RunDetailLayout({
               >
                 <DownloadIcon className={styles.controlIcon} />
               </a>
-            );
+            ) : null;
           })()}
           {/* Link out to the traces this run emitted, when the deployment runs an
             observability stack. Rendered from the record's own timestamps so
@@ -507,8 +524,7 @@ export function RunDetailLayout({
             static site reports none. */}
           {(() => {
             const tracesUrl = grafanaTraceUrl(grafanaUrl, run.id, run);
-            if (!tracesUrl) return null;
-            return (
+            return tracesUrl ? (
               <a
                 className={styles.tracesLink}
                 href={tracesUrl}
@@ -519,7 +535,7 @@ export function RunDetailLayout({
               >
                 <ExternalLinkIcon className={styles.controlIcon} />
               </a>
-            );
+            ) : null;
           })()}
           {/* The run's OWN publish state, off the record this page just resolved,
               rather than the produced worklist — which lags behind a run that was

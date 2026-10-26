@@ -2581,16 +2581,10 @@
     "@typescript-eslint/unbound-method": {
       "count": 1
     },
-    "import-x/order": {
-      "count": 15
-    },
     "react-hooks/refs": {
       "count": 1
     },
     "react-hooks/set-state-in-effect": {
-      "count": 1
-    },
-    "unicorn/catch-error-name": {
       "count": 1
     },
     "unicorn/filename-case": {
@@ -2600,9 +2594,6 @@
       "count": 2
     },
     "unicorn/prefer-await": {
-      "count": 3
-    },
-    "unicorn/prefer-ternary": {
       "count": 3
     }
   },
