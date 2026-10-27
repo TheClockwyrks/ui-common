@@ -90,17 +90,25 @@ function record(
 }
 
 // Stand the layout up for one run, with a single `great`-rated review attached so
-// the header badge has something to render when the type allows one.
+// the header badge has something to render when the type allows one. Each call
+// mounts a run id of its own: the layout's detail cache is process-wide, so a
+// shared id would let an earlier test's record seed this one's first frame.
+const layoutIds = { last: 0 };
 function renderLayout(
   testType: RunRecord["subject"]["testType"],
   harnessSlug?: string,
   codeAnalysis?: RunRecord["codeAnalysis"],
   engine?: { slug: string; version?: string },
 ) {
+  layoutIds.last += 1;
+  const runId = `${RUN_ID}-${String(layoutIds.last)}`;
   fixture.failure = null;
   fixture.byId = null;
   fixture.detail = {
-    record: record(testType, harnessSlug, codeAnalysis, engine),
+    record: {
+      ...record(testType, harnessSlug, codeAnalysis, engine),
+      id: runId,
+    },
     reviews: [
       {
         reviewer: "u1@example.com",
@@ -112,7 +120,7 @@ function renderLayout(
     ],
   };
   return render(
-    <MemoryRouter initialEntries={[`/runs/${RUN_ID}`]}>
+    <MemoryRouter initialEntries={[`/runs/${runId}`]}>
       <Routes>
         <Route
           path="/runs/:runId"
